@@ -98,10 +98,8 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="AcrylicFormU.pas"/>
-        <DCCReference Include="CustomPanel.pas"/>
-        <DCCReference Include="AuxForm1.pas">
-            <Form>Form2</Form>
+        <DCCReference Include="AcrylicFormU.pas">
+            <Form>$R *.res</Form>
         </DCCReference>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
@@ -123,6 +121,11 @@
                 <Source>
                     <Source Name="MainSource">AcrylicForm.dpr</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="C:\Users\Public\Documents\Embarcadero\Studio\21.0\Bpl\AcrylicTest.bpl">Test</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k270.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp270.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">
                 <DeployFile LocalName="Win32\Debug\AcrylicForm.exe" Configuration="Debug" Class="ProjectOutput">

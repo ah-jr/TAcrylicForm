@@ -2,9 +2,7 @@
 
 uses
   Vcl.Forms,
-  AcrylicFormU in 'AcrylicFormU.pas',
-  CustomPanel  in 'CustomPanel.pas',
-  AuxForm1     in 'AuxForm1.pas';
+  AcrylicFormU in 'AcrylicFormU.pas';
 
 {$R *.res}
 

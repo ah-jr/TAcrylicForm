@@ -22,4 +22,34 @@ object AcrylicForm: TAcrylicForm
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
+  object pnlBackground: THitTransparentPanel
+    Left = 0
+    Top = 0
+    Width = 617
+    Height = 519
+    Align = alClient
+    TabOrder = 0
+    object pnlTitleBar: THitTransparentPanel
+      Left = 1
+      Top = 1
+      Width = 615
+      Height = 41
+      Align = alTop
+      BevelOuter = bvNone
+      TabOrder = 0
+    end
+    object pnlContent: TPanel
+      Left = 1
+      Top = 42
+      Width = 615
+      Height = 476
+      Align = alClient
+      BevelOuter = bvNone
+      TabOrder = 1
+      ExplicitLeft = 216
+      ExplicitTop = 240
+      ExplicitWidth = 185
+      ExplicitHeight = 41
+    end
+  end
 end
