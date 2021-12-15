@@ -4,7 +4,7 @@
 
 uses
   Vcl.Forms,
-  AcrylicFormU in 'AcrylicFormU.pas';
+  AcrylicFormU in 'src/AcrylicFormU.pas';
 
 {$R *.res}
 
