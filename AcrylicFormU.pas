@@ -22,21 +22,25 @@ uses
 
 type
   TAcrylicForm = class(TForm)
-    pnlTitleBar: THitTransparentPanel;
-    pnlBackground: THitTransparentPanel;
-    pnlContent: TPanel;
-    procedure FormCreate(Sender: TObject);
-    procedure FormMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
-
-    procedure MouseMove(Sender: TObject);
+    pnlTitleBar   : THitTransparentPanel;
+    pnlBackground : THitTransparentPanel;
+    pnlContent    : TPanel;
+    imgClose      : TImage;
+    imgMaximize   : TImage;
+    imgMinimize   : TImage;
+    procedure FormCreate           (Sender: TObject);
+    procedure imgMaximizeMouseEnter(Sender: TObject);
+    procedure imgMaximizeMouseLeave(Sender: TObject);
+    procedure imgCloseMouseEnter   (Sender: TObject);
+    procedure imgCloseMouseLeave   (Sender: TObject);
+    procedure imgMinimizeMouseEnter(Sender: TObject);
+    procedure imgMinimizeMouseLeave(Sender: TObject);
+    procedure imgCloseClick        (Sender: TObject);
 
   private
     m_bInitialized : Boolean;
-    imgClose: TImage;
-    imgMaximize: TImage;
-    imgMinimize: TImage;
-    clFormColor : TColor;
+    m_clFormColor  : TColor;
+    m_btBlurAmount : Byte;
 
     m_pngCloseN    : TPngImage;
     m_pngCloseH    : TPngImage;
@@ -45,90 +49,102 @@ type
     m_pngMinimizeN : TPngImage;
     m_pngMinimizeH : TPngImage;
 
-    tmrAcrylicChange: TTimer;
+    m_tmrAcrylicChange: TTimer;
 
-    procedure EnableBlur(hwndHandle: hwnd; nMode: Integer);
-    procedure OnAcrylicTimer(Sender: TObject);
     procedure OnMoveOrResize;
-    procedure UpdateAuxForms;
-    procedure OnCloseImageClick(Sender: TObject);
-    procedure SetColor(a_clColor : TColor);
+    procedure UpdatePositions;
 
-    procedure WMNCMoving(var Msg: TWMMoving); message WM_MOVING;
-    procedure WMNCSize(var Msg: TWMSize); message WM_SIZE;
+    procedure EnableBlur    (hwndHandle: HWND; nMode: Integer);
+    procedure OnAcrylicTimer(Sender: TObject);
+    procedure SetColor      (a_clColor : TColor);
+    procedure SetBlurAmount (a_btAmount : Byte);
+
+    procedure WMNCMoving (var Msg: TWMMoving);    message WM_MOVING;
+    procedure WMNCSize   (var Msg: TWMSize);      message WM_SIZE;
     procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
-
-  protected
-    function DoHandleStyleMessage(var Message: TMessage): Boolean; override;
 
   public
     constructor Create(AOwner : TComponent); override;
     destructor  Destroy; override;
 
-
-
-    property Color : TColor read clFormColor write SetColor;
+    property Color      : TColor read m_clFormColor  write SetColor;
+    property BlurAmount : Byte   read m_btBlurAmount write SetBlurAmount;
   end;
 
   AccentPolicy = packed record
-    AccentState: Integer;
-    AccentFlags: Integer;
-    GradientColor: Integer;
-    AnimationId: Integer;
+    AccentState   : Integer;
+    AccentFlags   : Integer;
+    GradientColor : Integer;
+    AnimationId   : Integer;
   end;
 
   WindowCompositionAttributeData = packed record
-    Attribute: Cardinal;
-    Data: Pointer;
-    SizeOfData: Integer;
+    Attribute  : Cardinal;
+    Data       : Pointer;
+    SizeOfData : Integer;
   end;
 
 var
   MainAcrylicForm: TAcrylicForm;
-  SetWindowCompositionAttribute: function(hwnd: hwnd; var Data: WindowCompositionAttributeData): Integer; stdcall;
+
+  SetWindowCompositionAttribute: function(hwnd: HWND; var Data: WindowCompositionAttributeData): Integer; stdcall;
 
 const
   c_nTitleBarHeight = 50;
+  c_nTopIconWidth   = 46;
+  c_nTopIconHeight  = 32;
 
 implementation
 
 {$R *.dfm}
 
+//==============================================================================
 procedure TAcrylicForm.OnAcrylicTimer(Sender: TObject);
 begin
   if not(GetKeyState(VK_LBUTTON) and $8000 <> 0) then
   begin
     EnableBlur(Handle, 4);
-    UpdateAuxForms;
+    UpdatePositions;
   end;
 end;
 
-procedure TAcrylicForm.OnCloseImageClick(Sender: TObject);
-begin
-  Close;
-end;
-
+//==============================================================================
 procedure TAcrylicForm.SetColor(a_clColor : TColor);
 begin
-  clFormColor := a_clColor;
+  m_clFormColor := a_clColor;
+  EnableBlur(Handle, 4);
 end;
 
+//==============================================================================
+procedure TAcrylicForm.SetBlurAmount(a_btAmount : Byte);
+begin
+  m_btBlurAmount := a_btAmount;
+  EnableBlur(Handle, 4);
+end;
+
+//==============================================================================
 procedure TAcrylicForm.OnMoveOrResize;
 begin
   if m_bInitialized then
   begin
     EnableBlur(Handle, 3);
 
-    tmrAcrylicChange.Enabled := False;
-    tmrAcrylicChange.Enabled := True;
+    m_tmrAcrylicChange.Enabled := False;
+    m_tmrAcrylicChange.Enabled := True;
 
-    UpdateAuxForms;
+    UpdatePositions;
   end;
 end;
 
+//==============================================================================
 constructor TAcrylicForm.Create(AOwner : TComponent);
 begin
   m_bInitialized := False;
+
+  m_tmrAcrylicChange := TTimer.Create(self);
+  m_tmrAcrylicChange.Interval := 10;
+  m_tmrAcrylicChange.OnTimer := OnAcrylicTimer;
+  m_tmrAcrylicChange.Enabled := True;
 
   m_pngCloseN    := TPngImage.Create;
   m_pngCloseH    := TPngImage.Create;
@@ -136,6 +152,9 @@ begin
   m_pngMaximizeH := TPngImage.Create;
   m_pngMinimizeN := TPngImage.Create;
   m_pngMinimizeH := TPngImage.Create;
+
+  m_clFormColor  := $202020;
+  m_btBlurAmount := 200;
 
   try
     m_pngCloseN.LoadFromResourceName   (HInstance, 'close_normal');
@@ -151,10 +170,9 @@ begin
   inherited;
 end;
 
+//==============================================================================
 destructor TAcrylicForm.Destroy;
 begin
-  inherited;
-
   m_pngCloseN.Free;
   m_pngCloseH.Free;
   m_pngMaximizeN.Free;
@@ -162,98 +180,20 @@ begin
   m_pngMinimizeN.Free;
   m_pngMinimizeH.Free;
 
-  tmrAcrylicChange.Enabled := False;
-  tmrAcrylicChange.Free;
+  m_tmrAcrylicChange.Enabled := False;
+  m_tmrAcrylicChange.Free;
+
+  inherited;
 end;
 
-function TAcrylicForm.DoHandleStyleMessage(var Message: TMessage): Boolean;
-begin
-  if Message.Msg = WM_NCHITTEST then
-  begin
-    Result := False;
-  end
-  else
-  begin
-    Result := inherited;
-  end;
-end;
-
-procedure TAcrylicForm.EnableBlur(hwndHandle: hwnd; nMode: Integer);
-const
-  WCA_ACCENT_POLICY = 19;
-  ACCENT_ENABLE_BLURBEHIND = 3;
-  ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
-var
-  dwm10: THandle;
-  Data: WindowCompositionAttributeData;
-  accent: AccentPolicy;
-  clColor: TColor;
-  blurAmount: Byte;
-begin
-  dwm10 := LoadLibrary('user32.dll');
-
-  if nMode = 3 then
-  begin
-    clColor := $252525;
-    blurAmount := 235;
-  end
-  else
-  begin
-    clColor := $202020;
-    blurAmount := 200;
-  end;
-
-  try
-    @SetWindowCompositionAttribute :=
-      GetProcAddress(dwm10, 'SetWindowCompositionAttribute');
-    if @SetWindowCompositionAttribute <> nil then
-    begin
-      accent.AccentState := nMode;
-      accent.AccentFlags := 2;
-      accent.GradientColor := (blurAmount SHL 24) or clColor;
-      Data.Attribute := WCA_ACCENT_POLICY;
-      Data.SizeOfData := SizeOf(accent);
-      Data.Data := @accent;
-      SetWindowCompositionAttribute(hwndHandle, Data);
-    end
-    else
-    begin
-      ShowMessage
-        ('Not found Windows 10 SetWindowCompositionAttribute in user32.dll');
-    end;
-  finally
-    FreeLibrary(dwm10);
-  end;
-end;
-
+//==============================================================================
 procedure TAcrylicForm.FormCreate(Sender: TObject);
 begin
   BorderStyle := bsNone;
   BorderIcons := [biSystemMenu, biMinimize];
-
-
-
   EnableBlur(Handle, 4);
 
-
-  tmrAcrylicChange := TTimer.Create(self);
-  tmrAcrylicChange.Interval := 10;
-  tmrAcrylicChange.OnTimer := OnAcrylicTimer;
-  tmrAcrylicChange.Enabled := True;
-
-  imgClose := TImage.Create(pnlTitleBar);
-  imgMaximize := TImage.Create(pnlTitleBar);
-  imgMinimize := TImage.Create(pnlTitleBar);
-
-  imgClose.Parent := pnlTitleBar;
-  imgMaximize.Parent := pnlTitleBar;
-  imgMinimize.Parent := pnlTitleBar;
-
-  imgClose.OnClick := OnCloseImageClick;
-
-
-  //////////////////////////////////////////////////////////////////////////////
-  ///  Load Icons:
+  // Load Icons:
   try
     imgClose.Picture.Graphic    := m_pngCloseN;
     imgMaximize.Picture.Graphic := m_pngMaximizeN;
@@ -264,55 +204,127 @@ begin
   m_bInitialized := True;
 end;
 
-procedure TAcrylicForm.FormMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Integer);
-const
-  SC_DRAGMOVE = $F012;
+//==============================================================================
+procedure TAcrylicForm.UpdatePositions;
 begin
-  EnableBlur(Handle, 3);
+  imgClose.Width     := c_nTopIconWidth;
+  imgClose.Height    := c_nTopIconHeight;
+  imgClose.Left      := Width - c_nTopIconWidth - 1;
+  imgClose.Top       := 0;
 
-  if Button = mbLeft then
-  begin
-    ReleaseCapture;
-    Perform(WM_SYSCOMMAND, SC_DRAGMOVE, 0);
+  imgMaximize.Width  := imgClose.Width;
+  imgMaximize.Height := imgClose.Height;
+  imgMaximize.Left   := imgClose.Left - c_nTopIconWidth;
+  imgMaximize.Top    := imgClose.Top;
+
+  imgMinimize.Width  := imgClose.Width;
+  imgMinimize.Height := imgClose.Height;
+  imgMinimize.Left   := imgMaximize.Left - c_nTopIconWidth;
+  imgMinimize.Top    := imgClose.Top;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.EnableBlur(hwndHandle: HWND; nMode: Integer);
+const
+  WCA_ACCENT_POLICY               = 19;
+  ACCENT_ENABLE_BLURBEHIND        = 3;
+  ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
+var
+  DWM10      : THandle;
+  Data       : WindowCompositionAttributeData;
+  Accent     : AccentPolicy;
+begin
+  DWM10 := LoadLibrary('user32.dll');
+
+  try
+    @SetWindowCompositionAttribute := GetProcAddress(DWM10, 'SetWindowCompositionAttribute');
+    if @SetWindowCompositionAttribute <> nil then
+    begin
+      Accent.AccentState   := nMode;
+      Accent.AccentFlags   := 2;
+      Accent.GradientColor := (m_btBlurAmount SHL 24) or m_clFormColor;
+
+      Data.Attribute  := WCA_ACCENT_POLICY;
+      Data.SizeOfData := SizeOf(Accent);
+      Data.Data       := @Accent;
+
+      SetWindowCompositionAttribute(hwndHandle, Data);
+    end
+    else
+    begin
+      ShowMessage
+        ('Not found Windows 10 SetWindowCompositionAttribute in user32.dll');
+    end;
+  finally
+    FreeLibrary(DWM10);
   end;
 end;
 
-procedure TAcrylicForm.MouseMove(Sender: TObject);
+//==============================================================================
+//
+//  Object Events
+//
+//==============================================================================
+procedure TAcrylicForm.imgCloseClick(Sender: TObject);
 begin
-  //
+  Close;
 end;
 
-procedure TAcrylicForm.UpdateAuxForms;
+//==============================================================================
+procedure TAcrylicForm.imgCloseMouseEnter(Sender: TObject);
 begin
-  imgClose.Width := 46;
-  imgClose.Height := 32;
-  imgClose.Left := Width - 47;
-  imgClose.Top := 0;
-
-  imgMaximize.Width := imgClose.Width;
-  imgMaximize.Height := imgClose.Height;
-  imgMaximize.Left := imgClose.Left - 46;
-  imgMaximize.Top := imgClose.Top;
-
-  imgMinimize.Width := imgClose.Width;
-  imgMinimize.Height := imgClose.Height;
-  imgMinimize.Left := imgMaximize.Left - 46;
-  imgMinimize.Top := imgClose.Top;
+  imgClose.Picture.Graphic := m_pngCloseH;
 end;
 
+//==============================================================================
+procedure TAcrylicForm.imgCloseMouseLeave(Sender: TObject);
+begin
+  imgClose.Picture.Graphic := m_pngCloseN;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.imgMaximizeMouseEnter(Sender: TObject);
+begin
+  imgMaximize.Picture.Graphic := m_pngMaximizeH;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.imgMaximizeMouseLeave(Sender: TObject);
+begin
+  imgMaximize.Picture.Graphic := m_pngMaximizeN;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.imgMinimizeMouseEnter(Sender: TObject);
+begin
+  imgMinimize.Picture.Graphic := m_pngMinimizeH;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.imgMinimizeMouseLeave(Sender: TObject);
+begin
+  imgMinimize.Picture.Graphic := m_pngMinimizeN;
+end;
+
+//==============================================================================
+//
+//  System Messages
+//
+//==============================================================================
 procedure TAcrylicForm.WMNCMoving(var Msg: TWMMoving);
 begin
   inherited;
   OnMoveOrResize;
 end;
 
+//==============================================================================
 procedure TAcrylicForm.WMNCSize(var Msg: TWMSize);
 begin
   inherited;
   OnMoveOrResize;
 end;
 
+//==============================================================================
 procedure TAcrylicForm.WMNCHitTest(var Msg: TWMNCHitTest);
 const
   c_nSpan = 7;
@@ -350,8 +362,9 @@ begin
       Msg.Result := HTCAPTION;
   end;
 
-  tmrAcrylicChange.Enabled := False;
-  tmrAcrylicChange.Enabled := True;
+  m_tmrAcrylicChange.Enabled := False;
+  m_tmrAcrylicChange.Enabled := True;
 end;
 
+//==============================================================================
 end.

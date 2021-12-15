@@ -37,6 +37,31 @@ object AcrylicForm: TAcrylicForm
       Align = alTop
       BevelOuter = bvNone
       TabOrder = 0
+      object imgClose: TImage
+        Left = 569
+        Top = -1
+        Width = 46
+        Height = 32
+        OnClick = imgCloseClick
+        OnMouseEnter = imgCloseMouseEnter
+        OnMouseLeave = imgCloseMouseLeave
+      end
+      object imgMaximize: TImage
+        Left = 525
+        Top = -1
+        Width = 46
+        Height = 32
+        OnMouseEnter = imgMaximizeMouseEnter
+        OnMouseLeave = imgMaximizeMouseLeave
+      end
+      object imgMinimize: TImage
+        Left = 481
+        Top = -1
+        Width = 46
+        Height = 32
+        OnMouseEnter = imgMinimizeMouseEnter
+        OnMouseLeave = imgMinimizeMouseLeave
+      end
     end
     object pnlContent: TPanel
       Left = 1
