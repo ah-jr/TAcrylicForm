@@ -98,6 +98,9 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <RcCompile Include="icons.rc">
+            <Form>icons.res</Form>
+        </RcCompile>
         <DCCReference Include="AcrylicFormU.pas">
             <Form>$R *.res</Form>
         </DCCReference>

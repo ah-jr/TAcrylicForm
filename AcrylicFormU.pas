@@ -15,13 +15,10 @@ uses
   Vcl.Dialogs,
   Vcl.StdCtrls,
   Vcl.ExtCtrls,
+  Vcl.ImgList,
   Vcl.Imaging.pngimage,
-  DWMApi,
-  Registry,
   HitTransparentPanel;
 
-function newWndProc(hwnd: hwnd; uMsg: UINT; wParam: wParam; lParam: lParam)
-  : LRESULT; stdcall;
 
 type
   TAcrylicForm = class(TForm)
@@ -35,28 +32,40 @@ type
     procedure MouseMove(Sender: TObject);
 
   private
+    m_bInitialized : Boolean;
     imgClose: TImage;
     imgMaximize: TImage;
     imgMinimize: TImage;
     clFormColor : TColor;
 
+    m_pngCloseN    : TPngImage;
+    m_pngCloseH    : TPngImage;
+    m_pngMaximizeN : TPngImage;
+    m_pngMaximizeH : TPngImage;
+    m_pngMinimizeN : TPngImage;
+    m_pngMinimizeH : TPngImage;
+
     tmrAcrylicChange: TTimer;
 
     procedure EnableBlur(hwndHandle: hwnd; nMode: Integer);
-    procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
     procedure OnAcrylicTimer(Sender: TObject);
+    procedure OnMoveOrResize;
     procedure UpdateAuxForms;
     procedure OnCloseImageClick(Sender: TObject);
     procedure SetColor(a_clColor : TColor);
+
+    procedure WMNCMoving(var Msg: TWMMoving); message WM_MOVING;
+    procedure WMNCSize(var Msg: TWMSize); message WM_SIZE;
+    procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
 
   protected
     function DoHandleStyleMessage(var Message: TMessage): Boolean; override;
 
   public
-    destructor Destroy; override;
+    constructor Create(AOwner : TComponent); override;
+    destructor  Destroy; override;
 
-    procedure ChangeBlurMode(nMode: Integer);
-    procedure OnMoveOrResize;
+
 
     property Color : TColor read clFormColor write SetColor;
   end;
@@ -76,11 +85,7 @@ type
 
 var
   MainAcrylicForm: TAcrylicForm;
-  SetWindowCompositionAttribute: function(hwnd: hwnd;
-    var Data: WindowCompositionAttributeData): Integer; stdcall;
-
-  OldWindowProc: Pointer = nil;
-  NewWindowProc: Pointer = nil;
+  SetWindowCompositionAttribute: function(hwnd: hwnd; var Data: WindowCompositionAttributeData): Integer; stdcall;
 
 const
   c_nTitleBarHeight = 50;
@@ -110,21 +115,54 @@ end;
 
 procedure TAcrylicForm.OnMoveOrResize;
 begin
-  ChangeBlurMode(3);
-  tmrAcrylicChange.Enabled := False;
-  tmrAcrylicChange.Enabled := True;
+  if m_bInitialized then
+  begin
+    EnableBlur(Handle, 3);
 
-  UpdateAuxForms;
+    tmrAcrylicChange.Enabled := False;
+    tmrAcrylicChange.Enabled := True;
+
+    UpdateAuxForms;
+  end;
 end;
 
-procedure TAcrylicForm.ChangeBlurMode(nMode: Integer);
+constructor TAcrylicForm.Create(AOwner : TComponent);
 begin
-  EnableBlur(Handle, nMode);
+  m_bInitialized := False;
+
+  m_pngCloseN    := TPngImage.Create;
+  m_pngCloseH    := TPngImage.Create;
+  m_pngMaximizeN := TPngImage.Create;
+  m_pngMaximizeH := TPngImage.Create;
+  m_pngMinimizeN := TPngImage.Create;
+  m_pngMinimizeH := TPngImage.Create;
+
+  try
+    m_pngCloseN.LoadFromResourceName   (HInstance, 'close_normal');
+    m_pngCloseH.LoadFromResourceName   (HInstance, 'close_hover');
+    m_pngMaximizeN.LoadFromResourceName(HInstance, 'maximize_normal');
+    m_pngMaximizeH.LoadFromResourceName(HInstance, 'maximize_hover');
+    m_pngMinimizeN.LoadFromResourceName(HInstance, 'minimize_normal');
+    m_pngMinimizeH.LoadFromResourceName(HInstance, 'minimize_hover');
+  except
+
+  end;
+
+  inherited;
 end;
 
 destructor TAcrylicForm.Destroy;
 begin
   inherited;
+
+  m_pngCloseN.Free;
+  m_pngCloseH.Free;
+  m_pngMaximizeN.Free;
+  m_pngMaximizeH.Free;
+  m_pngMinimizeN.Free;
+  m_pngMinimizeH.Free;
+
+  tmrAcrylicChange.Enabled := False;
   tmrAcrylicChange.Free;
 end;
 
@@ -193,12 +231,9 @@ begin
   BorderStyle := bsNone;
   BorderIcons := [biSystemMenu, biMinimize];
 
+
+
   EnableBlur(Handle, 4);
-
-  OldWindowProc := Pointer(GetWindowLong(self.Handle, GWL_WNDPROC));
-  NewWindowProc := Pointer(SetWindowLong(self.Handle, GWL_WNDPROC,
-    Integer(@newWndProc)));
-
 
 
   tmrAcrylicChange := TTimer.Create(self);
@@ -216,9 +251,17 @@ begin
 
   imgClose.OnClick := OnCloseImageClick;
 
-  imgClose.Picture.LoadFromFile('images/close-hovered.png');
-  imgMaximize.Picture.LoadFromFile('images/maximize.png');
-  imgMinimize.Picture.LoadFromFile('images/minimize.png');
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///  Load Icons:
+  try
+    imgClose.Picture.Graphic    := m_pngCloseN;
+    imgMaximize.Picture.Graphic := m_pngMaximizeN;
+    imgMinimize.Picture.Graphic := m_pngMinimizeN;
+  except
+  end;
+
+  m_bInitialized := True;
 end;
 
 procedure TAcrylicForm.FormMouseDown(Sender: TObject; Button: TMouseButton;
@@ -256,6 +299,18 @@ begin
   imgMinimize.Height := imgClose.Height;
   imgMinimize.Left := imgMaximize.Left - 46;
   imgMinimize.Top := imgClose.Top;
+end;
+
+procedure TAcrylicForm.WMNCMoving(var Msg: TWMMoving);
+begin
+  inherited;
+  OnMoveOrResize;
+end;
+
+procedure TAcrylicForm.WMNCSize(var Msg: TWMSize);
+begin
+  inherited;
+  OnMoveOrResize;
 end;
 
 procedure TAcrylicForm.WMNCHitTest(var Msg: TWMNCHitTest);
@@ -297,21 +352,6 @@ begin
 
   tmrAcrylicChange.Enabled := False;
   tmrAcrylicChange.Enabled := True;
-end;
-
-function newWndProc(hwnd: hwnd; uMsg: UINT; wParam: wParam; lParam: lParam)
-  : LRESULT; stdcall;
-begin
-  if hwnd = MainAcrylicForm.Handle then
-  begin
-    case uMsg of
-      WM_MOVING, WM_SIZE:
-        begin
-          MainAcrylicForm.OnMoveOrResize;
-        end;
-    end;
-  end;
-  Result := CallWindowProc(OldWindowProc, hwnd, uMsg, wParam, lParam);
 end;
 
 end.

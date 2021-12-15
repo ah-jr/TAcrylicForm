@@ -46,10 +46,6 @@ object AcrylicForm: TAcrylicForm
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
-      ExplicitLeft = 216
-      ExplicitTop = 240
-      ExplicitWidth = 185
-      ExplicitHeight = 41
     end
   end
 end

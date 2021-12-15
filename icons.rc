@@ -1,0 +1,7 @@
+close_normal    RCDATA "images/close.png"
+maximize_normal RCDATA "images/maximize.png"
+minimize_normal RCDATA "images/minimize.png"
+
+close_hover     RCDATA "images/close-hovered.png"
+maximize_hover  RCDATA "images/maximize-hovered.png"
+minimize_hover  RCDATA "images/minimize-hovered.png"
