@@ -19,6 +19,7 @@ uses
   Vcl.Imaging.pngimage,
   HitTransparentPanel;
 
+{$R 'icons.res' 'icons.rc'}
 
 type
   TAcrylicForm = class(TForm)

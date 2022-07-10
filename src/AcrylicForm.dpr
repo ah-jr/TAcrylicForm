@@ -1,10 +1,8 @@
 ﻿program AcrylicForm;
 
-{$R 'icons.res' 'icons.rc'}
-
 uses
   Vcl.Forms,
-  AcrylicFormU in 'src/AcrylicFormU.pas';
+  AcrylicFormU in 'AcrylicFormU.pas';
 
 {$R *.res}
 
