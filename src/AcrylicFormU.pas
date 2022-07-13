@@ -42,6 +42,7 @@ type
     m_bInitialized : Boolean;
     m_clFormColor  : TColor;
     m_btBlurAmount : Byte;
+    m_bResizable   : Boolean;
 
     m_pngCloseN    : TPngImage;
     m_pngCloseH    : TPngImage;
@@ -68,8 +69,9 @@ type
     constructor Create(AOwner : TComponent); override;
     destructor  Destroy; override;
 
-    property Color      : TColor read m_clFormColor  write SetColor;
-    property BlurAmount : Byte   read m_btBlurAmount write SetBlurAmount;
+    property Color      : TColor  read m_clFormColor  write SetColor;
+    property BlurAmount : Byte    read m_btBlurAmount write SetBlurAmount;
+    property Resizable  : Boolean read m_bResizable   write m_bResizable;
   end;
 
   AccentPolicy = packed record
@@ -155,7 +157,9 @@ begin
   m_pngMinimizeH := TPngImage.Create;
 
   m_clFormColor  := $202020;
-  m_btBlurAmount := 200;
+  m_btBlurAmount := 180;
+
+  m_bResizable   := True;
 
   try
     m_pngCloseN.LoadFromResourceName   (HInstance, 'close_normal');
@@ -340,26 +344,30 @@ begin
 
   if (WindowState = wsNormal) then
   begin
-    if (ScreenPt.X < c_nSpan) and (ScreenPt.Y < c_nSpan) then
-      Msg.Result := HTTOPLEFT
-    else if (ScreenPt.X < c_nSpan) and (ScreenPt.Y >= Height - c_nSpan - nBorder)
-    then
-      Msg.Result := HTBOTTOMLEFT
-    else if (ScreenPt.X >= Width - c_nSpan - nBorder) and (ScreenPt.Y < c_nSpan)
-    then
-      Msg.Result := HTTOPRIGHT
-    else if (ScreenPt.X >= Width - c_nSpan - nBorder) and
-      (ScreenPt.Y >= Height - c_nSpan - nBorder) then
-      Msg.Result := HTBOTTOMRIGHT
-    else if (ScreenPt.X < c_nSpan) then
-      Msg.Result := HTLEFT
-    else if (ScreenPt.Y < c_nSpan) then
-      Msg.Result := HTTOP
-    else if (ScreenPt.X >= Width - c_nSpan - nBorder) then
-      Msg.Result := HTRIGHT
-    else if (ScreenPt.Y >= Height - c_nSpan - nBorder) then
-      Msg.Result := HTBOTTOM
-    else if (ScreenPt.Y <= c_nTitleBarHeight) then
+    if m_bResizable then
+    begin
+      if (ScreenPt.X < c_nSpan) and (ScreenPt.Y < c_nSpan) then
+        Msg.Result := HTTOPLEFT
+      else if (ScreenPt.X < c_nSpan) and (ScreenPt.Y >= Height - c_nSpan - nBorder)
+      then
+        Msg.Result := HTBOTTOMLEFT
+      else if (ScreenPt.X >= Width - c_nSpan - nBorder) and (ScreenPt.Y < c_nSpan)
+      then
+        Msg.Result := HTTOPRIGHT
+      else if (ScreenPt.X >= Width - c_nSpan - nBorder) and
+        (ScreenPt.Y >= Height - c_nSpan - nBorder) then
+        Msg.Result := HTBOTTOMRIGHT
+      else if (ScreenPt.X < c_nSpan) then
+        Msg.Result := HTLEFT
+      else if (ScreenPt.Y < c_nSpan) then
+        Msg.Result := HTTOP
+      else if (ScreenPt.X >= Width - c_nSpan - nBorder) then
+        Msg.Result := HTRIGHT
+      else if (ScreenPt.Y >= Height - c_nSpan - nBorder) then
+        Msg.Result := HTBOTTOM
+    end;
+
+    if (ScreenPt.Y <= c_nTitleBarHeight) then
       Msg.Result := HTCAPTION;
   end;
 

@@ -1,8 +1,15 @@
 # TAcrylicForm  
 This is a Delphi form adapted to use Window's Acrylic material.  
 
+The form comes totally blank, with redrawn minimize/maximize/close buttons. 
+It's resizable by default, and you can change the following properties:
+- Color 
+- BlurAmount
+- Resizable
+
 # Demos
-The form comes totally blank, with redrawn minimize/maximize/close buttons. It's also resizable.
+
+Here's how it looks
 
 ![](docs/demo1.png)  
 

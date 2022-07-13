@@ -28,6 +28,7 @@ object AcrylicForm: TAcrylicForm
     Width = 617
     Height = 519
     Align = alClient
+    BevelOuter = bvSpace
     TabOrder = 0
     object pnlTitleBar: THitTransparentPanel
       Left = 1
