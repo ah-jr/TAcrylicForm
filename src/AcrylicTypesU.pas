@@ -11,6 +11,12 @@ type
                  msClicked,
                  msNone);
 
+  TIntArray = Array of Integer;
+  PIntArray = ^TIntArray;
+
+  TSingleArray = Array of Single;
+  PSingleArray = ^TSingleArray;
+
 implementation
 
 end.

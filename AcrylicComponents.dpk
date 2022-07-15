@@ -1,0 +1,43 @@
+package AcrylicComponents;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION OFF}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES ON}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$DEFINE DEBUG}
+{$ENDIF IMPLICITBUILDING}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  vclimg,
+  vcl;
+
+contains
+  AcrylicTypesU      in 'src\AcrylicTypesU.pas',
+  AcrylicButtonU     in 'src\AcrylicButtonU.pas',
+  AcrylicGhostPanelU in 'src\AcrylicGhostPanelU.pas',
+  AcrylicLabelU      in 'src\AcrylicLabelU.pas',
+  AcrylicTrackU      in 'src\AcrylicTrackU.pas',
+  AcrylicFormU       in 'src\AcrylicFormU.pas';
+
+end.

@@ -1,0 +1,18 @@
+==============================================================================
+AcrylicComponents - PATCH NOTES 
+==============================================================================
+
+v1.2:  
+  
+  - Added TAcrylicLabel: labels that work with TAcrylicForm   
+  - Added TAcrylicTrack: special button that shows the histogram of a set of 
+    values
+
+v1.1:  
+  
+  - Added TAcrylicButton: create custom buttons with transparency that can 
+    contain images  
+
+v1.0:  
+  
+  - TAcrylicForm added  
