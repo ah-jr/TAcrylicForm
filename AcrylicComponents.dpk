@@ -33,11 +33,11 @@ requires
   vcl;
 
 contains
-  AcrylicTypesU      in 'src\AcrylicTypesU.pas',
-  AcrylicButtonU     in 'src\AcrylicButtonU.pas',
+  AcrylicTypesU in 'src\AcrylicTypesU.pas',
+  AcrylicButtonU in 'src\AcrylicButtonU.pas',
   AcrylicGhostPanelU in 'src\AcrylicGhostPanelU.pas',
-  AcrylicLabelU      in 'src\AcrylicLabelU.pas',
-  AcrylicTrackU      in 'src\AcrylicTrackU.pas',
-  AcrylicFormU       in 'src\AcrylicFormU.pas';
+  AcrylicLabelU in 'src\AcrylicLabelU.pas',
+  AcrylicTrackU in 'src\AcrylicTrackU.pas',
+  AcrylicFormU in 'src\AcrylicFormU.pas';
 
 end.
