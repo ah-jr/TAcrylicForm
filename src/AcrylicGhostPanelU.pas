@@ -1,4 +1,4 @@
-unit HitTransparentPanel;
+unit AcrylicGhostPanelU;
 
 interface
 
@@ -20,7 +20,7 @@ uses
 
 type
 
-  THitTransparentPanel = Class(TPanel)
+  TAcrylicGhostPanel = Class(TPanel)
   private
     procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
 end;
@@ -29,17 +29,18 @@ procedure Register;
 
 implementation
 
+//==============================================================================
 procedure Register;
 begin
-  RegisterComponents('TEST', [THitTransparentPanel]);
+  RegisterComponents('AcrylicComponents', [TAcrylicGhostPanel]);
 end;
 
-procedure THitTransparentPanel.WMNCHitTest(var Msg: TWMNCHitTest);
+//==============================================================================
+procedure TAcrylicGhostPanel.WMNCHitTest(var Msg: TWMNCHitTest);
 begin
   inherited;
   Msg.Result := HTTRANSPARENT;
 end;
-
 
 
 end.

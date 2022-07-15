@@ -17,14 +17,14 @@ uses
   Vcl.ExtCtrls,
   Vcl.ImgList,
   Vcl.Imaging.pngimage,
-  HitTransparentPanel;
+  AcrylicGhostPanelU;
 
 {$R 'icons.res' 'icons.rc'}
 
 type
   TAcrylicForm = class(TForm)
-    pnlTitleBar   : THitTransparentPanel;
-    pnlBackground : THitTransparentPanel;
+    pnlTitleBar   : TAcrylicGhostPanel;
+    pnlBackground : TAcrylicGhostPanel;
     pnlContent    : TPanel;
     imgClose      : TImage;
     imgMaximize   : TImage;
