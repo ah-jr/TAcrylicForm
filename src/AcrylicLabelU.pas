@@ -60,7 +60,6 @@ begin
   gdiGraphics := TGPGraphics.Create(bmpResult.Canvas.Handle);
   gdiSolidPen := TGPPen.Create(nColor);
   gdiBrush    := TGPSolidBrush.Create(nColor);
-  gdiFont     := TGPFont.Create(Font.Name, Font.Size, FontStyleRegular);
   gdiGraphics.SetSmoothingMode(SmoothingModeNone);
   gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
 
@@ -68,6 +67,8 @@ begin
   // Draw text
   if Caption <> '' then
   begin
+    gdiFont := TGPFont.Create(Font.Name, Font.Size, FontStyleRegular);
+
     pntText.X := 0;
     pntText.Y := 0;
     gdiGraphics.MeasureString(Caption, -1, gdiFont, pntText, recText);
@@ -107,6 +108,7 @@ begin
   //////////////////////////////////////////////////////////////////////////////
   // Draw result to canvas
   Canvas.Draw(0, 0, bmpResult);
+  bmpResult.Free;
 end;
 
 

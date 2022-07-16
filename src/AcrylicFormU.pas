@@ -19,7 +19,7 @@ uses
   Vcl.Imaging.pngimage,
   AcrylicGhostPanelU;
 
-{$R 'icons.res' 'icons.rc'}
+{$R ..\res\icons.res}
 
 type
   TAcrylicForm = class(TForm)
@@ -97,9 +97,18 @@ const
   c_nTopIconWidth   = 46;
   c_nTopIconHeight  = 32;
 
+procedure Register;
+
 implementation
 
 {$R *.dfm}
+
+//==============================================================================
+procedure Register;
+begin
+  RegisterComponents('AcrylicComponents', [TAcrylicForm]);
+end;
+
 
 //==============================================================================
 procedure TAcrylicForm.OnAcrylicTimer(Sender: TObject);

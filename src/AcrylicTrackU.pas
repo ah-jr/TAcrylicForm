@@ -23,6 +23,7 @@ type
     m_msMouseState : TMouseState;
     m_arrData      : TSingleArray;
     m_strText      : String;
+    m_dPosition    : Double;
 
     procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
     procedure CMMouseEnter(var Message: TMessage);      message CM_MOUSEENTER;
@@ -41,7 +42,8 @@ type
     procedure SetData(a_pData : PIntArray; a_nSize : Integer);
 
   published
-    property Text : String    read m_strText  write m_strText;
+    property Text     : String    read m_strText   write m_strText;
+    property Position : Double    read m_dPosition write m_dPosition;
 
     property OnClick;
 
@@ -66,7 +68,9 @@ uses
 constructor TAcrylicTrack.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  Color := clBackground;
+
+  Color          := clBackground;
+  m_dPosition    := -1;
   m_msMouseState := msNone;
 end;
 
@@ -123,8 +127,11 @@ var
   bmpResult    : TBitmap;
   nIndex       : Integer;
 
-  menor, maior, aux, last : Single;
-  switch : boolean;        amplitude : Integer; offset:Integer;
+  small, big, last : Single;
+  switch : boolean;
+  amplitude : Integer;
+  offset:Integer;
+  nPos    : Integer;
 begin
   //////////////////////////////////////////////////////////////////////////////
   // Create bitmap that will contain the final result
@@ -145,17 +152,12 @@ begin
   gdiGraphics := TGPGraphics.Create(bmpResult.Canvas.Handle);
   gdiSolidPen := TGPPen.Create(nColor);
   gdiBrush    := TGPSolidBrush.Create(nColor);
-  gdiFont     := TGPFont.Create('Tahoma', 8, FontStyleRegular);
   gdiGraphics.SetSmoothingMode(SmoothingModeNone);
   gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw background and titlebar
-  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth-1, ClientHeight-1);
-
-  gdiBrush.SetColor(MakeColor(100, 50, 50, 50));
-  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth-1, 18);
-  gdiGraphics.DrawRectangle(gdiSolidPen, 0, 0, ClientWidth-2, ClientHeight-2);
+  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, ClientHeight);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw data
@@ -170,44 +172,89 @@ begin
 
   for nIndex := 0 to (Length(m_arrData) div 2) - 1 do
   begin
-    amplitude := Ceil(0.9 * ((ClientHeight - 18) div 2));
+    amplitude := Trunc(0.9 * ((ClientHeight - 18) div 2));
     offset := (ClientHeight + 18) div 2;
 
-    menor := Min((amplitude*m_arrData[2*nIndex + 1] + offset),
+    small := Min((amplitude*m_arrData[2*nIndex + 1] + offset),
                  (amplitude*m_arrData[2*nIndex    ] + offset));
 
-    maior := Max((amplitude*m_arrData[2*nIndex + 1] + offset),
+    big   := Max((amplitude*m_arrData[2*nIndex + 1] + offset),
                  (amplitude*m_arrData[2*nIndex    ] + offset));
 
 
-    switch := abs(maior - last) < abs(menor - last);
+    switch := abs(big - last) < abs(small - last);
 
     if not switch then
     begin
       gdiDataPath.AddLine((nIndex + 5),
-                          maior,
+                          big,
                           (nIndex + 5),
-                          menor);
+                          small);
 
-      last := menor;
+      last := small;
     end
     else
     begin
       gdiDataPath.AddLine((nIndex + 5),
-                          menor,
+                          small,
                           (nIndex + 5),
-                          maior);
+                          big);
 
-      last := maior;
+      last := big;
     end;
   end;
 
   gdiGraphics.DrawPath(gdiSolidPen, gdiDataPath);
 
   //////////////////////////////////////////////////////////////////////////////
+  // Draw position line
+  if m_dPosition > 0 then
+
+    gdiGraphics.SetSmoothingMode(SmoothingModeNone);
+    gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
+
+    gdiSolidPen.SetWidth(1);
+    gdiSolidPen.SetColor(MakeColor(255, 100, 255, 255));
+
+    nPos := Trunc(m_dPosition * (ClientWidth - 10)) + 5;
+
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+
+    dec(nPos);
+    gdiSolidPen.SetColor(MakeColor(100, 100, 255, 255));
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+
+    dec(nPos);
+    gdiSolidPen.SetColor(MakeColor(50, 100, 255, 255));
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+
+    dec(nPos);
+    gdiSolidPen.SetColor(MakeColor(30, 100, 255, 255));
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+
+    dec(nPos);
+    gdiSolidPen.SetColor(MakeColor(10, 100, 255, 255));
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Draw titlebar and border
+  gdiBrush.SetColor(MakeColor(100, 50, 50, 50));
+  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, 18);
+  gdiSolidPen.SetColor(nColor);
+  gdiSolidPen.SetWidth(1);
+  gdiGraphics.DrawRectangle(gdiSolidPen, 0, 0, ClientWidth-1, ClientHeight-1);
+
+  //////////////////////////////////////////////////////////////////////////////
   // Draw text
   if m_strText <> '' then
   begin
+    gdiFont := TGPFont.Create('Tahoma', 8, FontStyleRegular);
+
     pntText.X := 3;
     pntText.Y := 3;
 
@@ -227,6 +274,7 @@ begin
   //////////////////////////////////////////////////////////////////////////////
   // Draw result to canvas
   Canvas.Draw(0, 0, bmpResult);
+  bmpResult.Free;
 end;
 
 //==============================================================================

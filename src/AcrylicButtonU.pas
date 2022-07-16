@@ -108,19 +108,20 @@ begin
   gdiGraphics := TGPGraphics.Create(bmpResult.Canvas.Handle);
   gdiSolidPen := TGPPen.Create(nColor);
   gdiBrush    := TGPSolidBrush.Create(nColor);
-  gdiFont     := TGPFont.Create('Tahoma', 8, FontStyleRegular);
   gdiGraphics.SetSmoothingMode(SmoothingModeNone);
   gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw button
-  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth-1, ClientHeight-1);
-  gdiGraphics.DrawRectangle(gdiSolidPen, 0, 0, ClientWidth-2, ClientHeight-2);
+  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, ClientHeight);
+  gdiGraphics.DrawRectangle(gdiSolidPen, 0, 0, ClientWidth-1, ClientHeight-1);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw text
   if m_strText <> '' then
   begin
+    gdiFont := TGPFont.Create('Tahoma', 8, FontStyleRegular);
+
     pntText.X := 0;
     pntText.Y := 0;
     gdiGraphics.MeasureString(m_strText, -1, gdiFont, pntText, recText);
@@ -162,6 +163,7 @@ begin
   //////////////////////////////////////////////////////////////////////////////
   // Draw result to canvas
   Canvas.Draw(0, 0, bmpResult);
+  bmpResult.Free;
 end;
 
 //==============================================================================
