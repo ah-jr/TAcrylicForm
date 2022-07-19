@@ -94,9 +94,11 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="rtl.dcp"/>
         <DCCReference Include="vclimg.dcp"/>
         <DCCReference Include="vcl.dcp"/>
-        <DCCReference Include="src\AcrylicTypesU.pas"/>
-        <DCCReference Include="src\AcrylicButtonU.pas"/>
+        <DCCReference Include="src\AcrylicControlU.pas"/>
         <DCCReference Include="src\AcrylicGhostPanelU.pas"/>
+        <DCCReference Include="src\AcrylicTypesU.pas"/>
+        <DCCReference Include="src\AcrylicUtilsU.pas"/>
+        <DCCReference Include="src\AcrylicButtonU.pas"/>
         <DCCReference Include="src\AcrylicLabelU.pas"/>
         <DCCReference Include="src\AcrylicTrackU.pas"/>
         <DCCReference Include="src\AcrylicFormU.pas"/>

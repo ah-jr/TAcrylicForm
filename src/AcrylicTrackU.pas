@@ -15,25 +15,21 @@ uses
   Vcl.StdCtrls,
   Vcl.ExtCtrls,
   Vcl.Imaging.pngimage,
-  AcrylicTypesU;
+  AcrylicTypesU,
+  AcrylicControlU;
 
 type
-  TAcrylicTrack = Class(TCustomControl)
+
+  TAcrylicTrack = Class(TAcrylicControl)
   private
-    m_msMouseState : TMouseState;
     m_arrData      : TSingleArray;
-    m_strText      : String;
     m_dPosition    : Double;
 
-    procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
-    procedure CMMouseEnter(var Message: TMessage);      message CM_MOUSEENTER;
-    procedure CMMouseLeave(var Message: TMessage);      message CM_MOUSELEAVE;
+    procedure SetPosition (a_dPos : Double);
+    function  IsPosInRange(a_dPos : Double) : Boolean;
 
   protected
-    procedure Paint; override;
-    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
-    procedure MouseUp  (Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
-    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+    procedure PaintComponent; override;
 
   public
     constructor Create(AOwner: TComponent); override;
@@ -42,10 +38,7 @@ type
     procedure SetData(a_pData : PIntArray; a_nSize : Integer);
 
   published
-    property Text     : String    read m_strText   write m_strText;
-    property Position : Double    read m_dPosition write m_dPosition;
-
-    property OnClick;
+    property Position : Double read m_dPosition write SetPosition;
 
 end;
 
@@ -69,15 +62,34 @@ constructor TAcrylicTrack.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  Color          := clBackground;
   m_dPosition    := -1;
-  m_msMouseState := msNone;
 end;
 
 //==============================================================================
 destructor TAcrylicTrack.Destroy;
 begin
   inherited;
+end;
+
+//==============================================================================
+procedure TAcrylicTrack.SetPosition(a_dPos : Double);
+begin
+  if IsPosInRange(m_dPosition) and (not IsPosInRange(a_dPos)) then
+    m_bRepaint := True;
+
+  if IsPosInRange(a_dPos) then
+  begin
+    m_dPosition := a_dPos;
+    m_bRepaint  := True;
+  end
+  else
+    m_dPosition := -1;
+end;
+
+//==============================================================================
+function TAcrylicTrack.IsPosInRange(a_dPos : Double) : Boolean;
+begin
+  Result := (a_dPos >= 0) and (a_dPos < 1);
 end;
 
 //==============================================================================
@@ -115,16 +127,12 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicTrack.Paint;
+procedure TAcrylicTrack.PaintComponent;
 var
-  gdiGraphics  : TGPGraphics;
-  gdiSolidPen  : TGPPen;
-  gdiBrush     : TGPSolidBrush;
   gdiDataPath  : TGPGraphicsPath;
   gdiFont      : TGPFont;
   pntText      : TGPPointF;
   nColor       : Cardinal;
-  bmpResult    : TBitmap;
   nIndex       : Integer;
 
   small, big, last : Single;
@@ -134,13 +142,6 @@ var
   nPos    : Integer;
 begin
   //////////////////////////////////////////////////////////////////////////////
-  // Create bitmap that will contain the final result
-  bmpResult := TBitmap.Create;
-  bmpResult.SetSize(ClientWidth,ClientHeight);
-  bmpResult.Canvas.Brush.Color := clBackground;
-  bmpResult.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
-
-  //////////////////////////////////////////////////////////////////////////////
   // Setup color and create GDIP objects
   case m_msMouseState of
     msNone    : nColor := MakeColor(100, 0, 0, 0);
@@ -149,23 +150,20 @@ begin
     else        nColor := MakeColor(100, 0, 0, 0);
   end;
 
-  gdiGraphics := TGPGraphics.Create(bmpResult.Canvas.Handle);
-  gdiSolidPen := TGPPen.Create(nColor);
-  gdiBrush    := TGPSolidBrush.Create(nColor);
-  gdiGraphics.SetSmoothingMode(SmoothingModeNone);
-  gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
+  m_gdiSolidPen.SetColor(nColor);
+  m_gdiBrush.SetColor(nColor);
 
   //////////////////////////////////////////////////////////////////////////////
-  // Draw background and titlebar
-  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, ClientHeight);
+  // Draw background
+  m_gdiGraphics.FillRectangle(m_gdiBrush, 0, 0, ClientWidth, ClientHeight);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw data
-  gdiGraphics.SetSmoothingMode(SmoothingModeHighQuality);
-  gdiGraphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
+  m_gdiGraphics.SetSmoothingMode(SmoothingModeHighQuality);
+  m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
 
-  gdiSolidPen.SetColor(MakeColor(255, 160, 180, 190));
-  gdiSolidPen.SetWidth(1);
+  m_gdiSolidPen.SetColor(MakeColor(255, 160, 180, 190));
+  m_gdiSolidPen.SetWidth(1);
 
   gdiDataPath := TGPGraphicsPath.Create;
   last := 0;
@@ -204,62 +202,63 @@ begin
     end;
   end;
 
-  gdiGraphics.DrawPath(gdiSolidPen, gdiDataPath);
+  m_gdiGraphics.DrawPath(m_gdiSolidPen, gdiDataPath);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw position line
-  if m_dPosition > 0 then
+  if m_dPosition >= 0 then
+  begin
+    m_gdiGraphics.SetSmoothingMode(SmoothingModeNone);
+    m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
 
-    gdiGraphics.SetSmoothingMode(SmoothingModeNone);
-    gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
-
-    gdiSolidPen.SetWidth(1);
-    gdiSolidPen.SetColor(MakeColor(255, 100, 255, 255));
+    m_gdiSolidPen.SetWidth(1);
+    m_gdiSolidPen.SetColor(MakeColor(255, 100, 255, 255));
 
     nPos := Trunc(m_dPosition * (ClientWidth - 10)) + 5;
 
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
 
     dec(nPos);
-    gdiSolidPen.SetColor(MakeColor(100, 100, 255, 255));
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiSolidPen.SetColor(MakeColor(100, 100, 255, 255));
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
 
     dec(nPos);
-    gdiSolidPen.SetColor(MakeColor(50, 100, 255, 255));
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiSolidPen.SetColor(MakeColor(50, 100, 255, 255));
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
 
     dec(nPos);
-    gdiSolidPen.SetColor(MakeColor(30, 100, 255, 255));
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiSolidPen.SetColor(MakeColor(30, 100, 255, 255));
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
 
     dec(nPos);
-    gdiSolidPen.SetColor(MakeColor(10, 100, 255, 255));
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
-    gdiGraphics.DrawLine(gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiSolidPen.SetColor(MakeColor(10, 100, 255, 255));
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos, 18, nPos, ClientHeight-1);
+  end;
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw titlebar and border
-  gdiBrush.SetColor(MakeColor(100, 50, 50, 50));
-  gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, 18);
-  gdiSolidPen.SetColor(nColor);
-  gdiSolidPen.SetWidth(1);
-  gdiGraphics.DrawRectangle(gdiSolidPen, 0, 0, ClientWidth-1, ClientHeight-1);
+  m_gdiBrush.SetColor(MakeColor(100, 50, 50, 50));
+  m_gdiGraphics.FillRectangle(m_gdiBrush, 0, 0, ClientWidth, 18);
+  m_gdiSolidPen.SetColor(nColor);
+  m_gdiSolidPen.SetWidth(1);
+  m_gdiGraphics.DrawRectangle(m_gdiSolidPen, 0, 0, ClientWidth-1, ClientHeight-1);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw text
   if m_strText <> '' then
   begin
-    gdiFont := TGPFont.Create('Tahoma', 8, FontStyleRegular);
+    gdiFont := TGPFont.Create(Font.Name, Font.Size, FontStyleRegular);
 
     pntText.X := 3;
     pntText.Y := 3;
 
-    gdiBrush.SetColor(MakeColor(255, 255, 255, 255));
-    gdiGraphics.DrawString(m_strText, -1, gdiFont, pntText, gdiBrush);
+    m_gdiBrush.SetColor(MakeColor(255, 255, 255, 255));
+    m_gdiGraphics.DrawString(m_strText, -1, gdiFont, pntText, m_gdiBrush);
 
     gdiFont.Free;
   end;
@@ -267,54 +266,6 @@ begin
   //////////////////////////////////////////////////////////////////////////////
   // Free objects
   gdiDataPath.Free;
-  gdiGraphics.Free;
-  gdiSolidPen.Free;
-  gdiBrush.Free;
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Draw result to canvas
-  Canvas.Draw(0, 0, bmpResult);
-  bmpResult.Free;
-end;
-
-//==============================================================================
-procedure TAcrylicTrack.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-begin
-  m_msMouseState := msNone;
-  Repaint;
-end;
-
-//==============================================================================
-procedure TAcrylicTrack.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-begin
-  m_msMouseState := msClicked;
-  Repaint;
-end;
-
-//==============================================================================
-procedure TAcrylicTrack.MouseMove(Shift: TShiftState; X, Y: Integer);
-begin
-  //
-end;
-
-//==============================================================================
-procedure TAcrylicTrack.WMEraseBkgnd(var Message: TWMEraseBkgnd);
-begin
-  // Do nothing to prevent flicker
-end;
-
-//==============================================================================
-procedure TAcrylicTrack.CMMouseEnter(var Message: TMessage);
-begin
-  m_msMouseState := msHover;
-  Invalidate;
-end;
-
-//==============================================================================
-procedure TAcrylicTrack.CMMouseLeave(var Message: TMessage);
-begin
-  m_msMouseState := msNone;
-  Invalidate;
 end;
 
 end.

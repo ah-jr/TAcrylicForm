@@ -23,6 +23,10 @@ type
   TAcrylicGhostPanel = Class(TPanel)
   private
     procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
+
+  published
+    property Canvas;
+
 end;
 
 procedure Register;

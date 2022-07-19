@@ -11,6 +11,10 @@ type
                  msClicked,
                  msNone);
 
+  TAlignment  = (aCenter,
+                 aLeft,
+                 aRight);
+
   TIntArray = Array of Integer;
   PIntArray = ^TIntArray;
 
