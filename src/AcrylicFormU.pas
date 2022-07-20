@@ -30,6 +30,7 @@ type
     imgMaximize   : TImage;
     imgMinimize   : TImage;
     procedure FormCreate           (Sender: TObject);
+    procedure FormPaint            (Sender: TObject);
     procedure imgMaximizeMouseEnter(Sender: TObject);
     procedure imgMaximizeMouseLeave(Sender: TObject);
     procedure imgCloseMouseEnter   (Sender: TObject);
@@ -38,18 +39,21 @@ type
     procedure imgMinimizeMouseLeave(Sender: TObject);
     procedure imgCloseClick        (Sender: TObject);
 
-  private
-    m_bInitialized : Boolean;
-    m_clFormColor  : TColor;
-    m_btBlurAmount : Byte;
-    m_bResizable   : Boolean;
 
-    m_pngCloseN    : TPngImage;
-    m_pngCloseH    : TPngImage;
-    m_pngMaximizeN : TPngImage;
-    m_pngMaximizeH : TPngImage;
-    m_pngMinimizeN : TPngImage;
-    m_pngMinimizeH : TPngImage;
+  private
+    m_bInitialized  : Boolean;
+    m_clFormColor   : TColor;
+    m_clBorderColor : TColor;
+    m_btBlurAmount  : Byte;
+    m_bResizable    : Boolean;
+    m_bWithBorder   : Boolean;
+
+    m_pngCloseN     : TPngImage;
+    m_pngCloseH     : TPngImage;
+    m_pngMaximizeN  : TPngImage;
+    m_pngMaximizeH  : TPngImage;
+    m_pngMinimizeN  : TPngImage;
+    m_pngMinimizeH  : TPngImage;
 
     m_tmrAcrylicChange: TTimer;
 
@@ -60,6 +64,7 @@ type
     procedure OnAcrylicTimer(Sender: TObject);
     procedure SetColor      (a_clColor : TColor);
     procedure SetBlurAmount (a_btAmount : Byte);
+    procedure PaintBorder;
 
     procedure WMNCMoving (var Msg: TWMMoving);    message WM_MOVING;
     procedure WMNCSize   (var Msg: TWMSize);      message WM_SIZE;
@@ -69,9 +74,11 @@ type
     constructor Create(AOwner : TComponent); override;
     destructor  Destroy; override;
 
-    property Color      : TColor  read m_clFormColor  write SetColor;
-    property BlurAmount : Byte    read m_btBlurAmount write SetBlurAmount;
-    property Resizable  : Boolean read m_bResizable   write m_bResizable;
+    property WithBorder  : Boolean read m_bWithBorder   write m_bWithBorder;
+    property BorderColor : TColor  read m_clBorderColor write m_clBorderColor;
+    property Color       : TColor  read m_clFormColor   write SetColor;
+    property BlurAmount  : Byte    read m_btBlurAmount  write SetBlurAmount;
+    property Resizable   : Boolean read m_bResizable    write m_bResizable;
   end;
 
   AccentPolicy = packed record
@@ -100,6 +107,12 @@ const
 procedure Register;
 
 implementation
+
+uses
+  GDIPAPI,
+  GDIPUTIL,
+  GDIPOBJ,
+  AcrylicUtilsU;
 
 {$R *.dfm}
 
@@ -145,6 +158,7 @@ begin
     m_tmrAcrylicChange.Enabled := True;
 
     UpdatePositions;
+    PaintBorder;
   end;
 end;
 
@@ -153,22 +167,24 @@ constructor TAcrylicForm.Create(AOwner : TComponent);
 begin
   m_bInitialized := False;
 
-  m_tmrAcrylicChange := TTimer.Create(self);
+  m_tmrAcrylicChange          := TTimer.Create(self);
   m_tmrAcrylicChange.Interval := 10;
-  m_tmrAcrylicChange.OnTimer := OnAcrylicTimer;
-  m_tmrAcrylicChange.Enabled := True;
+  m_tmrAcrylicChange.OnTimer  := OnAcrylicTimer;
+  m_tmrAcrylicChange.Enabled  := True;
 
-  m_pngCloseN    := TPngImage.Create;
-  m_pngCloseH    := TPngImage.Create;
-  m_pngMaximizeN := TPngImage.Create;
-  m_pngMaximizeH := TPngImage.Create;
-  m_pngMinimizeN := TPngImage.Create;
-  m_pngMinimizeH := TPngImage.Create;
+  m_pngCloseN     := TPngImage.Create;
+  m_pngCloseH     := TPngImage.Create;
+  m_pngMaximizeN  := TPngImage.Create;
+  m_pngMaximizeH  := TPngImage.Create;
+  m_pngMinimizeN  := TPngImage.Create;
+  m_pngMinimizeH  := TPngImage.Create;
 
-  m_clFormColor  := $202020;
-  m_btBlurAmount := 180;
+  m_clFormColor   := $202020;
+  m_clBorderColor := $FFFFFF;
+  m_btBlurAmount  := 180;
 
-  m_bResizable   := True;
+  m_bResizable    := True;
+  m_bWithBorder   := True;
 
   try
     m_pngCloseN.LoadFromResourceName   (HInstance, 'close_normal');
@@ -216,6 +232,30 @@ begin
   end;
 
   m_bInitialized := True;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.FormPaint(Sender: TObject);
+begin
+  PaintBorder;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.PaintBorder;
+var
+  gdiGraphics : TGPGraphics;
+  gdiSolidPen : TGPPen;
+begin
+  if m_bWithBorder then
+  begin
+    gdiGraphics := TGPGraphics.Create(Canvas.Handle);
+    gdiSolidPen := TGPPen.Create(GdiColor(m_clBorderColor), 1);
+
+    gdiGraphics.DrawRectangle(gdiSolidPen, 0, 0, ClientWidth - 1, ClientHeight - 1);
+
+    gdiGraphics.Free;
+    gdiSolidPen.Free;
+  end;
 end;
 
 //==============================================================================

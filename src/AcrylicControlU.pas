@@ -51,6 +51,7 @@ type
     procedure PaintComponent; virtual;
     procedure PaintBackground;
     procedure PaintText;
+    procedure PaintEnabled;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp  (Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
@@ -71,7 +72,9 @@ type
     property BorderColor : TAlphaColor read m_clBorderColor write m_clBorderColor;
     property WithBorder  : Boolean     read m_bWithBorder   write m_bWithBorder;
 
+    property Enabled;
     property OnClick;
+    property OnDblClick;
 end;
 
 implementation
@@ -143,6 +146,7 @@ begin
     m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
 
     PaintComponent;
+    PaintEnabled;
 
     m_gdiGraphics.Free;
     m_bRepaint := False;
@@ -159,11 +163,16 @@ var
 begin
   nColor := 0;
 
-  case m_msMouseState of
-    msNone    : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0,  0,  0,  0);
-    msHover   : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 15, 15, 15);
-    msClicked : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 30, 30, 30);
-  end;
+  if Enabled then
+  begin
+    case m_msMouseState of
+      msNone    : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0,  0,  0,  0);
+      msHover   : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 15, 15, 15);
+      msClicked : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 30, 30, 30);
+    end;
+  end
+  else
+    nColor := GdiColor(m_clBackColor);
 
   m_gdiBrush.SetColor(nColor);
   m_gdiGraphics.FillRectangle(m_gdiBrush, 1, 1, ClientWidth-2, ClientHeight-2);
@@ -206,6 +215,15 @@ begin
   end;
 end;
 
+//==============================================================================
+procedure TAcrylicControl.PaintEnabled;
+begin
+  if not Enabled then
+  begin
+    m_gdiBrush.SetColor(GdiColor($A0252525));
+    m_gdiGraphics.FillRectangle(m_gdiBrush, 1, 1, ClientWidth-2, ClientHeight-2);
+  end;
+end;
 //==============================================================================
 procedure TAcrylicControl.PaintComponent;
 begin

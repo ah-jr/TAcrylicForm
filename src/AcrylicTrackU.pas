@@ -24,12 +24,14 @@ type
   private
     m_arrData      : TSingleArray;
     m_dPosition    : Double;
+    m_bmpData      : TBitmap;
 
     procedure SetPosition (a_dPos : Double);
     function  IsPosInRange(a_dPos : Double) : Boolean;
 
   protected
     procedure PaintComponent; override;
+    procedure DrawData;
 
   public
     constructor Create(AOwner: TComponent); override;
@@ -60,15 +62,24 @@ uses
 //==============================================================================
 constructor TAcrylicTrack.Create(AOwner: TComponent);
 begin
-  inherited Create(AOwner);
+  Inherited Create(AOwner);
 
-  m_dPosition    := -1;
+  m_bmpData  := TBitmap.Create;
+  m_bmpData.Transparent := False;
+
+    m_bmpData.PixelFormat := pf32Bit;
+    m_bmpData.HandleType :=  bmDIB;
+    m_bmpData.alphaformat := afDefined;
+
+  m_dPosition := -1;
 end;
 
 //==============================================================================
 destructor TAcrylicTrack.Destroy;
 begin
-  inherited;
+  m_bmpData.Free;
+
+  Inherited;
 end;
 
 //==============================================================================
@@ -124,46 +135,38 @@ begin
     m_arrData[2*nIndex] := dRes / nMax;
     m_arrData[2*nIndex+1] := dRes2 / nMax;
   end;
+
+  DrawData;
 end;
 
 //==============================================================================
-procedure TAcrylicTrack.PaintComponent;
+procedure TAcrylicTrack.DrawData;
 var
-  gdiDataPath  : TGPGraphicsPath;
-  gdiFont      : TGPFont;
-  pntText      : TGPPointF;
-  nColor       : Cardinal;
-  nIndex       : Integer;
-
-  small, big, last : Single;
+    small, big, last : Single;
   switch : boolean;
   amplitude : Integer;
   offset:Integer;
   nPos    : Integer;
+    gdiDataPath  : TGPGraphicsPath;
+    nIndex : Integer;
+
+     gdiGraphics   : TGPGraphics;
+
+         gdiSolidPen   : TGPPen;
 begin
-  //////////////////////////////////////////////////////////////////////////////
-  // Setup color and create GDIP objects
-  case m_msMouseState of
-    msNone    : nColor := MakeColor(100, 0, 0, 0);
-    msClicked : nColor := MakeColor(100, 30, 30, 30);
-    msHover   : nColor := MakeColor(100, 15, 15, 15);
-    else        nColor := MakeColor(100, 0, 0, 0);
-  end;
-
-  m_gdiSolidPen.SetColor(nColor);
-  m_gdiBrush.SetColor(nColor);
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Draw background
-  m_gdiGraphics.FillRectangle(m_gdiBrush, 0, 0, ClientWidth, ClientHeight);
+  m_bmpData.SetSize(ClientWidth,ClientHeight);
+  m_bmpData.Canvas.Brush.Color := $00000000;
+  m_bmpData.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw data
-  m_gdiGraphics.SetSmoothingMode(SmoothingModeHighQuality);
-  m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
+  gdiGraphics := TGPGraphics.Create(m_bmpData.Canvas.Handle);
+  gdiGraphics.SetSmoothingMode(SmoothingModeHighQuality);
+  gdiGraphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
 
-  m_gdiSolidPen.SetColor(MakeColor(255, 160, 180, 190));
-  m_gdiSolidPen.SetWidth(1);
+  gdiSolidPen := TGPPen.Create(0);
+  gdiSolidPen.SetColor(MakeColor(255, 160, 180, 190));
+  gdiSolidPen.SetWidth(1);
 
   gdiDataPath := TGPGraphicsPath.Create;
   last := 0;
@@ -202,7 +205,35 @@ begin
     end;
   end;
 
-  m_gdiGraphics.DrawPath(m_gdiSolidPen, gdiDataPath);
+  gdiGraphics.DrawPath(gdiSolidPen, gdiDataPath);
+  gdiDataPath.Free;
+  gdiGraphics.Free;
+
+  Canvas.Draw(0, 0, m_bmpPaint);
+end;
+
+//==============================================================================
+procedure TAcrylicTrack.PaintComponent;
+var
+  gdiDataPath  : TGPGraphicsPath;
+  gdiFont      : TGPFont;
+  pntText      : TGPPointF;
+  nColor       : Cardinal;
+  nIndex       : Integer;
+
+  small, big, last : Single;
+  switch : boolean;
+  amplitude : Integer;
+  offset:Integer;
+  nPos    : Integer;
+begin
+  //////////////////////////////////////////////////////////////////////////////
+  // Draw background
+  PaintBackground;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Draw data
+  m_bmpPaint.canvas.Draw(0, 0, m_bmpData);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw position line
@@ -265,7 +296,7 @@ begin
 
   //////////////////////////////////////////////////////////////////////////////
   // Free objects
-  gdiDataPath.Free;
+  //gdiDataPath.Free;
 end;
 
 end.

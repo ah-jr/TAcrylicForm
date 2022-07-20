@@ -20,6 +20,7 @@ object AcrylicForm: TAcrylicForm
   GlassFrame.SheetOfGlass = True
   OldCreateOrder = False
   OnCreate = FormCreate
+  OnPaint = FormPaint
   PixelsPerInch = 96
   TextHeight = 13
   object pnlBackground: TAcrylicGhostPanel
@@ -28,12 +29,12 @@ object AcrylicForm: TAcrylicForm
     Width = 617
     Height = 519
     Align = alClient
-    BevelOuter = bvSpace
+    BevelOuter = bvNone
     TabOrder = 0
     object pnlTitleBar: TAcrylicGhostPanel
-      Left = 1
-      Top = 1
-      Width = 615
+      Left = 0
+      Top = 0
+      Width = 617
       Height = 41
       Align = alTop
       BevelOuter = bvNone
@@ -65,10 +66,10 @@ object AcrylicForm: TAcrylicForm
       end
     end
     object pnlContent: TPanel
-      Left = 1
-      Top = 42
-      Width = 615
-      Height = 476
+      Left = 0
+      Top = 41
+      Width = 617
+      Height = 478
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1

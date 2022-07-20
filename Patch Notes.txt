@@ -2,17 +2,25 @@
 AcrylicComponents - PATCH NOTES 
 ==============================================================================
 
+v1.3:
+
+  - Changed painting for disabled objects.
+  - AcrylicForm borders can be customized.
+  - Fixed memory leak in buttons.
+  - Optimized data drawing for TAcrylicTrack, preventing full repaint when not
+  necessary.
+
 v1.2:  
   
-  - Added TAcrylicLabel: labels that work with TAcrylicForm   
+  - Added TAcrylicLabel: labels that work with TAcrylicForm.   
   - Added TAcrylicTrack: special button that shows the histogram of a set of 
-    values
+    values.
 
 v1.1:  
   
   - Added TAcrylicButton: create custom buttons with transparency that can 
-    contain images  
+    contain images.
 
 v1.0:  
   
-  - TAcrylicForm added  
+  - TAcrylicForm created.  

@@ -23,6 +23,8 @@ type
   private
     m_pngImage : TPngImage;
 
+    procedure SetPNG(a_pngPNG : TPngImage);
+
   protected
     procedure PaintComponent; override;
 
@@ -31,7 +33,7 @@ type
     destructor  Destroy; override;
 
   published
-    property Png : TPngImage read m_pngImage write m_pngImage;
+    property Png : TPngImage read m_pngImage write SetPNG;
 
 end;
 
@@ -61,6 +63,15 @@ begin
     m_pngImage.Free;
 
   Inherited;
+end;
+
+//==============================================================================
+procedure TAcrylicButton.SetPNG(a_pngPNG : TPngImage);
+begin
+  if m_pngImage <> nil then
+    FreeAndNil(m_pngImage);
+
+  m_pngImage := a_pngPNG
 end;
 
 //==============================================================================
