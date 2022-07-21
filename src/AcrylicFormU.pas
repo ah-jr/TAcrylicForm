@@ -100,9 +100,10 @@ var
   SetWindowCompositionAttribute: function(hwnd: HWND; var Data: WindowCompositionAttributeData): Integer; stdcall;
 
 const
-  c_nTitleBarHeight = 50;
-  c_nTopIconWidth   = 46;
-  c_nTopIconHeight  = 32;
+  c_nTitleBarHeight    = 50;
+  c_nTopIconWidth      = 46;
+  c_nTopIconHeight     = 32;
+  c_nBorderTriggerSize = 7;
 
 procedure Register;
 
@@ -131,6 +132,8 @@ begin
     EnableBlur(Handle, 4);
     UpdatePositions;
   end;
+
+  m_tmrAcrylicChange.Enabled  := False;
 end;
 
 //==============================================================================
@@ -223,6 +226,8 @@ begin
   BorderIcons := [biSystemMenu, biMinimize];
   EnableBlur(Handle, 4);
 
+  pnlContent.Align := alNone;
+
   // Load Icons:
   try
     imgClose.Picture.Graphic    := m_pngCloseN;
@@ -261,9 +266,14 @@ end;
 //==============================================================================
 procedure TAcrylicForm.UpdatePositions;
 begin
+  pnlContent.Left    := c_nBorderTriggerSize;
+  pnlContent.Top     := pnlTitleBar.Height;
+  pnlContent.Width   := ClientWidth  - 2 * c_nBorderTriggerSize;
+  pnlContent.Height  := ClientHeight - pnlTitleBar.Height - c_nBorderTriggerSize;
+
   imgClose.Width     := c_nTopIconWidth;
   imgClose.Height    := c_nTopIconHeight;
-  imgClose.Left      := Width - c_nTopIconWidth - 1;
+  imgClose.Left      := Width - c_nTopIconWidth;
   imgClose.Top       := 0;
 
   imgMaximize.Width  := imgClose.Width;
@@ -391,6 +401,8 @@ begin
   ScreenPt := ScreenToClient(Point(Msg.Xpos, Msg.Ypos));
   inherited;
 
+  Msg.Result := HTCLIENT;
+
   if (WindowState = wsNormal) then
   begin
     if m_bResizable then
@@ -416,7 +428,7 @@ begin
         Msg.Result := HTBOTTOM
     end;
 
-    if (ScreenPt.Y <= c_nTitleBarHeight) then
+    if (ScreenPt.Y <= c_nTitleBarHeight) and (Msg.Result = HTCLIENT) then
       Msg.Result := HTCAPTION;
   end;
 

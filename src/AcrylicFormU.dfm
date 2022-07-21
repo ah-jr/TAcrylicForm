@@ -40,7 +40,7 @@ object AcrylicForm: TAcrylicForm
       BevelOuter = bvNone
       TabOrder = 0
       object imgClose: TImage
-        Left = 569
+        Left = 571
         Top = -1
         Width = 46
         Height = 32
@@ -49,7 +49,7 @@ object AcrylicForm: TAcrylicForm
         OnMouseLeave = imgCloseMouseLeave
       end
       object imgMaximize: TImage
-        Left = 525
+        Left = 527
         Top = -1
         Width = 46
         Height = 32
@@ -57,7 +57,7 @@ object AcrylicForm: TAcrylicForm
         OnMouseLeave = imgMaximizeMouseLeave
       end
       object imgMinimize: TImage
-        Left = 481
+        Left = 483
         Top = -1
         Width = 46
         Height = 32
@@ -73,6 +73,10 @@ object AcrylicForm: TAcrylicForm
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
+      ExplicitLeft = 1
+      ExplicitTop = 42
+      ExplicitWidth = 615
+      ExplicitHeight = 476
     end
   end
 end

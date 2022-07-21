@@ -23,10 +23,14 @@ uses
 type
 
   TAcrylicLabel = Class(TAcrylicControl)
+
+  public
+    constructor Create(AOwner: TComponent); override;
+
   protected
     procedure PaintComponent; override;
 
-end;
+  end;
 
 procedure Register;
 
@@ -39,6 +43,15 @@ uses
 procedure Register;
 begin
   RegisterComponents('AcrylicComponents', [TAcrylicLabel]);
+end;
+
+//==============================================================================
+constructor TAcrylicLabel.Create(AOwner: TComponent);
+begin
+  Inherited Create(AOwner);
+
+  m_bWithBorder   := False;
+  m_bWithBack     := False;
 end;
 
 //==============================================================================

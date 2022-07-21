@@ -17,7 +17,11 @@ uses
   function  GdiColor(a_clColor : TAlphaColor) : Cardinal; overload;
   function  GdiColor(a_clColor : TColor) : Cardinal; overload;
   function  GdiColor(a_clColor : TColor; a_nAlpha : Byte) : Cardinal; overload;
-  function  GdiChangeColor(a_clColor : TAlphaColor; a_byteAlpha, a_byteRed, a_byteGreen, a_byteBlue : Byte) : Cardinal;
+  function  GdiChangeColor(a_clColor   : TAlphaColor;
+                           a_byteAlpha : SmallInt = 0;
+                           a_byteRed   : SmallInt = 0;
+                           a_byteGreen : SmallInt = 0;
+                           a_byteBlue  : SmallInt = 0) : Cardinal;
 
   procedure RefreshAcrylicControls(Parent: TWinControl);
 
@@ -60,7 +64,11 @@ begin
 end;
 
 //==============================================================================
-function GdiChangeColor(a_clColor : TAlphaColor; a_byteAlpha, a_byteRed, a_byteGreen, a_byteBlue : Byte) : Cardinal;
+function GdiChangeColor(a_clColor   : TAlphaColor;
+                        a_byteAlpha : SmallInt = 0;
+                        a_byteRed   : SmallInt = 0;
+                        a_byteGreen : SmallInt = 0;
+                        a_byteBlue  : SmallInt = 0) : Cardinal;
 begin
   Result := MakeColor(Min(Max(GetAlpha(a_clColor) + a_byteAlpha, 0), 255),
                       Min(Max(GetRed  (a_clColor) + a_byteRed,   0), 255),

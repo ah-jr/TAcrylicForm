@@ -27,7 +27,7 @@ type
   published
     property Canvas;
 
-end;
+  end;
 
 procedure Register;
 

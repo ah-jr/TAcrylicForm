@@ -35,7 +35,7 @@ type
   published
     property Png : TPngImage read m_pngImage write SetPNG;
 
-end;
+  end;
 
   procedure Register;
 

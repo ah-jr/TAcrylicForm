@@ -28,6 +28,8 @@ type
     procedure CMMouseEnter(var Message: TMessage);      message CM_MOUSEENTER;
     procedure CMMouseLeave(var Message: TMessage);      message CM_MOUSELEAVE;
 
+    procedure SetText(a_strText : String);
+
   protected
     m_msMouseState  : TMouseState;
     m_strText       : String;
@@ -40,6 +42,7 @@ type
     m_clBorderColor : TAlphaColor;
     m_fFont         : TFont;
     m_bWithBorder   : Boolean;
+    m_bWithBack     : Boolean;
 
     m_gdiGraphics   : TGPGraphics;
     m_gdiSolidPen   : TGPPen;
@@ -50,7 +53,7 @@ type
     procedure Paint; override;
     procedure PaintComponent; virtual;
     procedure PaintBackground;
-    procedure PaintText;
+    procedure PaintText(a_nLeft : Integer = -1; a_nTop : Integer = -1);
     procedure PaintEnabled;
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp  (Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
@@ -63,19 +66,20 @@ type
     procedure Refresh(a_bForce : Boolean = False);
 
   published
-    property Text        : String      read m_strText       write m_strText;
-    property Font        : TFont       read m_fFont         write m_fFont;
-    property Alignment   : TAlignment  read m_aAlignment    write m_aAlignment;
-    property Color       : TAlphaColor read m_clColor       write m_clColor;
-    property FontColor   : TAlphaColor read m_clFontColor   write m_clFontColor;
-    property BackColor   : TAlphaColor read m_clBackColor   write m_clBackColor;
-    property BorderColor : TAlphaColor read m_clBorderColor write m_clBorderColor;
-    property WithBorder  : Boolean     read m_bWithBorder   write m_bWithBorder;
+    property Text           : String      read m_strText       write SetText;
+    property Font           : TFont       read m_fFont         write m_fFont;
+    property Alignment      : TAlignment  read m_aAlignment    write m_aAlignment;
+    property Color          : TAlphaColor read m_clColor       write m_clColor;
+    property FontColor      : TAlphaColor read m_clFontColor   write m_clFontColor;
+    property BackColor      : TAlphaColor read m_clBackColor   write m_clBackColor;
+    property BorderColor    : TAlphaColor read m_clBorderColor write m_clBorderColor;
+    property WithBorder     : Boolean     read m_bWithBorder   write m_bWithBorder;
+    property WithBackground : Boolean     read m_bWithBack     write m_bWithBack;
 
     property Enabled;
     property OnClick;
     property OnDblClick;
-end;
+  end;
 
 implementation
 
@@ -93,8 +97,10 @@ begin
   m_msMouseState  := msNone;
   m_bRepaint      := True;
   m_bWithBorder   := True;
-  m_bmpPaint      := TBitmap.Create;
+  m_bWithBack     := True;
   m_fFont         := TFont.Create;
+  m_bmpPaint      := TBitmap.Create;
+
 
   m_clColor       := $FFFFFFFF;
   m_clFontColor   := $FFFFFFFF;
@@ -108,6 +114,8 @@ begin
   m_gdiGraphics   := nil;
   m_gdiSolidPen   := TGPPen.Create(0);
   m_gdiBrush      := TGPSolidBrush.Create(0);
+
+  ControlStyle := ControlStyle - [csDoubleClicks];
 end;
 
 //==============================================================================
@@ -119,6 +127,13 @@ begin
   m_gdiBrush.Free;
 
   Inherited;
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetText(a_strText : String);
+begin
+  m_strText := a_strText;
+  Refresh(True);
 end;
 
 //==============================================================================
@@ -159,33 +174,44 @@ end;
 //==============================================================================
 procedure TAcrylicControl.PaintBackground;
 var
-  nColor : Cardinal;
+  nColor  : Cardinal;
+  recBack : TGPRect;
 begin
   nColor := 0;
 
-  if Enabled then
+  if m_bWithBack then
   begin
-    case m_msMouseState of
-      msNone    : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0,  0,  0,  0);
-      msHover   : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 15, 15, 15);
-      msClicked : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 30, 30, 30);
-    end;
-  end
-  else
-    nColor := GdiColor(m_clBackColor);
+    if Enabled then
+    begin
+      case m_msMouseState of
+        msNone    : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0,  0,  0,  0);
+        msHover   : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 15, 15, 15);
+        msClicked : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 30, 30, 30);
+      end;
+    end
+    else
+      nColor := GdiColor(m_clBackColor);
 
-  m_gdiBrush.SetColor(nColor);
-  m_gdiGraphics.FillRectangle(m_gdiBrush, 1, 1, ClientWidth-2, ClientHeight-2);
+    if m_bWithBorder then
+      recBack := MakeRect(1, 1, ClientWidth - 2, ClientHeight - 2)
+    else
+      recBack := MakeRect(0, 0, ClientWidth, ClientHeight);
+
+    m_gdiBrush.SetColor(nColor);
+    m_gdiGraphics.FillRectangle(m_gdiBrush, recBack);
+  end;
 
   if m_bWithBorder then
+  begin
     nColor := GdiColor(m_clBorderColor);
 
-  m_gdiSolidPen.SetColor(nColor);
-  m_gdiGraphics.DrawRectangle(m_gdiSolidPen, 0, 0, ClientWidth-1, ClientHeight-1);
+    m_gdiSolidPen.SetColor(nColor);
+    m_gdiGraphics.DrawRectangle(m_gdiSolidPen, 0, 0, ClientWidth-1, ClientHeight-1);
+  end;
 end;
 
 //==============================================================================
-procedure TAcrylicControl.PaintText;
+procedure TAcrylicControl.PaintText(a_nLeft : Integer = -1; a_nTop : Integer = -1);
 var
   pntText : TGPPointF;
   recText : TGPRectF;
@@ -200,13 +226,23 @@ begin
 
     m_gdiGraphics.MeasureString(Text, -1, gdiFont, pntText, recText);
 
-    pntText.Y := Trunc(ClientHeight - recText.Height) div 2;
+    if a_nLeft < 0 then
+    begin
+      case Alignment of
+        aCenter: pntText.X := Trunc(ClientWidth  - recText.Width) div 2;
+        aLeft:   pntText.X := 1;
+        aRight:  pntText.X := Trunc(ClientWidth  - recText.Width - 1);
+      end;
+    end
+    else
+      pntText.X := a_nLeft;
 
-    case Alignment of
-      aCenter: pntText.X := Trunc(ClientWidth  - recText.Width) div 2;
-      aLeft:   pntText.X := 1;
-      aRight:  pntText.X := Trunc(ClientWidth  - recText.Width - 1);
-    end;
+    if a_nTop < 0 then
+    begin
+      pntText.Y := (Trunc(ClientHeight - recText.Height) div 2) + 1;
+    end
+    else
+      pntText.Y := a_nTop;
 
     m_gdiBrush.SetColor(GdiColor(FontColor));
     m_gdiGraphics.DrawString(Text, -1, gdiFont, pntText, m_gdiBrush);
