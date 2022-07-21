@@ -24,6 +24,11 @@ uses
                            a_byteBlue  : SmallInt = 0) : Cardinal;
 
   procedure RefreshAcrylicControls(Parent: TWinControl);
+  function  SupportBlur: Boolean;
+
+var
+  // Blur state can be accessed globally via this variable
+  g_bWithBlur : Boolean = False;
 
 implementation
 
@@ -92,6 +97,12 @@ begin
     if Child is TWinControl then
       RefreshAcrylicControls(TWinControl(Child));
   end;
+end;
+
+//==============================================================================
+function  SupportBlur: Boolean;
+begin
+  Result := TOSVersion.Name = 'Windows 10';
 end;
 
 end.

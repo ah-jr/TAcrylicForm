@@ -31,9 +31,14 @@ type
     m_clLineColor     : TAlphaColor;
     m_clTitleColor    : TAlphaColor;
     m_clDataColor     : TAlphaColor;
+    m_pData           : PIntArray;
+    m_nDataSize       : Integer;
+
+    procedure WMNCSize(var Message: TWMSize); message WM_SIZE;
 
     procedure SetPosition (a_dPos : Double);
     function  IsPosInRange(a_dPos : Double) : Boolean;
+    procedure RecalculatePath;
 
   protected
     procedure PaintComponent; override;
@@ -84,12 +89,19 @@ begin
   m_bmpData.HandleType  := bmDIB;
   m_bmpData.Alphaformat := afDefined;
 
-  m_clLineColor  := $FF64FFFF;
-  m_clTitleColor := $64323232;
-  m_clDataColor  := $FFA0B4BE;
+  m_clBackColor   := $CF0F0F0F;
+  m_clBorderColor := $CF1F1F1F;
+  m_clLineColor   := $FFFF8B64;
+  m_clTitleColor  := $64323232;
+  m_clDataColor   := $FFA0B4BE;
 
   m_nTitleBarHeight := 17;
   m_dPosition       := -1;
+
+  m_bClickable := True;
+
+  m_pData     := nil;
+  m_nDataSize := 0;
 end;
 
 //==============================================================================
@@ -124,6 +136,18 @@ end;
 
 //==============================================================================
 procedure TAcrylicTrack.SetData(a_pData : PIntArray; a_nSize : Integer);
+begin
+  if a_pData <> nil then
+  begin
+    m_pData     := a_pData;
+    m_nDataSize := a_nSize;
+
+    RecalculatePath;
+  end;
+end;
+
+//==============================================================================
+procedure TAcrylicTrack.RecalculatePath;
 var
   nTrackIdx    : Integer;
   nFragIdx     : Integer;
@@ -141,16 +165,16 @@ begin
   m_gdiDataPath.Reset;
 
   dScreenRatio := (ClientWidth - 2 * DATAOFFSET) / PATHSIZE;
-  dTrackRatio  := a_nSize / PATHSIZE;
-  nAmplitude   := (ClientHeight - m_nTitleBarHeight - 3) div 2;
+  dTrackRatio  := m_nDataSize / PATHSIZE;
+  nAmplitude   := (ClientHeight - m_nTitleBarHeight - 10) div 2;
   nOffset      := (ClientHeight + m_nTitleBarHeight) div 2;
   nMax         := 1;
   pntPrev.X    := DATAOFFSET;
   pntPrev.Y    := nOffset;
   bSwitch      := True;
 
-  for nTrackIdx := 0 to a_nSize - 1 do
-    nMax := Max(nMax, Abs(TIntArray(a_pData^)[nTrackIdx]));
+  for nTrackIdx := 0 to m_nDataSize - 1 do
+    nMax := Max(nMax, Abs(TIntArray(m_pData^)[nTrackIdx]));
 
   //////////////////////////////////////////////////////////////////////////////
   // Narrow down data to fit in the PATHSIZE
@@ -167,7 +191,7 @@ begin
     begin
       //////////////////////////////////////////////////////////////////////////
       // Get the largest value in the samples covered
-      nCurrent := TIntArray(a_pData^)[Round(nTrackIdx * dTrackRatio) + nFragIdx];
+      nCurrent := TIntArray(m_pData^)[Round(nTrackIdx * dTrackRatio) + nFragIdx];
 
       if bSwitch then
         nAverage := Min(nCurrent, nAverage)
@@ -214,8 +238,6 @@ begin
 
   gdiGraphics.DrawPath(gdiSolidPen, m_gdiDataPath);
   gdiGraphics.Free;
-
-  Canvas.Draw(0, 0, m_bmpPaint);
 end;
 
 //==============================================================================
@@ -229,7 +251,7 @@ begin
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw data
-  m_bmpPaint.canvas.Draw(0, 0, m_bmpData);
+  m_bmpPaint.Canvas.Draw(0, 0, m_bmpData);
 
   //////////////////////////////////////////////////////////////////////////////
   // Draw position line
@@ -243,19 +265,19 @@ begin
     nPos := Trunc(m_dPosition * (ClientWidth - 2 * DATAOFFSET)) + DATAOFFSET;
 
     m_gdiSolidPen.SetColor(GdiChangeColor(m_clLineColor, 0));
-    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos,     m_nTitleBarHeight, nPos,     ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos,     m_nTitleBarHeight + 1, nPos,     ClientHeight-1);
 
     m_gdiSolidPen.SetColor(GdiChangeColor(m_clLineColor, -100));
-    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 1, m_nTitleBarHeight, nPos - 1, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 1, m_nTitleBarHeight + 1, nPos - 1, ClientHeight-1);
 
     m_gdiSolidPen.SetColor(GdiChangeColor(m_clLineColor, -150));
-    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 2, m_nTitleBarHeight, nPos - 2, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 2, m_nTitleBarHeight + 1, nPos - 2, ClientHeight-1);
 
     m_gdiSolidPen.SetColor(GdiChangeColor(m_clLineColor, -200));
-    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 3, m_nTitleBarHeight, nPos - 3, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 3, m_nTitleBarHeight + 1, nPos - 3, ClientHeight-1);
 
     m_gdiSolidPen.SetColor(GdiChangeColor(m_clLineColor, -230));
-    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 4, m_nTitleBarHeight, nPos - 4, ClientHeight-1);
+    m_gdiGraphics.DrawLine(m_gdiSolidPen, nPos - 4, m_nTitleBarHeight + 1, nPos - 4, ClientHeight-1);
   end;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -273,6 +295,14 @@ begin
   //////////////////////////////////////////////////////////////////////////////
   // Draw Text
   PaintText(3, 2);
+end;
+
+//==============================================================================
+procedure TAcrylicTrack.WMNCSize(var Message: TWMSize);
+begin
+  inherited;
+  RecalculatePath;
+  Refresh(True);
 end;
 
 end.

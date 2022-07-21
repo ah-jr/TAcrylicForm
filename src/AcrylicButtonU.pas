@@ -54,6 +54,8 @@ constructor TAcrylicButton.Create(AOwner: TComponent);
 begin
   Inherited Create(AOwner);
   m_pngImage := nil;
+
+  m_bClickable := True;
 end;
 
 //==============================================================================

@@ -25,6 +25,8 @@ type
   TAcrylicControl = Class(TCustomControl)
   private
     procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
+    procedure WMNCMoving  (var Message: TWMMoving);     message WM_MOVING;
+    procedure WMNCSize    (var Message: TWMSize);       message WM_SIZE;
     procedure CMMouseEnter(var Message: TMessage);      message CM_MOUSEENTER;
     procedure CMMouseLeave(var Message: TMessage);      message CM_MOUSELEAVE;
 
@@ -40,9 +42,11 @@ type
     m_clFontColor   : TAlphaColor;
     m_clBackColor   : TAlphaColor;
     m_clBorderColor : TAlphaColor;
+    m_clReset       : TAlphaColor;
     m_fFont         : TFont;
     m_bWithBorder   : Boolean;
     m_bWithBack     : Boolean;
+    m_bClickable    : Boolean;
 
     m_gdiGraphics   : TGPGraphics;
     m_gdiSolidPen   : TGPPen;
@@ -55,6 +59,7 @@ type
     procedure PaintBackground;
     procedure PaintText(a_nLeft : Integer = -1; a_nTop : Integer = -1);
     procedure PaintEnabled;
+
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp  (Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
@@ -79,6 +84,10 @@ type
     property Enabled;
     property OnClick;
     property OnDblClick;
+    property Hint;
+    property ShowHint;
+    property Visible;
+
   end;
 
 implementation
@@ -95,17 +104,17 @@ begin
   m_strText       := Name;
 
   m_msMouseState  := msNone;
+  m_bClickable    := False;
   m_bRepaint      := True;
   m_bWithBorder   := True;
   m_bWithBack     := True;
   m_fFont         := TFont.Create;
   m_bmpPaint      := TBitmap.Create;
 
-
-  m_clColor       := $FFFFFFFF;
-  m_clFontColor   := $FFFFFFFF;
-  m_clBackColor   := $640F0F0F;
-  m_clBorderColor := $64070707;
+  m_clColor       := c_clCtrlMisc;
+  m_clFontColor   := c_clCtrlFont;
+  m_clBackColor   := c_clCtrlBack;
+  m_clBorderColor := c_clCtrlBorder;
 
   m_fFont.Name    := 'Tahoma';
   m_fFont.Size    := 8;
@@ -153,7 +162,12 @@ begin
     ////////////////////////////////////////////////////////////////////////////
     // Create bitmap that will contain the final result
     m_bmpPaint.SetSize(ClientWidth,ClientHeight);
-    m_bmpPaint.Canvas.Brush.Color := clBackground;
+
+    if g_bWithBlur
+      then m_bmpPaint.Canvas.Brush.Color := m_clReset
+      else m_bmpPaint.Canvas.Brush.Color := c_clFormBack;
+
+    m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
     m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
 
     m_gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
@@ -184,9 +198,9 @@ begin
     if Enabled then
     begin
       case m_msMouseState of
-        msNone    : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0,  0,  0,  0);
-        msHover   : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 15, 15, 15);
-        msClicked : nColor := GdiChangeColor(GdiColor(m_clBackColor), 0, 30, 30, 30);
+        msNone    : nColor := GdiChangeColor(m_clBackColor, 0,  0,  0,  0);
+        msHover   : nColor := GdiChangeColor(m_clBackColor, 0, 25, 25, 25);
+        msClicked : nColor := GdiChangeColor(m_clBackColor, 0, 40, 40, 40);
       end;
     end
     else
@@ -216,10 +230,16 @@ var
   pntText : TGPPointF;
   recText : TGPRectF;
   gdiFont : TGPFont;
+  fsStyle : TFontStyle;
 begin
   if Text <> '' then
   begin
-    gdiFont := TGPFont.Create(Font.Name, Font.Size, FontStyleRegular);
+    if fsBold in Font.Style then
+      fsStyle := FontStyleBold
+    else
+      fsStyle := FontStyleRegular;
+
+    gdiFont := TGPFont.Create(Font.Name, Font.Size, fsStyle);
 
     pntText.X := 0;
     pntText.Y := 0;
@@ -256,7 +276,7 @@ procedure TAcrylicControl.PaintEnabled;
 begin
   if not Enabled then
   begin
-    m_gdiBrush.SetColor(GdiColor($A0252525));
+    m_gdiBrush.SetColor(GdiColor(c_clCtrlDisabled));
     m_gdiGraphics.FillRectangle(m_gdiBrush, 1, 1, ClientWidth-2, ClientHeight-2);
   end;
 end;
@@ -269,14 +289,18 @@ end;
 //==============================================================================
 procedure TAcrylicControl.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  m_msMouseState := msNone;
+  if m_bClickable then
+    m_msMouseState := msNone;
+
   Refresh(True);
 end;
 
 //==============================================================================
 procedure TAcrylicControl.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  m_msMouseState := msClicked;
+  if m_bClickable then
+    m_msMouseState := msClicked;
+
   Refresh(True);
 end;
 
@@ -293,16 +317,34 @@ begin
 end;
 
 //==============================================================================
+procedure TAcrylicControl.WMNCMoving(var Message: TWMMoving);
+begin
+  inherited;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.WMNCSize(var Message: TWMSize);
+begin
+  inherited;
+  Refresh(True);
+end;
+
+//==============================================================================
 procedure TAcrylicControl.CMMouseEnter(var Message: TMessage);
 begin
-  m_msMouseState := msHover;
+  if m_bClickable then
+    m_msMouseState := msHover;
+
   Refresh(True);
 end;
 
 //==============================================================================
 procedure TAcrylicControl.CMMouseLeave(var Message: TMessage);
 begin
-  m_msMouseState := msNone;
+  if m_bClickable then
+    m_msMouseState := msNone;
+
   Refresh(True);
 end;
 

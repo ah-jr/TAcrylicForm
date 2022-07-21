@@ -4,7 +4,21 @@ interface
 
 //uses
 
-//const
+const
+
+  // Default colors:
+  c_clCtrlFont     = $FFFFFFFF;
+  c_clCtrlMisc     = $FFFFFFFF;
+  c_clCtrlBack     = $640F0F0F;
+  c_clCtrlBorder   = $64070707;
+  c_clCtrlDisabled = $A0252525;
+
+  c_clFormBorder   = $FFFFFFFF;
+  c_clFormBack     = $1F1F1F;
+  c_clFormBlur     = $202020;
+
+
+  c_nDefaultBlur = 180;
 
 type
   TMouseState = (msHover,

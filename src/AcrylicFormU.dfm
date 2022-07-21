@@ -6,18 +6,12 @@ object AcrylicForm: TAcrylicForm
   ClientHeight = 519
   ClientWidth = 617
   Color = clCream
-  CustomTitleBar.Height = -1
+  TransparentColorValue = clPurple
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  GlassFrame.Enabled = True
-  GlassFrame.Left = -1
-  GlassFrame.Top = -1
-  GlassFrame.Right = -1
-  GlassFrame.Bottom = -1
-  GlassFrame.SheetOfGlass = True
   OldCreateOrder = False
   OnCreate = FormCreate
   OnPaint = FormPaint
@@ -73,10 +67,6 @@ object AcrylicForm: TAcrylicForm
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
-      ExplicitLeft = 1
-      ExplicitTop = 42
-      ExplicitWidth = 615
-      ExplicitHeight = 476
     end
   end
 end
