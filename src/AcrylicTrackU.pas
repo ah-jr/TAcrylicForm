@@ -18,6 +18,7 @@ uses
   Vcl.Imaging.pngimage,
   GDIPOBJ,
   AcrylicTypesU,
+
   AcrylicControlU;
 
 type
@@ -33,12 +34,15 @@ type
     m_clDataColor     : TAlphaColor;
     m_pData           : PIntArray;
     m_nDataSize       : Integer;
+    m_nLastWidth      : Integer;
+
 
     procedure WMNCSize(var Message: TWMSize); message WM_SIZE;
 
     procedure SetPosition (a_dPos : Double);
     function  IsPosInRange(a_dPos : Double) : Boolean;
     procedure RecalculatePath;
+    procedure ScalePath(a_dRatio : Single);
 
   protected
     procedure PaintComponent; override;
@@ -62,7 +66,7 @@ type
   procedure Register;
 
 const
-  PATHSIZE   = 10000;
+  PATHSIZE   = 3500;
   DATAOFFSET = 5;
 
 implementation
@@ -97,11 +101,10 @@ begin
 
   m_nTitleBarHeight := 17;
   m_dPosition       := -1;
-
-  m_bClickable := True;
-
-  m_pData     := nil;
-  m_nDataSize := 0;
+  m_nLastWidth      := 1;
+  m_nDataSize       := 0;
+  m_bClickable      := True;
+  m_pData           := nil;
 end;
 
 //==============================================================================
@@ -144,6 +147,19 @@ begin
 
     RecalculatePath;
   end;
+end;
+
+//==============================================================================
+procedure TAcrylicTrack.ScalePath(a_dRatio : Single);
+var
+  Matrix : TGPMatrix;
+begin
+  Matrix := TGPMatrix.Create;
+
+  Matrix.Scale(a_dRatio, 1, MatrixOrderAppend);
+  m_gdiDataPath.Transform(Matrix);
+
+  DrawData;
 end;
 
 //==============================================================================
@@ -301,8 +317,14 @@ end;
 procedure TAcrylicTrack.WMNCSize(var Message: TWMSize);
 begin
   inherited;
-  RecalculatePath;
-  Refresh(True);
+
+  if (m_bmpData <> nil) and (m_bmpData.Width > 0) then
+  begin
+    ScalePath(ClientWidth/m_nLastWidth);
+    Refresh(True);
+  end;
+
+  m_nLastWidth := ClientWidth;
 end;
 
 end.

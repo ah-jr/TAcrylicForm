@@ -40,6 +40,7 @@ type
     procedure imgMinimizeMouseLeave(Sender: TObject);
     procedure imgCloseClick        (Sender: TObject);
 
+    procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
 
   private
     m_bInitialized  : Boolean;
@@ -49,6 +50,11 @@ type
     m_btBlurAmount  : Byte;
     m_bResizable    : Boolean;
     m_bWithBorder   : Boolean;
+
+    m_nMinHeight    : Integer;
+    m_nMinWidth     : Integer;
+    m_nMaxHeight    : Integer;
+    m_nMaxWidth     : Integer;
 
     m_pngCloseN     : TPngImage;
     m_pngCloseH     : TPngImage;
@@ -73,9 +79,10 @@ type
     procedure PaintBackground;
     procedure PaintBorder;
 
-    procedure WMNCMoving (var Msg: TWMMoving);    message WM_MOVING;
-    procedure WMNCSize   (var Msg: TWMSize);      message WM_SIZE;
-    procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
+    procedure WMNCMoving     (var Msg: TWMMoving);        message WM_MOVING;
+    procedure WMNCSize       (var Msg: TWMSize);          message WM_SIZE;
+    procedure WMNCHitTest    (var Msg: TWMNCHitTest);     message WM_NCHITTEST;
+    procedure WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo); message WM_GETMINMAXINFO;
 
   public
     constructor Create(AOwner : TComponent); override;
@@ -88,6 +95,11 @@ type
     property BlurColor   : TColor      read m_clBlurColor   write SetColor;
     property BlurAmount  : Byte        read m_btBlurAmount  write SetBlurAmount;
     property Resizable   : Boolean     read m_bResizable    write m_bResizable;
+    property MinWidth    : Integer     read m_nMinWidth     write m_nMinWidth;
+    property MinHeight   : Integer     read m_nMinHeight    write m_nMinHeight;
+    property MaxWidth    : Integer     read m_nMaxWidth     write m_nMaxWidth;
+    property MaxHeight   : Integer     read m_nMaxHeight    write m_nMaxHeight;
+
   end;
 
   AccentPolicy = packed record
@@ -133,6 +145,11 @@ begin
   RegisterComponents('AcrylicComponents', [TAcrylicForm]);
 end;
 
+//==============================================================================
+procedure TAcrylicForm.WMEraseBkgnd(var Message: TWmEraseBkgnd);
+begin
+  //
+end;
 
 //==============================================================================
 procedure TAcrylicForm.OnAcrylicTimer(Sender: TObject);
@@ -217,6 +234,12 @@ begin
 
   m_bResizable    := True;
   m_bWithBorder   := True;
+
+  m_nMinHeight    := 1;
+  m_nMinWidth     := 1;
+
+  m_nMaxHeight    := -1;
+  m_nMaxWidth     := -1;
 
   try
     m_pngCloseN.LoadFromResourceName   (HInstance, 'close_normal');
@@ -325,6 +348,11 @@ end;
 //==============================================================================
 procedure TAcrylicForm.UpdatePositions;
 begin
+  pnlBackground.Left    := 1;
+  pnlBackground.Top     := 1;
+  pnlBackground.Width   := ClientWidth  - 2;
+  pnlBackground.Height  := ClientHeight - 2;
+
   pnlContent.Left    := c_nBorderTriggerSize;
   pnlContent.Top     := pnlTitleBar.Height;
   pnlContent.Width   := ClientWidth  - 2 * c_nBorderTriggerSize;
@@ -498,6 +526,28 @@ begin
 
   m_tmrAcrylicChange.Enabled := False;
   m_tmrAcrylicChange.Enabled := True;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo);
+{sets Size-limits for the Form}
+var
+  MinMaxInfo : PMinMaxInfo;
+begin
+  inherited;
+  MinMaxInfo := Msg.MinMaxInfo;
+
+  if m_nMaxWidth > 0 then
+    MinMaxInfo^.ptMaxTrackSize.X := m_nMaxWidth;
+
+  if m_nMaxHeight > 0 then
+    MinMaxInfo^.ptMaxTrackSize.Y := m_nMaxHeight;
+
+  if m_nMinWidth > 0 then
+    MinMaxInfo^.ptMinTrackSize.X := m_nMinWidth;
+
+  if m_nMinHeight > 0 then
+    MinMaxInfo^.ptMinTrackSize.Y := m_nMinHeight;
 end;
 
 //==============================================================================

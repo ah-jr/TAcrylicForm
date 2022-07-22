@@ -18,21 +18,23 @@ object AcrylicForm: TAcrylicForm
   PixelsPerInch = 96
   TextHeight = 13
   object pnlBackground: TAcrylicGhostPanel
-    Left = 0
-    Top = 0
-    Width = 617
-    Height = 519
-    Align = alClient
+    Left = 1
+    Top = 1
+    Width = 615
+    Height = 517
     BevelOuter = bvNone
+    Color = 2039583
     TabOrder = 0
     object pnlTitleBar: TAcrylicGhostPanel
       Left = 0
       Top = 0
-      Width = 617
+      Width = 615
       Height = 41
       Align = alTop
       BevelOuter = bvNone
+      Color = 2039583
       TabOrder = 0
+      ExplicitWidth = 617
       object imgClose: TImage
         Left = 571
         Top = -1
@@ -62,11 +64,13 @@ object AcrylicForm: TAcrylicForm
     object pnlContent: TPanel
       Left = 0
       Top = 41
-      Width = 617
-      Height = 478
+      Width = 615
+      Height = 476
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
+      ExplicitWidth = 617
+      ExplicitHeight = 478
     end
   end
 end

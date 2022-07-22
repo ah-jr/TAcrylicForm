@@ -16,6 +16,7 @@ const
   c_clFormBorder   = $FFFFFFFF;
   c_clFormBack     = $1F1F1F;
   c_clFormBlur     = $202020;
+  c_clTransparent  = $000000;
 
 
   c_nDefaultBlur = 180;

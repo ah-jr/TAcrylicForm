@@ -87,6 +87,8 @@ type
     property Hint;
     property ShowHint;
     property Visible;
+    property OnMouseWheelUp;
+    property OnMouseWheelDown;
 
   end;
 
@@ -164,7 +166,7 @@ begin
     m_bmpPaint.SetSize(ClientWidth,ClientHeight);
 
     if g_bWithBlur
-      then m_bmpPaint.Canvas.Brush.Color := m_clReset
+      then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
       else m_bmpPaint.Canvas.Brush.Color := c_clFormBack;
 
     m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
