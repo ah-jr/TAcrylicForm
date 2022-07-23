@@ -35,6 +35,7 @@ requires
 contains
   AcrylicControlU in 'src\AcrylicControlU.pas',
   AcrylicGhostPanelU in 'src\AcrylicGhostPanelU.pas',
+  AcrylicScrollBoxU in 'src\AcrylicScrollBoxU.pas',
   AcrylicTypesU in 'src\AcrylicTypesU.pas',
   AcrylicUtilsU in 'src\AcrylicUtilsU.pas',
   AcrylicButtonU in 'src\AcrylicButtonU.pas',

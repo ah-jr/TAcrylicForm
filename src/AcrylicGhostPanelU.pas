@@ -23,6 +23,7 @@ type
   TAcrylicGhostPanel = Class(TPanel)
   private
     m_clColor : TColor;
+    m_bGhost  : Boolean;
 
     procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
     procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
@@ -34,7 +35,8 @@ type
     constructor Create(AOwner : TComponent); override;
 
   published
-    property Color : TColor read m_clColor write m_clColor;
+    property Ghost : Boolean read m_bGhost  write m_bGhost;
+    property Color : TColor  read m_clColor write m_clColor;
     property Canvas;
 
   end;
@@ -59,13 +61,16 @@ constructor TAcrylicGhostPanel.Create(AOwner : TComponent);
 begin
   Inherited;
   m_clColor := c_clFormBack;
+  m_bGhost  := True;
 end;
 
 //==============================================================================
 procedure TAcrylicGhostPanel.WMNCHitTest(var Msg: TWMNCHitTest);
 begin
   inherited;
-  Msg.Result := HTTRANSPARENT;
+
+  if m_bGhost then
+    Msg.Result := HTTRANSPARENT;
 end;
 
 //==============================================================================
