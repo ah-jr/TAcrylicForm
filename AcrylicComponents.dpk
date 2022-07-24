@@ -41,6 +41,7 @@ contains
   AcrylicButtonU in 'src\AcrylicButtonU.pas',
   AcrylicLabelU in 'src\AcrylicLabelU.pas',
   AcrylicTrackU in 'src\AcrylicTrackU.pas',
+  AcrylicKnobU in 'src\AcrylicKnobU.pas',
   AcrylicFormU in 'src\AcrylicFormU.pas';
 
 end.

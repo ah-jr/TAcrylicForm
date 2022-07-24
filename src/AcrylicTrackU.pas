@@ -66,7 +66,7 @@ type
   procedure Register;
 
 const
-  PATHSIZE   = 3500;
+  PATHSIZE   = 3000;
   DATAOFFSET = 5;
 
 implementation
@@ -237,7 +237,7 @@ var
   gdiGraphics   : TGPGraphics;
   gdiSolidPen   : TGPPen;
 begin
-  m_bmpData.SetSize(ClientWidth,ClientHeight);
+  m_bmpData.SetSize(ClientWidth, ClientHeight);
   m_bmpData.Canvas.Brush.Color := $00000000;
   m_bmpData.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
 
@@ -273,9 +273,6 @@ begin
   // Draw position line
   if m_dPosition >= 0 then
   begin
-    m_gdiGraphics.SetSmoothingMode(SmoothingModeNone);
-    m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
-
     m_gdiSolidPen.SetWidth(1);
 
     nPos := Trunc(m_dPosition * (ClientWidth - 2 * DATAOFFSET)) + DATAOFFSET;
@@ -319,10 +316,7 @@ begin
   inherited;
 
   if (m_bmpData <> nil) and (m_bmpData.Width > 0) then
-  begin
     ScalePath(ClientWidth/m_nLastWidth);
-    Refresh(True);
-  end;
 
   m_nLastWidth := ClientWidth;
 end;

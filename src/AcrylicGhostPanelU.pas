@@ -75,21 +75,13 @@ end;
 
 //==============================================================================
 procedure TAcrylicGhostPanel.Paint;
-var
-  m_bmpPaint : TBitmap;
 begin
-  m_bmpPaint := Tbitmap.Create;
-  m_bmpPaint.SetSize(ClientWidth,ClientHeight);
-
   if g_bWithBlur
-    then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
-    else m_bmpPaint.Canvas.Brush.Color := m_clColor;
+    then Canvas.Brush.Color := c_clTransparent
+    else Canvas.Brush.Color := m_clColor;
 
-  m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
-  m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
-
-  Canvas.Draw(0,0, m_bmpPaint);
-  m_bmpPaint.Free;
+  Canvas.Pen.Color := Canvas.Brush.Color;
+  Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
 end;
 
 //==============================================================================

@@ -221,8 +221,9 @@ begin
   begin
     nColor := GdiColor(m_clBorderColor);
 
+    m_gdiSolidPen.SetWidth(1);
     m_gdiSolidPen.SetColor(nColor);
-    m_gdiGraphics.DrawRectangle(m_gdiSolidPen, 0, 0, ClientWidth-1, ClientHeight-1);
+    m_gdiGraphics.DrawRectangle(m_gdiSolidPen, 0, 0, ClientWidth - 1, ClientHeight - 1);
   end;
 end;
 
