@@ -2,7 +2,7 @@ object AcrylicForm: TAcrylicForm
   Left = 0
   Top = 0
   BorderStyle = bsNone
-  Caption = 'Form1'
+  Caption = 'AcrylicForm'
   ClientHeight = 519
   ClientWidth = 617
   Color = clCream

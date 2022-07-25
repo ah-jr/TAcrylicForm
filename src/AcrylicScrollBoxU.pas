@@ -53,8 +53,11 @@ type
   published
     property ScrollPanel : TAcrylicGhostPanel read m_ScrollPanel   write m_ScrollPanel;
     property ScrollColor : TAlphaColor        read m_clScrollColor write m_clScrollColor;
+
+    property BackColor;
     property Color;
     property Canvas;
+    property Colored;
 
   end;
 
@@ -84,6 +87,7 @@ begin
   m_nLastY   := 0;
 
   m_clScrollColor := TAlphaColor(clWhite);
+  Color           := c_clFormColor;
 
   m_msMouseState  := msNone;
 end;
@@ -125,14 +129,16 @@ begin
 
   Self.Ghost := False;
 
-  m_ScrollPanel        := TAcrylicGhostPanel.Create(Self);
-  m_ScrollPanel.Parent := Self;
-  m_ScrollPanel.Align  := alNone;
-  m_ScrollPanel.Left   := 0;
-  m_ScrollPanel.Top    := 0;
-  m_ScrollPanel.Width  := ClientWidth - c_nScrollBarWidth;
-  m_ScrollPanel.Height := ClientHeight;
-  m_ScrollPanel.Ghost  := False;
+  m_ScrollPanel         := TAcrylicGhostPanel.Create(Self);
+  m_ScrollPanel.Parent  := Self;
+  m_ScrollPanel.Align   := alNone;
+  m_ScrollPanel.Left    := 0;
+  m_ScrollPanel.Top     := 0;
+  m_ScrollPanel.Width   := ClientWidth - c_nScrollBarWidth;
+  m_ScrollPanel.Height  := ClientHeight;
+  m_ScrollPanel.Ghost   := False;
+  m_ScrollPanel.Colored := Colored;
+  m_ScrollPanel.Color   := Color;
 
   for nCtrlIdx := 0 to ControlCount - 2 do
   begin
@@ -163,14 +169,21 @@ begin
   bmpPaint.Canvas.Pen.Color := bmpPaint.Canvas.Brush.Color;
   bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
 
-  //////////////////////////////////////////////////////////////////////////////
-  ///  Paint ScrollBar
-
   gdiGraphics := TGPGraphics.Create(bmpPaint.Canvas.Handle);
   gdiBrush    := TGPSolidBrush.Create(GdiColor(m_clScrollColor));
 
+  if Colored then
+  begin
+    gdiBrush.SetColor(GdiColor(Color));
+    gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, ClientHeight);
+  end;
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///  Paint ScrollBar
   if m_ScrollPanel <> nil then
   begin
+    gdiBrush.SetColor(GdiColor(m_clScrollColor));
+
     nHeight := Trunc(ClientHeight * (ClientHeight / m_ScrollPanel.Height));
 
     if m_ScrollPanel.Height > ClientHeight then
