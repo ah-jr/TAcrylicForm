@@ -8,6 +8,7 @@ uses
   System.SysUtils,
   System.Variants,
   System.Classes,
+  System.UITypes,
   Vcl.Graphics,
   Vcl.Controls,
   Vcl.Forms,
@@ -18,6 +19,7 @@ uses
   Registry,
   DWMApi,
   AcrylicGhostPanelU,
+  AcrylicTypesU,
   GDIPOBJ,
   GDIPAPI,
   GDIPUTIL;
@@ -26,7 +28,11 @@ type
 
   TAcrylicScrollBox = Class(TAcrylicGhostPanel)
   private
-    m_ScrollPanel : TAcrylicGhostPanel;
+    m_ScrollPanel   : TAcrylicGhostPanel;
+    m_msMouseState  : TMouseState;
+    m_clScrollColor : TAlphaColor;
+    m_dLastTop      : Integer;
+    m_nLastY        : Integer;
 
     procedure WMNCSize(var Message: TWMSize); message WM_SIZE;
     procedure CMMouseWheel(var Message: TCMMouseWheel); message CM_MOUSEWHEEL;
@@ -35,13 +41,18 @@ type
     procedure Paint; override;
     procedure Loaded; override;
 
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseUp  (Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+
   public
     constructor Create(AOwner : TComponent); override;
     procedure AddControl(a_Control : TControl);
     procedure Scroll(a_nDist : Integer);
 
   published
-    property ScrollPanel : TAcrylicGhostPanel read m_ScrollPanel write m_ScrollPanel;
+    property ScrollPanel : TAcrylicGhostPanel read m_ScrollPanel   write m_ScrollPanel;
+    property ScrollColor : TAlphaColor        read m_clScrollColor write m_clScrollColor;
     property Color;
     property Canvas;
 
@@ -55,15 +66,26 @@ procedure Register;
 implementation
 
 uses
-  System.UITypes,
   Math,
-  AcrylicUtilsU,
-  AcrylicTypesU;
+  AcrylicUtilsU;
 
 //==============================================================================
 procedure Register;
 begin
   RegisterComponents('AcrylicComponents', [TAcrylicScrollBox]);
+end;
+
+//==============================================================================
+constructor TAcrylicScrollBox.Create(AOwner : TComponent);
+begin
+  Inherited;
+
+  m_dLastTop := 0;
+  m_nLastY   := 0;
+
+  m_clScrollColor := TAlphaColor(clWhite);
+
+  m_msMouseState  := msNone;
 end;
 
 //==============================================================================
@@ -92,12 +114,6 @@ begin
   m_ScrollPanel.Left   := 0;
   m_ScrollPanel.Top    := 0;
   m_ScrollPanel.Width  := ClientWidth - c_nScrollBarWidth;
-end;
-
-//==============================================================================
-constructor TAcrylicScrollBox.Create(AOwner : TComponent);
-begin
-  Inherited;
 end;
 
 //==============================================================================
@@ -130,16 +146,28 @@ end;
 procedure TAcrylicScrollBox.Paint;
 var
   gdiGraphics : TGPGraphics;
-  gdiSolidPen : TGPPen;
   gdiBrush    : TGPSolidBrush;
   nHeight     : Integer;
   nStart      : Integer;
+  bmpPaint    : TBitmap;
 begin
-  Inherited;
+  //////////////////////////////////////////////////////////////////////////////
+  ///  Clear Background
+  bmpPaint := TBitmap.Create;
+  bmpPaint.SetSize(ClientWidth, ClientHeight);
 
-  gdiGraphics := TGPGraphics.Create(Canvas.Handle);
-  gdiSolidPen := TGPPen.Create(GdiColor(clWhite), 1);
-  gdiBrush    := TGPSolidBrush.Create(GdiColor(clWhite));
+  if g_bWithBlur
+    then bmpPaint.Canvas.Brush.Color := c_clTransparent
+    else bmpPaint.Canvas.Brush.Color := c_clFormBack;
+
+  bmpPaint.Canvas.Pen.Color := bmpPaint.Canvas.Brush.Color;
+  bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///  Paint ScrollBar
+
+  gdiGraphics := TGPGraphics.Create(bmpPaint.Canvas.Handle);
+  gdiBrush    := TGPSolidBrush.Create(GdiColor(m_clScrollColor));
 
   if m_ScrollPanel <> nil then
   begin
@@ -148,12 +176,13 @@ begin
     if m_ScrollPanel.Height > ClientHeight then
     begin
       nStart := Trunc((ClientHeight - nHeight) * (m_ScrollPanel.Top / (ClientHeight - m_ScrollPanel.Height)));
-      gdiGraphics.FillRectangle(gdiBrush, m_ScrollPanel.Width, nStart, m_ScrollPanel.Width, nHeight);
+      gdiGraphics.FillRectangle(gdiBrush, m_ScrollPanel.Width, nStart, c_nScrollBarWidth, nHeight);
     end;
   end;
 
+  Canvas.Draw(0, 0, bmpPaint);
+
   gdiGraphics.Free;
-  gdiSolidPen.Free;
   gdiBrush.Free;
 end;
 
@@ -177,6 +206,40 @@ begin
     m_ScrollPanel.Top := Max(ClientHeight - m_ScrollPanel.Height, m_ScrollPanel.Top + a_nDist);
 
   Invalidate;
+end;
+
+//==============================================================================
+procedure TAcrylicScrollBox.MouseMove(Shift: TShiftState; X, Y: Integer);
+var
+  nNew : Integer;
+  nMin : Integer;
+begin
+  if m_msMouseState = msClicked then
+  begin
+    nMin := ClientHeight - m_ScrollPanel.Height;
+    nNew := Trunc((m_ScrollPanel.Height/ClientHeight) * (Y - m_nLastY));
+
+    m_ScrollPanel.Top := Min(0, Max(nMin, m_dLastTop - nNew));
+  end
+  else
+  begin
+    m_dLastTop   := m_ScrollPanel.Top;
+    m_nLastY     := Y;
+  end;
+
+  Invalidate;
+end;
+
+//==============================================================================
+procedure TAcrylicScrollBox.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  m_msMouseState := msNone;
+end;
+
+//==============================================================================
+procedure TAcrylicScrollBox.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+  m_msMouseState := msClicked;
 end;
 
 end.

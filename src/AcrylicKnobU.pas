@@ -31,13 +31,13 @@ type
 
     procedure CMMouseWheel(var Message: TCMMouseWheel); message CM_MOUSEWHEEL;
 
-    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
-
     procedure DoubleClick(Sender: TObject);
     procedure Changed;
 
   protected
     procedure PaintComponent; override;
+
+    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
 
   public
     constructor Create(AOwner: TComponent); override;
@@ -93,6 +93,10 @@ begin
   m_dLevel      := 0.5;
   m_clKnobColor := $FFFF8B64;
   m_bClickable  := True;
+
+  m_dLastLevel  := 0.5;
+  m_nLastY      := 0;
+  m_nLastX      := 0;
 
   ControlStyle  := ControlStyle + [csDoubleClicks];
 
