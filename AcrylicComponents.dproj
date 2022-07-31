@@ -104,6 +104,7 @@ $(PreBuildEvent)]]></PreBuildEvent>
         <DCCReference Include="src\AcrylicLabelU.pas"/>
         <DCCReference Include="src\AcrylicTrackU.pas"/>
         <DCCReference Include="src\AcrylicKnobU.pas"/>
+        <DCCReference Include="src\AcrylicTrackBarU.pas"/>
         <DCCReference Include="src\AcrylicFormU.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>

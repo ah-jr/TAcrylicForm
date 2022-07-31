@@ -24,13 +24,15 @@ uses
 type
   TAcrylicControl = Class(TCustomControl)
   private
-    procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
-    procedure WMNCMoving  (var Message: TWMMoving);     message WM_MOVING;
-    procedure WMNCSize    (var Message: TWMSize);       message WM_SIZE;
-    procedure CMMouseEnter(var Message: TMessage);      message CM_MOUSEENTER;
-    procedure CMMouseLeave(var Message: TMessage);      message CM_MOUSELEAVE;
+    procedure WMEraseBkgnd(var Msg: TWmEraseBkgnd); message WM_ERASEBKGND;
+    procedure WMNCMoving  (var Msg: TWMMoving);     message WM_MOVING;
+    procedure WMNCSize    (var Msg: TWMSize);       message WM_SIZE;
+    procedure CMMouseEnter(var Msg: TMessage);      message CM_MOUSEENTER;
+    procedure CMMouseLeave(var Msg: TMessage);      message CM_MOUSELEAVE;
+    procedure WMNCHitTest (var Msg: TWMNCHitTest);  message WM_NCHITTEST;
 
-    procedure SetText(a_strText : String);
+    procedure SetText           (a_strText   : String);
+    procedure SetTriggerDblClick(a_nDblClick : Boolean);
 
   protected
     m_msMouseState  : TMouseState;
@@ -47,6 +49,7 @@ type
     m_bWithBorder   : Boolean;
     m_bWithBack     : Boolean;
     m_bClickable    : Boolean;
+    m_bGhost        : Boolean;
 
     m_gdiGraphics   : TGPGraphics;
     m_gdiSolidPen   : TGPPen;
@@ -71,15 +74,17 @@ type
     procedure Refresh(a_bForce : Boolean = False);
 
   published
-    property Text           : String      read m_strText       write SetText;
-    property Font           : TFont       read m_fFont         write m_fFont;
-    property Alignment      : TAlignment  read m_aAlignment    write m_aAlignment;
-    property Color          : TAlphaColor read m_clColor       write m_clColor;
-    property FontColor      : TAlphaColor read m_clFontColor   write m_clFontColor;
-    property BackColor      : TAlphaColor read m_clBackColor   write m_clBackColor;
-    property BorderColor    : TAlphaColor read m_clBorderColor write m_clBorderColor;
-    property WithBorder     : Boolean     read m_bWithBorder   write m_bWithBorder;
-    property WithBackground : Boolean     read m_bWithBack     write m_bWithBack;
+    property Text            : String      read m_strText       write SetText;
+    property Font            : TFont       read m_fFont         write m_fFont;
+    property Alignment       : TAlignment  read m_aAlignment    write m_aAlignment;
+    property Color           : TAlphaColor read m_clColor       write m_clColor;
+    property FontColor       : TAlphaColor read m_clFontColor   write m_clFontColor;
+    property BackColor       : TAlphaColor read m_clBackColor   write m_clBackColor;
+    property BorderColor     : TAlphaColor read m_clBorderColor write m_clBorderColor;
+    property WithBorder      : Boolean     read m_bWithBorder   write m_bWithBorder;
+    property WithBackground  : Boolean     read m_bWithBack     write m_bWithBack;
+    property Ghost           : Boolean     read m_bGhost        write m_bGhost;
+    property TriggerDblClick : Boolean                          write SetTriggerDblClick;
 
     property Enabled;
     property OnClick;
@@ -107,6 +112,7 @@ begin
 
   m_msMouseState  := msNone;
   m_bClickable    := False;
+  m_bGhost        := False;
   m_bRepaint      := True;
   m_bWithBorder   := True;
   m_bWithBack     := True;
@@ -146,6 +152,15 @@ begin
   m_strText := a_strText;
   Refresh(True);
 end;
+
+//==============================================================================
+procedure TAcrylicControl.SetTriggerDblClick(a_nDblClick : Boolean);
+begin
+  if a_nDblClick
+    then ControlStyle := ControlStyle + [csDoubleClicks]
+    else ControlStyle := ControlStyle - [csDoubleClicks];
+end;
+
 
 //==============================================================================
 procedure TAcrylicControl.Refresh(a_bForce : Boolean = False);
@@ -314,27 +329,27 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicControl.WMEraseBkgnd(var Message: TWMEraseBkgnd);
+procedure TAcrylicControl.WMEraseBkgnd(var Msg: TWMEraseBkgnd);
 begin
   // Do nothing to prevent flickering
 end;
 
 //==============================================================================
-procedure TAcrylicControl.WMNCMoving(var Message: TWMMoving);
+procedure TAcrylicControl.WMNCMoving(var Msg: TWMMoving);
 begin
   inherited;
   Refresh(True);
 end;
 
 //==============================================================================
-procedure TAcrylicControl.WMNCSize(var Message: TWMSize);
+procedure TAcrylicControl.WMNCSize(var Msg: TWMSize);
 begin
   inherited;
   Refresh(True);
 end;
 
 //==============================================================================
-procedure TAcrylicControl.CMMouseEnter(var Message: TMessage);
+procedure TAcrylicControl.CMMouseEnter(var Msg: TMessage);
 begin
   if m_bClickable then
     m_msMouseState := msHover;
@@ -343,12 +358,21 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicControl.CMMouseLeave(var Message: TMessage);
+procedure TAcrylicControl.CMMouseLeave(var Msg: TMessage);
 begin
   if m_bClickable then
     m_msMouseState := msNone;
 
   Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.WMNCHitTest(var Msg: TWMNCHitTest);
+begin
+  inherited;
+
+  if m_bGhost then
+    Msg.Result := HTTRANSPARENT;
 end;
 
 end.

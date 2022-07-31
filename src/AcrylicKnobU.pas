@@ -91,7 +91,7 @@ begin
   Inherited Create(AOwner);
 
   m_dLevel      := 0.5;
-  m_clKnobColor := $FFFF8B64;
+  m_clKnobColor := c_clLavaOrange;
   m_bClickable  := True;
 
   m_dLastLevel  := 0.5;
@@ -135,7 +135,7 @@ begin
 
   //////////////////////////////////////////////////////////////////////////////
   ///  Draw knob
-  m_gdiGraphics.SetSmoothingMode(SmoothingModeAntiAlias);
+  m_gdiGraphics.SetSmoothingMode(SmoothingModeHighQuality);
   m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
 
   nAngle := Trunc(m_dLevel * c_nMaxAngle);

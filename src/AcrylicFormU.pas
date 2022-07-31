@@ -158,9 +158,9 @@ begin
   begin
     EnableBlur(Handle, 4);
     UpdatePositions;
-  end;
 
-  m_tmrAcrylicChange.Enabled  := False;
+    m_tmrAcrylicChange.Enabled  := False;
+  end;
 end;
 
 //==============================================================================
@@ -386,9 +386,12 @@ var
   DWM10      : THandle;
   Data       : WindowCompositionAttributeData;
   Accent     : AccentPolicy;
+  nBlurLevel : Integer;
 begin
   if not WithBlur then
     nMode := 1;
+
+  nBlurLevel := m_btBlurAmount;
 
   DWM10 := LoadLibrary('user32.dll');
 
@@ -398,7 +401,7 @@ begin
     begin
       Accent.AccentState   := nMode;
       Accent.AccentFlags   := 2;
-      Accent.GradientColor := (m_btBlurAmount SHL 24) or m_clBlurColor;
+      Accent.GradientColor := (nBlurLevel SHL 24) or m_clBlurColor;
 
       Data.Attribute  := WCA_ACCENT_POLICY;
       Data.SizeOfData := SizeOf(Accent);

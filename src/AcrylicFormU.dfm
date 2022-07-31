@@ -23,8 +23,11 @@ object AcrylicForm: TAcrylicForm
     Width = 615
     Height = 517
     BevelOuter = bvNone
-    Color = 2039583
+    Color = x001F1F1F
     TabOrder = 0
+    Ghost = True
+    Colored = False
+    Backcolor = 2039583
     object pnlTitleBar: TAcrylicGhostPanel
       Left = 0
       Top = 0
@@ -32,9 +35,11 @@ object AcrylicForm: TAcrylicForm
       Height = 41
       Align = alTop
       BevelOuter = bvNone
-      Color = 2039583
+      Color = x001F1F1F
       TabOrder = 0
-      ExplicitWidth = 617
+      Ghost = True
+      Colored = False
+      Backcolor = 2039583
       object imgClose: TImage
         Left = 571
         Top = -1
@@ -69,8 +74,6 @@ object AcrylicForm: TAcrylicForm
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
-      ExplicitWidth = 617
-      ExplicitHeight = 478
     end
   end
 end

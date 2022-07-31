@@ -43,6 +43,7 @@ contains
   AcrylicLabelU in 'src\AcrylicLabelU.pas',
   AcrylicTrackU in 'src\AcrylicTrackU.pas',
   AcrylicKnobU in 'src\AcrylicKnobU.pas',
+  AcrylicTrackBarU in 'src\AcrylicTrackBarU.pas',
   AcrylicFormU in 'src\AcrylicFormU.pas';
 
 end.

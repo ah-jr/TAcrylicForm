@@ -86,7 +86,7 @@ begin
   m_dLastTop := 0;
   m_nLastY   := 0;
 
-  m_clScrollColor := TAlphaColor(clWhite);
+  m_clScrollColor := ToAlphaColor(clWhite);
   Color           := c_clFormColor;
 
   m_msMouseState  := msNone;
@@ -207,6 +207,8 @@ begin
     m_ScrollPanel.Height := Max(m_ScrollPanel.Height, a_Control.Top + a_Control.Height);
     a_Control.Parent := m_ScrollPanel;
   end;
+
+  Invalidate;
 end;
 
 //==============================================================================

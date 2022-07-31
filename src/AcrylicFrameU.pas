@@ -220,7 +220,6 @@ const
 var
   ScreenPt: TPoint;
   nBorder: Integer;
-
 begin
   nBorder := BorderWidth + 2;
   ScreenPt := ScreenToClient(Point(Msg.Xpos, Msg.Ypos));
