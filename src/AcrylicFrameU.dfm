@@ -6,24 +6,56 @@ object AcrylicFrame: TAcrylicFrame
   DoubleBuffered = False
   ParentDoubleBuffered = False
   TabOrder = 0
-  object pnlTitle: TAcrylicGhostPanel
-    Left = 1
-    Top = 1
-    Width = 198
-    Height = 25
+  object pnlBack: TAcrylicGhostPanel
+    Left = 0
+    Top = 0
+    Width = 200
+    Height = 200
+    Align = alClient
     Color = x001F1F1F
     TabOrder = 0
     Ghost = True
     Colored = False
-    Backcolor = 2039583
-    object imgClose: TImage
-      Left = 174
-      Top = 0
-      Width = 24
-      Height = 24
-      OnClick = imgCloseClick
-      OnMouseEnter = imgCloseMouseEnter
-      OnMouseLeave = imgCloseMouseLeave
+    Backcolor = clWhite
+    object pnlTitle: TAcrylicGhostPanel
+      Left = 1
+      Top = 1
+      Width = 198
+      Height = 25
+      Color = x001F1F1F
+      TabOrder = 0
+      Ghost = True
+      Colored = False
+      Backcolor = 2039583
+      object imgClose: TImage
+        Left = 161
+        Top = 0
+        Width = 24
+        Height = 24
+        OnClick = imgCloseClick
+        OnMouseEnter = imgCloseMouseEnter
+        OnMouseLeave = imgCloseMouseLeave
+      end
+      object lblTitle: TAcrylicLabel
+        Left = 3
+        Top = 1
+        Width = 100
+        Height = 20
+        Text = ''
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -12
+        Font.Name = 'Tahoma'
+        Font.Style = []
+        Alignment = aLeft
+        Color = claWhite
+        FontColor = claWhite
+        BackColor = x640F0F0F
+        BorderColor = x64070707
+        WithBorder = False
+        WithBackground = False
+        Ghost = True
+      end
     end
   end
 end
