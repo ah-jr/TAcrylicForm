@@ -34,6 +34,10 @@ type
                  aLeft,
                  aRight);
 
+  TAcrylicFormStyle  = set of (fsClose,
+                               fsMinimize,
+                               fsMaximize);
+
   TIntArray = Array of Integer;
   PIntArray = ^TIntArray;
 

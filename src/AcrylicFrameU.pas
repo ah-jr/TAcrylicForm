@@ -123,7 +123,7 @@ begin
   m_pnlBody.Color   := c_clFormColor;
 
   pnlBack.WithBorder  := True;
-  pnlBack.Bordercolor := $33FFFFFF;
+  pnlBack.Bordercolor := c_clFormBorder;
 
   m_LastX         := 0;
   m_LastY         := 0;

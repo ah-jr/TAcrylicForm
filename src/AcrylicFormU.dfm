@@ -54,6 +54,7 @@ object AcrylicForm: TAcrylicForm
         Top = -1
         Width = 46
         Height = 32
+        OnClick = imgMaximizeClick
         OnMouseEnter = imgMaximizeMouseEnter
         OnMouseLeave = imgMaximizeMouseLeave
       end
@@ -62,6 +63,7 @@ object AcrylicForm: TAcrylicForm
         Top = -1
         Width = 46
         Height = 32
+        OnClick = imgMinimizeClick
         OnMouseEnter = imgMinimizeMouseEnter
         OnMouseLeave = imgMinimizeMouseLeave
       end

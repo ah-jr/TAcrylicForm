@@ -18,6 +18,7 @@ uses
   Vcl.ExtCtrls,
   Vcl.ImgList,
   Vcl.Imaging.pngimage,
+  AcrylicTypesU,
   AcrylicGhostPanelU;
 
 {$R ..\res\icons.res}
@@ -39,8 +40,11 @@ type
     procedure imgMinimizeMouseEnter(Sender: TObject);
     procedure imgMinimizeMouseLeave(Sender: TObject);
     procedure imgCloseClick        (Sender: TObject);
+    procedure imgMaximizeClick     (Sender: TObject);
+    procedure imgMinimizeClick     (Sender: TObject);
 
     procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
+
 
   private
     m_bInitialized  : Boolean;
@@ -50,11 +54,15 @@ type
     m_btBlurAmount  : Byte;
     m_bResizable    : Boolean;
     m_bWithBorder   : Boolean;
+    m_bMaximized    : Boolean;
 
     m_nMinHeight    : Integer;
     m_nMinWidth     : Integer;
     m_nMaxHeight    : Integer;
     m_nMaxWidth     : Integer;
+
+    m_recSize       : TRect;
+    m_fsStyle       : TAcrylicFormStyle;
 
     m_pngCloseN     : TPngImage;
     m_pngCloseH     : TPngImage;
@@ -68,11 +76,11 @@ type
     procedure OnMoveOrResize;
     procedure UpdatePositions;
 
-    procedure EnableBlur    (hwndHandle: HWND; nMode: Integer);
-    procedure OnAcrylicTimer(Sender: TObject);
-    procedure SetColor      (a_clColor : TColor);
+    procedure EnableBlur    (hwndHandle : HWND; nMode: Integer);
+    procedure OnAcrylicTimer(Sender     : TObject);
+    procedure SetColor      (a_clColor  : TColor);
     procedure SetBlurAmount (a_btAmount : Byte);
-    procedure ToggleBlur    (a_bBlur : Boolean);
+    procedure ToggleBlur    (a_bBlur    : Boolean);
 
     function  GetWithBlur : Boolean;
 
@@ -87,6 +95,8 @@ type
   public
     constructor Create(AOwner : TComponent); override;
     destructor  Destroy; override;
+
+    property Style : TAcrylicFormStyle read m_fsStyle       write m_fsStyle;
 
     property WithBlur    : Boolean     read GetWithBlur     write ToggleBlur;
     property WithBorder  : Boolean     read m_bWithBorder   write m_bWithBorder;
@@ -134,8 +144,7 @@ uses
   GDIPAPI,
   GDIPUTIL,
   GDIPOBJ,
-  AcrylicUtilsU,
-  AcrylicTypesU;
+  AcrylicUtilsU;
 
 {$R *.dfm}
 
@@ -234,6 +243,10 @@ begin
 
   m_bResizable    := True;
   m_bWithBorder   := True;
+  m_bMaximized    := False;
+
+  m_recSize       := TRect.Create(Left,Top,Width,Height);
+  m_fsStyle       := [fsClose, fsMinimize, fsMaximize];
 
   m_nMinHeight    := 1;
   m_nMinWidth     := 1;
@@ -299,6 +312,10 @@ begin
     GlassFrame.Bottom := -1;
   end;
 
+  imgClose.Visible    := fsClose    in m_fsStyle;
+  imgMaximize.Visible := fsMaximize in m_fsStyle;
+  imgMinimize.Visible := fsMinimize in m_fsStyle;
+
   m_bInitialized := True;
 end;
 
@@ -347,6 +364,8 @@ end;
 
 //==============================================================================
 procedure TAcrylicForm.UpdatePositions;
+var
+  nIconCount : Integer;
 begin
   pnlBackground.Left    := 1;
   pnlBackground.Top     := 1;
@@ -358,19 +377,27 @@ begin
   pnlContent.Width   := ClientWidth  - 2 * c_nBorderTriggerSize;
   pnlContent.Height  := ClientHeight - pnlTitleBar.Height - c_nBorderTriggerSize;
 
+  nIconCount := 1;
+
   imgClose.Width     := c_nTopIconWidth;
   imgClose.Height    := c_nTopIconHeight;
-  imgClose.Left      := Width - c_nTopIconWidth;
+  imgClose.Left      := Width - nIconCount * c_nTopIconWidth;
   imgClose.Top       := 0;
+
+  if imgClose.Visible then
+    Inc(nIconCount);
 
   imgMaximize.Width  := imgClose.Width;
   imgMaximize.Height := imgClose.Height;
-  imgMaximize.Left   := imgClose.Left - c_nTopIconWidth;
+  imgMaximize.Left   := Width - nIconCount * c_nTopIconWidth;
   imgMaximize.Top    := imgClose.Top;
+
+  if imgMaximize.Visible then
+    Inc(nIconCount);
 
   imgMinimize.Width  := imgClose.Width;
   imgMinimize.Height := imgClose.Height;
-  imgMinimize.Left   := imgMaximize.Left - c_nTopIconWidth;
+  imgMinimize.Left   := Width - nIconCount * c_nTopIconWidth;
   imgMinimize.Top    := imgClose.Top;
 end;
 
@@ -430,6 +457,31 @@ begin
 end;
 
 //==============================================================================
+procedure TAcrylicForm.imgMaximizeClick(Sender: TObject);
+begin
+  m_bMaximized := not m_bMaximized;
+
+  if m_bMaximized then
+  begin
+    m_recSize := TRect.Create(Left, Top, Left + Width, Top + Height);
+
+    with Screen.WorkAreaRect do
+      SetBounds(Left, Top, Right - Left, Bottom - Top);
+  end
+  else
+  begin
+    with m_recSize do
+      SetBounds(Left, Top, Right - Left, Bottom - Top);
+  end;
+end;
+
+//==============================================================================
+procedure TAcrylicForm.imgMinimizeClick(Sender: TObject);
+begin
+  Application.Minimize;
+end;
+
+//==============================================================================
 procedure TAcrylicForm.imgCloseMouseEnter(Sender: TObject);
 begin
   imgClose.Picture.Graphic := m_pngCloseH;
@@ -454,6 +506,7 @@ begin
 end;
 
 //==============================================================================
+
 procedure TAcrylicForm.imgMinimizeMouseEnter(Sender: TObject);
 begin
   imgMinimize.Picture.Graphic := m_pngMinimizeH;
