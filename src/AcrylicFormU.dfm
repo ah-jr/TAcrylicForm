@@ -28,6 +28,8 @@ object AcrylicForm: TAcrylicForm
     Ghost = True
     Colored = False
     Backcolor = 2039583
+    Bordercolor = claNull
+    WithBorder = False
     object pnlTitleBar: TAcrylicGhostPanel
       Left = 0
       Top = 0
@@ -40,6 +42,8 @@ object AcrylicForm: TAcrylicForm
       Ghost = True
       Colored = False
       Backcolor = 2039583
+      Bordercolor = claNull
+      WithBorder = False
       object imgClose: TImage
         Left = 571
         Top = -1

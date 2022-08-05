@@ -112,9 +112,9 @@ begin
   m_Canvas     := TCanvas.Create;
   m_bResizable := True;
 
-  m_bWithBorder   := True;
-  m_bColored      := True;
-  m_clBackColor   := c_clFormBack;
+  m_bWithBorder := True;
+  m_bColored    := True;
+  m_clBackColor := c_clFormBack;
 
   m_pnlBody         := TAcrylicghostPanel.Create(pnlBack);
   m_pnlBody.Parent  := pnlBack;
@@ -122,6 +122,7 @@ begin
   m_pnlBody.Colored := True;
   m_pnlBody.Color   := c_clFormColor;
 
+  pnlBack.Colored     := False;
   pnlBack.WithBorder  := True;
   pnlBack.Bordercolor := c_clFormBorder;
 

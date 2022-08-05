@@ -16,7 +16,9 @@ object AcrylicFrame: TAcrylicFrame
     TabOrder = 0
     Ghost = True
     Colored = False
-    Backcolor = clWhite
+    Backcolor = 2039583
+    Bordercolor = claNull
+    WithBorder = False
     object pnlTitle: TAcrylicGhostPanel
       Left = 1
       Top = 1
@@ -27,6 +29,8 @@ object AcrylicFrame: TAcrylicFrame
       Ghost = True
       Colored = False
       Backcolor = 2039583
+      Bordercolor = claNull
+      WithBorder = False
       object imgClose: TImage
         Left = 161
         Top = 0
@@ -50,7 +54,7 @@ object AcrylicFrame: TAcrylicFrame
         Alignment = aLeft
         Color = claWhite
         FontColor = claWhite
-        BackColor = x640F0F0F
+        BackColor = 2039583
         BorderColor = x64070707
         WithBorder = False
         WithBackground = False

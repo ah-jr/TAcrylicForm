@@ -37,12 +37,13 @@ type
   protected
     m_msMouseState  : TMouseState;
     m_strText       : String;
+    m_strTexts      : TStringList;
     m_bmpPaint      : TBitmap;
     m_bRepaint      : Boolean;
     m_aAlignment    : TAlignment;
     m_clColor       : TAlphaColor;
     m_clFontColor   : TAlphaColor;
-    m_clBackColor   : TAlphaColor;
+    m_clBackColor   : TColor;
     m_clBorderColor : TAlphaColor;
     m_clReset       : TAlphaColor;
     m_fFont         : TFont;
@@ -75,11 +76,12 @@ type
 
   published
     property Text            : String      read m_strText       write SetText;
+    property Texts           : TStringList read m_strTexts      write m_strTexts;
     property Font            : TFont       read m_fFont         write m_fFont;
     property Alignment       : TAlignment  read m_aAlignment    write m_aAlignment;
     property Color           : TAlphaColor read m_clColor       write m_clColor;
     property FontColor       : TAlphaColor read m_clFontColor   write m_clFontColor;
-    property BackColor       : TAlphaColor read m_clBackColor   write m_clBackColor;
+    property BackColor       : TColor      read m_clBackColor   write m_clBackColor;
     property BorderColor     : TAlphaColor read m_clBorderColor write m_clBorderColor;
     property WithBorder      : Boolean     read m_bWithBorder   write m_bWithBorder;
     property WithBackground  : Boolean     read m_bWithBack     write m_bWithBack;
@@ -118,11 +120,12 @@ begin
   m_bWithBack     := True;
   m_fFont         := TFont.Create;
   m_bmpPaint      := TBitmap.Create;
+  m_strTexts      := TStringList.Create;
 
-  m_clColor       := c_clCtrlMisc;
   m_clFontColor   := c_clCtrlFont;
-  m_clBackColor   := c_clCtrlBack;
+  m_clColor       := c_clCtrlColor;
   m_clBorderColor := c_clCtrlBorder;
+  m_clBackColor   := c_clFormBack;
 
   m_fFont.Name    := 'Tahoma';
   m_fFont.Size    := 8;
@@ -142,6 +145,7 @@ begin
   m_fFont.Free;
   m_gdiSolidPen.Free;
   m_gdiBrush.Free;
+  m_strTexts.Free;
 
   Inherited;
 end;
@@ -182,7 +186,7 @@ begin
 
     if g_bWithBlur
       then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
-      else m_bmpPaint.Canvas.Brush.Color := c_clFormBack;
+      else m_bmpPaint.Canvas.Brush.Color := m_clBackColor;
 
     m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
     m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
@@ -215,13 +219,13 @@ begin
     if Enabled then
     begin
       case m_msMouseState of
-        msNone    : nColor := GdiChangeColor(m_clBackColor, 0,  0,  0,  0);
-        msHover   : nColor := GdiChangeColor(m_clBackColor, 0, 25, 25, 25);
-        msClicked : nColor := GdiChangeColor(m_clBackColor, 0, 40, 40, 40);
+        msNone    : nColor := GdiChangeColor(m_clColor, 0,  0,  0,  0);
+        msHover   : nColor := GdiChangeColor(m_clColor, 0, 25, 25, 25);
+        msClicked : nColor := GdiChangeColor(m_clColor, 0, 40, 40, 40);
       end;
     end
     else
-      nColor := GdiColor(m_clBackColor);
+      nColor := GdiColor(m_clColor);
 
     if m_bWithBorder then
       recBack := MakeRect(1, 1, ClientWidth - 2, ClientHeight - 2)
@@ -249,41 +253,58 @@ var
   recText : TGPRectF;
   gdiFont : TGPFont;
   fsStyle : TFontStyle;
+  nStrIdx : Integer;
+const
+  c_nLineBreakGap = 1;
 begin
-  if Text <> '' then
+  if (Text <> '') or (Texts.Count > 0) then
   begin
-    if fsBold in Font.Style then
-      fsStyle := FontStyleBold
-    else
-      fsStyle := FontStyleRegular;
+    if fsBold in Font.Style
+      then fsStyle := FontStyleBold
+      else fsStyle := FontStyleRegular;
 
+    m_gdiBrush.SetColor(GdiColor(FontColor));
     gdiFont := TGPFont.Create(Font.Name, Font.Size, fsStyle);
-
     pntText.X := 0;
     pntText.Y := 0;
 
-    m_gdiGraphics.MeasureString(Text, -1, gdiFont, pntText, recText);
-
-    if a_nLeft < 0 then
+    ////////////////////////////////////////////////////////////////////////////
+    ///  One single String:
+    if Text <> '' then
     begin
-      case Alignment of
-        aCenter: pntText.X := Trunc(ClientWidth  - recText.Width) div 2;
-        aLeft:   pntText.X := 1;
-        aRight:  pntText.X := Trunc(ClientWidth  - recText.Width - 1);
+      m_gdiGraphics.MeasureString(Text, -1, gdiFont, pntText, recText);
+
+      if a_nLeft < 0 then
+      begin
+        case Alignment of
+          aCenter: pntText.X := Trunc(ClientWidth  - recText.Width) div 2;
+          aLeft:   pntText.X := 1;
+          aRight:  pntText.X := Trunc(ClientWidth  - recText.Width - 1);
+        end;
+      end
+      else
+        pntText.X := a_nLeft;
+
+      if a_nTop < 0
+        then pntText.Y := (Trunc(ClientHeight - recText.Height) div 2) + 1
+        else pntText.Y := a_nTop;
+
+      m_gdiGraphics.DrawString(Text, -1, gdiFont, pntText, m_gdiBrush);
+    end
+    ////////////////////////////////////////////////////////////////////////////
+    ///  Multiple Strings:
+    else if Texts.Count > 0 then
+    begin
+      m_gdiGraphics.MeasureString(Texts[0], -1, gdiFont, pntText, recText);
+
+      for nStrIdx := 0 to Texts.Count - 1 do
+      begin
+        pntText.X := 1;
+        pntText.Y := (recText.Height + c_nLineBreakGap) * nStrIdx;
+
+        m_gdiGraphics.DrawString(Texts[nStrIdx], -1, gdiFont, pntText, m_gdiBrush);
       end;
-    end
-    else
-      pntText.X := a_nLeft;
-
-    if a_nTop < 0 then
-    begin
-      pntText.Y := (Trunc(ClientHeight - recText.Height) div 2) + 1;
-    end
-    else
-      pntText.Y := a_nTop;
-
-    m_gdiBrush.SetColor(GdiColor(FontColor));
-    m_gdiGraphics.DrawString(Text, -1, gdiFont, pntText, m_gdiBrush);
+    end;
 
     gdiFont.Free;
   end;
