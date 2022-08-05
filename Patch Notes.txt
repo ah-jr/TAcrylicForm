@@ -2,13 +2,29 @@
 AcrylicComponents - PATCH NOTES 
 ==============================================================================
 
+v1.4
+
+  - Enhanced control customization and refactoring in data painting.
+  - Enabled mode without blur, enabled dynamic path in tracks.
+  - Min/max size for AcrylicForm, path scaling for tracks.
+  - Added simple scrollbox component, works with mouse dragging and wheel.
+  - Added TAcrylicKnob, a rotatory slider.
+  - Created a TAcrylicFrame component, which works as a window that can be
+    inserted used within a AcrylicForm
+  - Added AcrylicTrackBar component  
+  - Fixed memory leak with TBitmap
+  - Created border painting in GhostPanel
+  - Allow user to customize form buttons (close, maximize, minimize)
+  - Added possibility to create label with multiple strings
+   
+
 v1.3:
 
   - Changed painting for disabled objects.
   - AcrylicForm borders can be customized.
   - Fixed memory leak in buttons.
   - Optimized data drawing for TAcrylicTrack, preventing full repaint when not
-  necessary.
+    necessary.
 
 v1.2:  
   
