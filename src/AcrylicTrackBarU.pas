@@ -186,6 +186,8 @@ procedure TAcrylicTrackBar.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
   if m_msMouseState = msClicked then
     SetTempLevel(X / ClientWidth);
+
+  Refresh(True);
 end;
 
 //==============================================================================

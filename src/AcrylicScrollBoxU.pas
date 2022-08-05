@@ -195,6 +195,7 @@ begin
 
   Canvas.Draw(0, 0, bmpPaint);
 
+  bmpPaint.Free;
   gdiGraphics.Free;
   gdiBrush.Free;
 end;
