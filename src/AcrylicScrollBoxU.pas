@@ -155,21 +155,19 @@ var
   gdiBrush    : TGPSolidBrush;
   nHeight     : Integer;
   nStart      : Integer;
-  bmpPaint    : TBitmap;
 begin
   //////////////////////////////////////////////////////////////////////////////
   ///  Clear Background
-  bmpPaint := TBitmap.Create;
-  bmpPaint.SetSize(ClientWidth, ClientHeight);
+  m_bmpPaint.SetSize(ClientWidth, ClientHeight);
 
   if g_bWithBlur
-    then bmpPaint.Canvas.Brush.Color := c_clTransparent
-    else bmpPaint.Canvas.Brush.Color := c_clFormBack;
+    then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
+    else m_bmpPaint.Canvas.Brush.Color := c_clFormBack;
 
-  bmpPaint.Canvas.Pen.Color := bmpPaint.Canvas.Brush.Color;
-  bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
+  m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
+  m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
 
-  gdiGraphics := TGPGraphics.Create(bmpPaint.Canvas.Handle);
+  gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
   gdiBrush    := TGPSolidBrush.Create(GdiColor(m_clScrollColor));
 
   if Colored then
@@ -193,9 +191,8 @@ begin
     end;
   end;
 
-  Canvas.Draw(0, 0, bmpPaint);
+  Canvas.Draw(0, 0, m_bmpPaint);
 
-  bmpPaint.Free;
   gdiGraphics.Free;
   gdiBrush.Free;
 end;

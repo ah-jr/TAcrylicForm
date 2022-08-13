@@ -214,7 +214,6 @@ begin
     m_tmrAcrylicChange.Enabled := True;
 
     UpdatePositions;
-    PaintBorder;
   end;
 end;
 

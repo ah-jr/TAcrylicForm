@@ -21,7 +21,9 @@ uses
   GDIPOBJ,
   GDIPAPI,
   GDIPUTIL,
-  AcrylicGhostPanelU, AcrylicControlU, AcrylicLabelU;
+  AcrylicGhostPanelU,
+  AcrylicControlU,
+  AcrylicLabelU;
 
 type
 
@@ -147,6 +149,7 @@ begin
   end;
 end;
 
+//==============================================================================
 destructor TAcrylicFrame.Destroy;
 begin
   m_pngCloseN.Free;
@@ -165,14 +168,12 @@ end;
 //==============================================================================
 procedure TAcrylicFrame.WMPaint(var Msg: TWMPaint);
 begin
-  Inherited;
+  PaintHandler(Msg);
 end;
 
 //==============================================================================
 procedure TAcrylicFrame.WMNCSize(var Msg: TWMSize);
 begin
-  inherited;
-
   BringToFront;
   UpdatePositions;
 end;
@@ -187,7 +188,7 @@ var
 begin
   nBorder := BorderWidth + 2;
   ScreenPt := ScreenToClient(Point(Msg.Xpos, Msg.Ypos));
-  inherited;
+  Inherited;
 
   Msg.Result := HTCLIENT;
 
@@ -296,12 +297,17 @@ begin
     end;
   end;
 
-  inherited;
+  Inherited;
 end;
 
 //==============================================================================
 procedure TAcrylicFrame.UpdatePositions;
 begin
+  pnlBack.Left      := 0;
+  pnlBack.Top       := 0;
+  pnlBack.Width     := ClientWidth;
+  pnlBack.Height    := ClientHeight;
+
   m_pnlBody.Left    := c_nBorderTriggerSize;
   m_pnlBody.Top     := c_nTitleBarHeight;
   m_pnlBody.Width   := ClientWidth  - 2 * c_nBorderTriggerSize;
@@ -318,7 +324,11 @@ begin
 
   lblTitle.Width    := imgClose.Left - 5;
 
-  Invalidate;
+//  pnlTitle.Repaint;
+//  imgClose.Repaint;
+//  pnlBack.Repaint;
+//  m_pnlBody.Repaint;
+//  lblTitle.Repaint;
 end;
 
 //==============================================================================

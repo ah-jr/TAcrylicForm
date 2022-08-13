@@ -34,10 +34,14 @@ type
     procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
 
   protected
+    m_bmpPaint : TBitmap;
+
     procedure Paint; override;
 
   public
     constructor Create(AOwner : TComponent); override;
+    destructor  Destroy; override;
+
 
   published
     property Ghost       : Boolean      read m_bGhost        write m_bGhost;
@@ -58,6 +62,7 @@ uses
   GDIPOBJ,
   GDIPAPI,
   GDIPUTIL,
+  DateUtils,
   AcrylicUtilsU,
   AcrylicTypesU;
 
@@ -76,13 +81,20 @@ begin
   m_bColored    := False;
   m_bWithBorder := False;
   m_bGhost      := True;
+  m_bmpPaint    := TBitmap.Create;
+end;
+
+//==============================================================================
+destructor TAcrylicGhostPanel.Destroy;
+begin
+  m_bmpPaint.Free;
+
+  Inherited;
 end;
 
 //==============================================================================
 procedure TAcrylicGhostPanel.WMNCHitTest(var Msg: TWMNCHitTest);
 begin
-  inherited;
-
   if m_bGhost then
     Msg.Result := HTTRANSPARENT;
 end;
@@ -93,21 +105,19 @@ var
   gdiGraphics : TGPGraphics;
   gdiBrush    : TGPSolidBrush;
   gdiPen      : TGPPen;
-  bmpPaint    : TBitmap;
 begin
   //////////////////////////////////////////////////////////////////////////////
   ///  Clear Background
-  bmpPaint := TBitmap.Create;
-  bmpPaint.SetSize(ClientWidth, ClientHeight);
+  m_bmpPaint.SetSize(ClientWidth, ClientHeight);
 
   if g_bWithBlur
-    then bmpPaint.Canvas.Brush.Color := c_clTransparent
-    else bmpPaint.Canvas.Brush.Color := m_clBackColor;
+    then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
+    else m_bmpPaint.Canvas.Brush.Color := m_clBackColor;
 
-  bmpPaint.Canvas.Pen.Color := bmpPaint.Canvas.Brush.Color;
-  bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
+  m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
+  m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
 
-  gdiGraphics := TGPGraphics.Create(bmpPaint.Canvas.Handle);
+  gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
 
   if m_bColored then
   begin
@@ -124,8 +134,7 @@ begin
   end;
 
   gdiGraphics.Free;
-  Canvas.Draw(0, 0, bmpPaint);
-  bmpPaint.Free;
+  Canvas.Draw(0, 0, m_bmpPaint);
 end;
 
 //==============================================================================

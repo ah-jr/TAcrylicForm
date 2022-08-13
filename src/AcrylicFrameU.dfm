@@ -11,7 +11,6 @@ object AcrylicFrame: TAcrylicFrame
     Top = 0
     Width = 200
     Height = 200
-    Align = alClient
     Color = x001F1F1F
     TabOrder = 0
     Ghost = True
