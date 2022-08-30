@@ -16,6 +16,7 @@ uses
   Vcl.StdCtrls,
   Vcl.ExtCtrls,
   Vcl.Imaging.pngimage,
+  GR32,
   Registry,
   DWMApi;
 
@@ -23,18 +24,17 @@ type
 
   TAcrylicGhostPanel = Class(TPanel)
   private
+    procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
+    procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
+
+  protected
+    m_bmpBuffer     : TBitmap32;
     m_clBackColor   : TColor;
     m_clColor       : TAlphaColor;
     m_clBorderColor : TAlphaColor;
     m_bGhost        : Boolean;
     m_bColored      : Boolean;
     m_bWithBorder   : Boolean;
-
-    procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
-    procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
-
-  protected
-    m_bmpPaint : TBitmap;
 
     procedure Paint; override;
 
@@ -62,6 +62,7 @@ uses
   GDIPOBJ,
   GDIPAPI,
   GDIPUTIL,
+  GR32_Backends,
   DateUtils,
   AcrylicUtilsU,
   AcrylicTypesU;
@@ -81,13 +82,13 @@ begin
   m_bColored    := False;
   m_bWithBorder := False;
   m_bGhost      := True;
-  m_bmpPaint    := TBitmap.Create;
+  m_bmpBuffer   := TBitmap32.Create;
 end;
 
 //==============================================================================
 destructor TAcrylicGhostPanel.Destroy;
 begin
-  m_bmpPaint.Free;
+  m_bmpBuffer.Free;
 
   Inherited;
 end;
@@ -101,40 +102,25 @@ end;
 
 //==============================================================================
 procedure TAcrylicGhostPanel.Paint;
-var
-  gdiGraphics : TGPGraphics;
-  gdiBrush    : TGPSolidBrush;
-  gdiPen      : TGPPen;
 begin
-  //////////////////////////////////////////////////////////////////////////////
-  ///  Clear Background
-  m_bmpPaint.SetSize(ClientWidth, ClientHeight);
+  m_bmpBuffer.SetSize(ClientWidth, ClientHeight);
 
   if g_bWithBlur
-    then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
-    else m_bmpPaint.Canvas.Brush.Color := m_clBackColor;
-
-  m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
-  m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
-
-  gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
+    then m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clTransparent)
+    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
 
   if m_bColored then
-  begin
-    gdiBrush    := TGPSolidBrush.Create(GdiColor(m_clColor));
-    gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, ClientHeight);
-    gdiBrush.Free;
-  end;
+    m_bmpBuffer.FillRectS(0, 0, ClientWidth, ClientHeight, m_clColor);
 
   if m_bWithBorder then
-  begin
-    gdiPen := TGPPen.Create(GdiColor(m_clBorderColor), 1);
-    gdiGraphics.DrawRectangle(gdiPen, 0, 0, ClientWidth - 1, ClientHeight - 1);
-    gdiPen.Free;
-  end;
+    m_bmpBuffer.FrameRectTS(0, 0, ClientWidth, ClientHeight, m_clBorderColor);
 
-  gdiGraphics.Free;
-  Canvas.Draw(0, 0, m_bmpPaint);
+  m_bmpBuffer.Lock;
+  try
+    BitBlt(Canvas.Handle, 0, 0, Width, Height, m_bmpBuffer.Handle, 0, 0, SRCCOPY);
+  finally
+    m_bmpBuffer.Unlock;
+  end;
 end;
 
 //==============================================================================

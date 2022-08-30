@@ -69,6 +69,8 @@ procedure Register;
 implementation
 
 uses
+  GR32,
+  GR32_Backends,
   Math,
   AcrylicUtilsU;
 
@@ -83,12 +85,12 @@ constructor TAcrylicScrollBox.Create(AOwner : TComponent);
 begin
   Inherited;
 
-  m_dLastTop := 0;
-  m_nLastY   := 0;
-
+  m_bGhost        := False;
+  m_dLastTop      := 0;
+  m_nLastY        := 0;
+  m_bWithBorder   := False;
   m_clScrollColor := ToAlphaColor(clWhite);
-  Color           := c_clFormColor;
-
+  m_clColor       := c_clFormColor;
   m_msMouseState  := msNone;
 end;
 
@@ -151,50 +153,46 @@ end;
 //==============================================================================
 procedure TAcrylicScrollBox.Paint;
 var
-  gdiGraphics : TGPGraphics;
-  gdiBrush    : TGPSolidBrush;
   nHeight     : Integer;
   nStart      : Integer;
 begin
   //////////////////////////////////////////////////////////////////////////////
-  ///  Clear Background
-  m_bmpPaint.SetSize(ClientWidth, ClientHeight);
+  ///  Paint Background
+  m_bmpBuffer.SetSize(ClientWidth, ClientHeight);
 
   if g_bWithBlur
-    then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
-    else m_bmpPaint.Canvas.Brush.Color := c_clFormBack;
+    then m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clTransparent)
+    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
 
-  m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
-  m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
+  if m_bColored then
+    m_bmpBuffer.FillRectS(0, 0, ClientWidth, ClientHeight, m_clColor);
 
-  gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
-  gdiBrush    := TGPSolidBrush.Create(GdiColor(m_clScrollColor));
-
-  if Colored then
-  begin
-    gdiBrush.SetColor(GdiColor(Color));
-    gdiGraphics.FillRectangle(gdiBrush, 0, 0, ClientWidth, ClientHeight);
-  end;
+  if m_bWithBorder then
+    m_bmpBuffer.FrameRectTS(0, 0, ClientWidth, ClientHeight, m_clBorderColor);
 
   //////////////////////////////////////////////////////////////////////////////
   ///  Paint ScrollBar
   if m_ScrollPanel <> nil then
   begin
-    gdiBrush.SetColor(GdiColor(m_clScrollColor));
-
     nHeight := Trunc(ClientHeight * (ClientHeight / m_ScrollPanel.Height));
 
     if m_ScrollPanel.Height > ClientHeight then
     begin
       nStart := Trunc((ClientHeight - nHeight) * (m_ScrollPanel.Top / (ClientHeight - m_ScrollPanel.Height)));
-      gdiGraphics.FillRectangle(gdiBrush, m_ScrollPanel.Width, nStart, c_nScrollBarWidth, nHeight);
+      m_bmpBuffer.FillRectT(m_ScrollPanel.Width,
+                           nStart,
+                           m_ScrollPanel.Width + c_nScrollBarWidth,
+                           nStart + nHeight,
+                           m_clScrollColor);
     end;
   end;
 
-  Canvas.Draw(0, 0, m_bmpPaint);
-
-  gdiGraphics.Free;
-  gdiBrush.Free;
+  m_bmpBuffer.Lock;
+  try
+    BitBlt(Canvas.Handle, 0, 0, Width, Height, m_bmpBuffer.Handle, 0, 0, SRCCOPY);
+  finally
+    m_bmpBuffer.Unlock;
+  end;
 end;
 
 //==============================================================================

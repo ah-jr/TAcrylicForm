@@ -323,12 +323,6 @@ begin
   imgClose.Top      := 0;
 
   lblTitle.Width    := imgClose.Left - 5;
-
-//  pnlTitle.Repaint;
-//  imgClose.Repaint;
-//  pnlBack.Repaint;
-//  m_pnlBody.Repaint;
-//  lblTitle.Repaint;
 end;
 
 //==============================================================================
