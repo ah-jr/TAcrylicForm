@@ -111,6 +111,9 @@ end;
 constructor TAcrylicFrame.Create(AOwner : TComponent);
 begin
   Inherited;
+
+  Visible := False;
+
   m_Canvas     := TCanvas.Create;
   m_bResizable := True;
 
@@ -174,7 +177,6 @@ end;
 //==============================================================================
 procedure TAcrylicFrame.WMNCSize(var Msg: TWMSize);
 begin
-  BringToFront;
   UpdatePositions;
 end;
 
@@ -276,10 +278,23 @@ begin
                    ((recInter.Height > c_nDistThreshold) and
                     (recInter.Width  > c_nDistThreshold)) then
                 begin
-                  x  := m_LastX;
-                  y  := m_LastY;
-                  cx := m_LastWidth;
-                  cy := m_LastHeight;
+                  if (m_LastWidth + m_LastX = recFrame.Left) or (m_LastX = recFrame.Right) then
+                  begin
+                    x  := m_LastX;
+                    cx := m_LastWidth;
+                  end
+                  else if (m_LastHeight + m_LastY = recFrame.Top) or (m_LastY = recFrame.Bottom) then
+                  begin
+                    y  := m_LastY;
+                    cy := m_LastHeight;
+                  end
+                  else
+                  begin
+                    x  := m_LastX;
+                    y  := m_LastY;
+                    cx := m_LastWidth;
+                    cy := m_LastHeight;
+                  end;
                 end
                 else
                   m_bIntersecting := True;
