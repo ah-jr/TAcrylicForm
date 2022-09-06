@@ -44,6 +44,8 @@ type
   TSingleArray = Array of Single;
   PSingleArray = ^TSingleArray;
 
+  TPopUpItemEvent  = procedure of object;
+
 implementation
 
 end.
