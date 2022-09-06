@@ -92,6 +92,19 @@ begin
   m_clScrollColor := ToAlphaColor(clWhite);
   m_clColor       := c_clFormColor;
   m_msMouseState  := msNone;
+
+  Self.Ghost := False;
+
+  m_ScrollPanel         := TAcrylicGhostPanel.Create(Self);
+  m_ScrollPanel.Parent  := Self;
+  m_ScrollPanel.Align   := alNone;
+  m_ScrollPanel.Left    := 0;
+  m_ScrollPanel.Top     := 0;
+  m_ScrollPanel.Width   := Width - c_nScrollBarWidth;
+  m_ScrollPanel.Height  := Height;
+  m_ScrollPanel.Ghost   := False;
+  m_ScrollPanel.Colored := Colored;
+  m_ScrollPanel.Color   := Color;
 end;
 
 //==============================================================================
@@ -117,37 +130,27 @@ procedure TAcrylicScrollBox.WMNCSize(var Message: TWMSize);
 begin
   Inherited;
 
-  m_ScrollPanel.Left   := 0;
-  m_ScrollPanel.Top    := 0;
-  m_ScrollPanel.Width  := ClientWidth - c_nScrollBarWidth;
+  if m_ScrollPanel <> nil then
+  begin
+    m_ScrollPanel.Left   := 0;
+    m_ScrollPanel.Top    := 0;
+    m_ScrollPanel.Width  := ClientWidth - c_nScrollBarWidth;
+  end;
 end;
 
 //==============================================================================
 procedure TAcrylicScrollBox.Loaded;
-var
-  nCtrlIdx : Integer;
+//var
+//  nCtrlIdx : Integer;
 begin
   Inherited;
 
-  Self.Ghost := False;
-
-  m_ScrollPanel         := TAcrylicGhostPanel.Create(Self);
-  m_ScrollPanel.Parent  := Self;
-  m_ScrollPanel.Align   := alNone;
-  m_ScrollPanel.Left    := 0;
-  m_ScrollPanel.Top     := 0;
-  m_ScrollPanel.Width   := ClientWidth - c_nScrollBarWidth;
-  m_ScrollPanel.Height  := ClientHeight;
-  m_ScrollPanel.Ghost   := False;
-  m_ScrollPanel.Colored := Colored;
-  m_ScrollPanel.Color   := Color;
-
-  for nCtrlIdx := 0 to ControlCount - 2 do
-  begin
-    m_ScrollPanel.Height := Max(m_ScrollPanel.Height, Controls[nCtrlIdx].Top + Controls[nCtrlIdx].Height);
-
-    Controls[nCtrlIdx].Parent := m_ScrollPanel;
-  end;
+//  for nCtrlIdx := 0 to ControlCount - 1 do
+//  begin
+//    m_ScrollPanel.Height := Max(m_ScrollPanel.Height, Controls[nCtrlIdx].Top + Controls[nCtrlIdx].Height);
+//
+//    Controls[nCtrlIdx].Parent := m_ScrollPanel;
+//  end;
 end;
 
 //==============================================================================
