@@ -21,6 +21,7 @@ uses
   DWMApi,
   AcrylicGhostPanelU,
   AcrylicTypesU,
+  AcrylicLabelU,
   GDIPOBJ,
   GDIPAPI,
   GDIPUTIL;
@@ -32,10 +33,9 @@ type
     Action : TPopUpItemEvent;
   end;
 
-
-  TAcrylicPopUpU = Class(TAcrylicGhostPanel)
+  TAcrylicPopUp = Class(TAcrylicGhostPanel)
   private
-    m_lstItems : TList<TPopUpItem>;
+    m_lstItems : TList<TAcrylicLabel>;
 
   protected
     procedure Paint; override;
@@ -45,6 +45,8 @@ type
     destructor  Destroy; override;
 
     procedure AddItem(a_puiItem : TPopUpItem);
+    procedure ClearItems;
+
     procedure PopUp(a_nLeft : Integer; a_nTop : Integer);
     procedure Hide;
 
@@ -58,8 +60,9 @@ type
 
 const
   c_nTextLeft   = 10;
-  c_nMinWidth   = 100;
-  c_nItemHeight = 30;
+  c_nMinWidth   = 50;
+  c_nItemHeight = 20;
+  c_nBorderSize = 5;
 
 procedure Register;
 
@@ -74,23 +77,27 @@ uses
 //==============================================================================
 procedure Register;
 begin
-  RegisterComponents('AcrylicComponents', [TAcrylicPopUpU]);
+  RegisterComponents('AcrylicComponents', [TAcrylicPopUp]);
 end;
 
 //==============================================================================
-constructor TAcrylicPopUpU.Create(AOwner : TComponent);
+constructor TAcrylicPopUp.Create(AOwner : TComponent);
 begin
+  Inherited;
+
   WithBorder := True;
   Visible    := False;
 
-  m_lstItems := TList<TPopUpItem>.Create;
+  BorderColor := c_clLavaOrange;
+
+  m_lstItems := TList<TAcrylicLabel>.Create;
 
   Width := c_nMinWidth;
-  Height := 10;
+  Height := 0;
 end;
 
 //==============================================================================
-destructor TAcrylicPopUpU.Destroy;
+destructor TAcrylicPopUp.Destroy;
 begin
   FreeAndNil(m_lstItems);
 
@@ -98,41 +105,66 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicPopUpU.AddItem(a_puiItem : TPopUpItem);
+procedure TAcrylicPopUp.AddItem(a_puiItem : TPopUpItem);
+var
+  AlLabel : TAcrylicLabel;
 begin
-  m_lstItems.Add(a_puiItem);
+  AlLabel        := TAcrylicLabel.Create(Self);
+  AlLabel.Parent := Self;
+  AlLabel.Left   := c_nBorderSize;
+  AlLabel.Top    := c_nBorderSize + m_lstItems.Count * c_nItemHeight;
+  AlLabel.Width  := Width - 2*c_nBorderSize;
+  AlLabel.Height := c_nItemHeight;
+  AlLabel.Text   := a_puiItem.Text;
+
+  m_lstItems.Add(AlLabel);
 end;
 
 //==============================================================================
-procedure TAcrylicPopUpU.PopUp(a_nLeft : Integer; a_nTop : Integer);
+procedure TAcrylicPopUp.ClearItems;
+var
+  AlLabel : TAcrylicLabel;
+begin
+  for AlLabel in m_lstItems do
+    FreeAndNil(AlLabel);
+
+  m_lstItems.Clear;
+end;
+
+//==============================================================================
+procedure TAcrylicPopUp.PopUp(a_nLeft : Integer; a_nTop : Integer);
+var
+  nMaxWidth : Integer;
+  AlLabel   : TAcrylicLabel;
 begin
   Left := a_nLeft;
   Top  := a_nTop;
 
-  Width := c_nMinWidth;
-  Height := m_lstItems.Count * c_nItemHeight;
+  nMaxWidth := c_nMinWidth;
+  for AlLabel in m_lstItems do
+    nMaxWidth := Max(c_nMinWidth, AlLabel.Width + 2*c_nBorderSize);
+
+  Width  := nMaxWidth;
+  Height := m_lstItems.Count * c_nItemHeight + 2*c_nBorderSize;
 
   if m_lstItems.Count > 0 then
     Visible := True;
+
+  BringToFront;
 end;
 
 //==============================================================================
-procedure TAcrylicPopUpU.Hide;
+procedure TAcrylicPopUp.Hide;
 begin
   Visible := False;
 end;
 
 //==============================================================================
-procedure TAcrylicPopUpU.Paint;
+procedure TAcrylicPopUp.Paint;
 var
   nIndex : Integer;
 begin
   Inherited;
-
-  for nIndex := 0 to m_lstItems.Count - 1 do
-  begin
-    Canvas.TextOut(c_nTextLeft, nIndex*c_nItemHeight, m_lstItems.Items[nIndex].Text);
-  end;
 end;
 
 end.
