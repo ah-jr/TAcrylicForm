@@ -21,16 +21,18 @@ uses
   AcrylicTypesU,
   AcrylicGhostPanelU;
 
-{$R ..\res\icons.res}
-
 type
   TAcrylicForm = class(TForm)
-    pnlTitleBar   : TAcrylicGhostPanel;
-    pnlBackground : TAcrylicGhostPanel;
-    pnlContent    : TPanel;
-    imgClose      : TImage;
-    imgMaximize   : TImage;
-    imgMinimize   : TImage;
+    pnlTitleBar      : TAcrylicGhostPanel;
+    pnlBackground    : TAcrylicGhostPanel;
+    pnlContent       : TPanel;
+    imgClose         : TImage;
+    imgMaximize      : TImage;
+    imgMinimize      : TImage;
+    imgCloseHover    : TImage;
+    imgMaximizeHover : TImage;
+    imgMinimizeHover : TImage;
+
     procedure FormCreate           (Sender: TObject);
     procedure FormPaint            (Sender: TObject);
     procedure imgMaximizeMouseEnter(Sender: TObject);
@@ -63,13 +65,6 @@ type
 
     m_recSize       : TRect;
     m_fsStyle       : TAcrylicFormStyle;
-
-    m_pngCloseN     : TPngImage;
-    m_pngCloseH     : TPngImage;
-    m_pngMaximizeN  : TPngImage;
-    m_pngMaximizeH  : TPngImage;
-    m_pngMinimizeN  : TPngImage;
-    m_pngMinimizeH  : TPngImage;
 
     m_tmrAcrylicChange: TTimer;
 
@@ -228,13 +223,6 @@ begin
   m_tmrAcrylicChange.OnTimer  := OnAcrylicTimer;
   m_tmrAcrylicChange.Enabled  := True;
 
-  m_pngCloseN     := TPngImage.Create;
-  m_pngCloseH     := TPngImage.Create;
-  m_pngMaximizeN  := TPngImage.Create;
-  m_pngMaximizeH  := TPngImage.Create;
-  m_pngMinimizeN  := TPngImage.Create;
-  m_pngMinimizeH  := TPngImage.Create;
-
   m_clBlurColor   := c_clFormBlur;
   m_clBorderColor := c_clFormBorder;
   m_clBackColor   := c_clFormBack;
@@ -253,30 +241,12 @@ begin
   m_nMaxHeight    := -1;
   m_nMaxWidth     := -1;
 
-  try
-    m_pngCloseN.LoadFromResourceName   (HInstance, 'close_normal');
-    m_pngCloseH.LoadFromResourceName   (HInstance, 'close_hover');
-    m_pngMaximizeN.LoadFromResourceName(HInstance, 'maximize_normal');
-    m_pngMaximizeH.LoadFromResourceName(HInstance, 'maximize_hover');
-    m_pngMinimizeN.LoadFromResourceName(HInstance, 'minimize_normal');
-    m_pngMinimizeH.LoadFromResourceName(HInstance, 'minimize_hover');
-  except
-
-  end;
-
   inherited;
 end;
 
 //==============================================================================
 destructor TAcrylicForm.Destroy;
 begin
-  m_pngCloseN.Free;
-  m_pngCloseH.Free;
-  m_pngMaximizeN.Free;
-  m_pngMaximizeH.Free;
-  m_pngMinimizeN.Free;
-  m_pngMinimizeH.Free;
-
   m_tmrAcrylicChange.Enabled := False;
   m_tmrAcrylicChange.Free;
 
@@ -291,14 +261,6 @@ begin
   EnableBlur(Handle, 4);
 
   pnlContent.Align := alNone;
-
-  // Load Icons:
-  try
-    imgClose.Picture.Graphic    := m_pngCloseN;
-    imgMaximize.Picture.Graphic := m_pngMaximizeN;
-    imgMinimize.Picture.Graphic := m_pngMinimizeN;
-  except
-  end;
 
   if WithBlur then
   begin
@@ -378,26 +340,38 @@ begin
 
   nIconCount := 1;
 
-  imgClose.Width     := c_nTopIconWidth;
-  imgClose.Height    := c_nTopIconHeight;
-  imgClose.Left      := Width - nIconCount * c_nTopIconWidth;
-  imgClose.Top       := 0;
+  imgClose.Width       := c_nTopIconWidth;
+  imgClose.Height      := c_nTopIconHeight;
+  imgClose.Left        := Width - nIconCount * c_nTopIconWidth;
+  imgClose.Top         := 0;
+  imgCloseHover.Width  := c_nTopIconWidth;
+  imgCloseHover.Height := c_nTopIconHeight;
+  imgCloseHover.Left   := Width - nIconCount * c_nTopIconWidth;
+  imgCloseHover.Top    := 0;
 
-  if imgClose.Visible then
+  if fsClose in m_fsStyle then
     Inc(nIconCount);
 
-  imgMaximize.Width  := imgClose.Width;
-  imgMaximize.Height := imgClose.Height;
-  imgMaximize.Left   := Width - nIconCount * c_nTopIconWidth;
-  imgMaximize.Top    := imgClose.Top;
+  imgMaximize.Width       := imgClose.Width;
+  imgMaximize.Height      := imgClose.Height;
+  imgMaximize.Left        := Width - nIconCount * c_nTopIconWidth;
+  imgMaximize.Top         := imgClose.Top;
+  imgMaximizeHover.Width  := imgClose.Width;
+  imgMaximizeHover.Height := imgClose.Height;
+  imgMaximizeHover.Left   := Width - nIconCount * c_nTopIconWidth;
+  imgMaximizeHover.Top    := imgClose.Top;
 
-  if imgMaximize.Visible then
+  if fsMaximize in m_fsStyle then
     Inc(nIconCount);
 
-  imgMinimize.Width  := imgClose.Width;
-  imgMinimize.Height := imgClose.Height;
-  imgMinimize.Left   := Width - nIconCount * c_nTopIconWidth;
-  imgMinimize.Top    := imgClose.Top;
+  imgMinimize.Width       := imgClose.Width;
+  imgMinimize.Height      := imgClose.Height;
+  imgMinimize.Left        := Width - nIconCount * c_nTopIconWidth;
+  imgMinimize.Top         := imgClose.Top;
+  imgMinimizeHover.Width  := imgClose.Width;
+  imgMinimizeHover.Height := imgClose.Height;
+  imgMinimizeHover.Left   := Width - nIconCount * c_nTopIconWidth;
+  imgMinimizeHover.Top    := imgClose.Top;
 end;
 
 //==============================================================================
@@ -483,38 +457,44 @@ end;
 //==============================================================================
 procedure TAcrylicForm.imgCloseMouseEnter(Sender: TObject);
 begin
-  imgClose.Picture.Graphic := m_pngCloseH;
+  imgClose.Visible      := False;
+  imgCloseHover.Visible := True;
 end;
 
 //==============================================================================
 procedure TAcrylicForm.imgCloseMouseLeave(Sender: TObject);
 begin
-  imgClose.Picture.Graphic := m_pngCloseN;
+  imgClose.Visible      := True;
+  imgCloseHover.Visible := False;
 end;
 
 //==============================================================================
 procedure TAcrylicForm.imgMaximizeMouseEnter(Sender: TObject);
 begin
-  imgMaximize.Picture.Graphic := m_pngMaximizeH;
+  imgMaximize.Visible      := False;
+  imgMaximizeHover.Visible := True;
 end;
 
 //==============================================================================
 procedure TAcrylicForm.imgMaximizeMouseLeave(Sender: TObject);
 begin
-  imgMaximize.Picture.Graphic := m_pngMaximizeN;
+  imgMaximize.Visible      := True;
+  imgMaximizeHover.Visible := False;
 end;
 
 //==============================================================================
 
 procedure TAcrylicForm.imgMinimizeMouseEnter(Sender: TObject);
 begin
-  imgMinimize.Picture.Graphic := m_pngMinimizeH;
+  imgMinimize.Visible      := False;
+  imgMinimizeHover.Visible := True;
 end;
 
 //==============================================================================
 procedure TAcrylicForm.imgMinimizeMouseLeave(Sender: TObject);
 begin
-  imgMinimize.Picture.Graphic := m_pngMinimizeN;
+  imgMinimize.Visible      := True;
+  imgMinimizeHover.Visible := False;
 end;
 
 //==============================================================================

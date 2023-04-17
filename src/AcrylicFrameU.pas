@@ -28,10 +28,11 @@ uses
 type
 
   TAcrylicFrame = Class(TFrame)
-    imgClose: TImage;
-    pnlTitle: TAcrylicGhostPanel;
-    lblTitle: TAcrylicLabel;
-    pnlBack : TAcrylicGhostPanel;
+    imgClose      : TImage;
+    pnlTitle      : TAcrylicGhostPanel;
+    lblTitle      : TAcrylicLabel;
+    pnlBack       : TAcrylicGhostPanel;
+    imgCloseHover : TImage;
 
     procedure imgCloseMouseEnter   (Sender: TObject);
     procedure imgCloseMouseLeave   (Sender: TObject);
@@ -55,9 +56,6 @@ type
     m_nMinWidth     : Integer;
     m_nMaxHeight    : Integer;
     m_nMaxWidth     : Integer;
-
-    m_pngCloseN     : TPngImage;
-    m_pngCloseH     : TPngImage;
 
     m_pnlBody       : TAcrylicGhostPanel;
 
@@ -123,8 +121,6 @@ constructor TAcrylicFrame.Create(AOwner : TComponent);
 begin
   Inherited;
 
-  Visible := False;
-
   m_Canvas     := TCanvas.Create;
   m_bResizable := True;
 
@@ -160,26 +156,11 @@ begin
   m_nMaxWidth     := -1;
 
   m_bIntersecting := True;
-
-  m_pngCloseN     := TPngImage.Create;
-  m_pngCloseH     := TPngImage.Create;
-
-  try
-    m_pngCloseN.LoadFromResourceName(HInstance, 'close_normal_mini');
-    m_pngCloseH.LoadFromResourceName(HInstance, 'close_hover_mini');
-
-    imgClose.Picture.Graphic := m_pngCloseN;
-  except
-
-  end;
 end;
 
 //==============================================================================
 destructor TAcrylicFrame.Destroy;
 begin
-  m_pngCloseN.Free;
-  m_pngCloseH.Free;
-
   m_Canvas.Free;
   Inherited;
 end;
@@ -357,10 +338,15 @@ begin
   pnlTitle.Top      := 1;
   pnlTitle.Width    := Width - 2;
 
-  imgClose.Width    := c_nTopIconWidth;
-  imgClose.Height   := c_nTopIconHeight;
-  imgClose.Left     := pnlTitle.Width - c_nTopIconWidth;
-  imgClose.Top      := 0;
+  imgClose.Width       := c_nTopIconWidth;
+  imgClose.Height      := c_nTopIconHeight;
+  imgClose.Left        := pnlTitle.Width - c_nTopIconWidth;
+  imgClose.Top         := 0;
+
+  imgCloseHover.Width  := c_nTopIconWidth;
+  imgCloseHover.Height := c_nTopIconHeight;
+  imgCloseHover.Left   := pnlTitle.Width - c_nTopIconWidth;
+  imgCloseHover.Top    := 0;
 
   lblTitle.Width    := imgClose.Left - 5;
 end;
@@ -382,13 +368,15 @@ end;
 //==============================================================================
 procedure TAcrylicFrame.imgCloseMouseEnter(Sender: TObject);
 begin
-  imgClose.Picture.Graphic := m_pngCloseH;
+  imgClose.Visible      := False;
+  imgCloseHover.Visible := True;
 end;
 
 //==============================================================================
 procedure TAcrylicFrame.imgCloseMouseLeave(Sender: TObject);
 begin
-  imgClose.Picture.Graphic := m_pngCloseN;
+  imgClose.Visible      := True;
+  imgCloseHover.Visible := False;
 end;
 
 //==============================================================================
