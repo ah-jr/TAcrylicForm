@@ -80,6 +80,7 @@
         <BRCC_OutputDir>res</BRCC_OutputDir>
         <PreBuildEvent><![CDATA[compile_resources.bat
 $(PreBuildEvent)]]></PreBuildEvent>
+        <DCC_UnitSearchPath>deps\GR32;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
