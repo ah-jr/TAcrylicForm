@@ -116,6 +116,8 @@ begin
   AlLabel.Width  := Width - 2*c_nBorderSize;
   AlLabel.Height := c_nItemHeight;
   AlLabel.Text   := a_puiItem.Text;
+  AlLabel.WithBackground := True;
+  AlLabel.Clickable := True;
 
   m_lstItems.Add(AlLabel);
 end;
@@ -161,8 +163,6 @@ end;
 
 //==============================================================================
 procedure TAcrylicPopUp.Paint;
-var
-  nIndex : Integer;
 begin
   Inherited;
 end;

@@ -110,7 +110,11 @@ begin
     else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
 
   if m_bColored then
-    m_bmpBuffer.FillRectS(0, 0, ClientWidth, ClientHeight, m_clColor);
+  begin
+    if g_bWithBlur
+      then m_bmpBuffer.FillRectS(0, 0, ClientWidth, ClientHeight, m_clColor)
+      else m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, m_clColor);
+  end;
 
   if m_bWithBorder then
     m_bmpBuffer.FrameRectTS(0, 0, ClientWidth, ClientHeight, m_clBorderColor);

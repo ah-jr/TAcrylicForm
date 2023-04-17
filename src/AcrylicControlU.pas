@@ -34,6 +34,7 @@ type
     procedure SetText           (a_strText   : String);
     procedure SetTriggerDblClick(a_nDblClick : Boolean);
 
+
   protected
     m_msMouseState  : TMouseState;
     m_strText       : String;
@@ -87,6 +88,7 @@ type
     property WithBackground  : Boolean     read m_bWithBack     write m_bWithBack;
     property Ghost           : Boolean     read m_bGhost        write m_bGhost;
     property TriggerDblClick : Boolean                          write SetTriggerDblClick;
+    property Clickable       : Boolean     read m_bClickable    write m_bClickable;
 
     property Enabled;
     property OnClick;

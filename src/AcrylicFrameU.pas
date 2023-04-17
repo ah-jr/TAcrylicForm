@@ -51,6 +51,11 @@ type
     m_LastWidth     : Integer;
     m_LastHeight    : Integer;
 
+    m_nMinHeight    : Integer;
+    m_nMinWidth     : Integer;
+    m_nMaxHeight    : Integer;
+    m_nMaxWidth     : Integer;
+
     m_pngCloseN     : TPngImage;
     m_pngCloseH     : TPngImage;
 
@@ -61,6 +66,7 @@ type
     procedure WMNCHitTest        (var Msg: TWMNCHitTest);         message WM_NCHITTEST;
     procedure WMPaint            (var Msg: TWMPaint);             message WM_PAINT;
     procedure WMWINDOWPOSChanging(Var Msg: TWMWINDOWPOSChanging); message WM_WINDOWPOSChanging;
+    procedure WMGetMinMaxInfo    (var Msg: TWMGetMinMaxInfo);     message WM_GETMINMAXINFO;
 
     procedure UpdatePositions;
     procedure SetTitle(a_strTitle : String);
@@ -80,6 +86,11 @@ type
     property BackColor   : TColor      read m_clBackColor   write m_clBackColor;
     property Resisable   : Boolean     read m_bResizable    write m_bResizable;
     property Title       : String      read m_strTitle      write SetTitle;
+
+    property MinWidth    : Integer     read m_nMinWidth     write m_nMinWidth;
+    property MinHeight   : Integer     read m_nMinHeight    write m_nMinHeight;
+    property MaxWidth    : Integer     read m_nMaxWidth     write m_nMaxWidth;
+    property MaxHeight   : Integer     read m_nMaxHeight    write m_nMaxHeight;
 
     property Visible;
   end;
@@ -124,18 +135,29 @@ begin
   m_pnlBody         := TAcrylicghostPanel.Create(pnlBack);
   m_pnlBody.Parent  := pnlBack;
   m_pnlBody.Ghost   := True;
-  m_pnlBody.Colored := True;
-  m_pnlBody.Color   := c_clFormColor;
+  m_pnlBody.Colored := False;
 
-  pnlBack.Colored     := False;
+  pnlBack.Colored     := True;
+  pnlBack.Color       := c_clFormColor;
   pnlBack.WithBorder  := True;
   pnlBack.Bordercolor := c_clFormBorder;
+
+  pnlTitle.Colored    := True;
+  pnlTitle.Color      := c_clFormColor;
+
+  lblTitle.Color          := c_clFormColor;
+  lblTitle.WithBackground := True;
 
   m_LastX         := 0;
   m_LastY         := 0;
   m_LastWidth     := 1;
   m_LastHeight    := 1;
   m_strTitle      := '';
+
+  m_nMinHeight    := 100;
+  m_nMinWidth     := 100;
+  m_nMaxHeight    := -1;
+  m_nMaxWidth     := -1;
 
   m_bIntersecting := True;
 
@@ -170,8 +192,11 @@ end;
 
 //==============================================================================
 procedure TAcrylicFrame.WMPaint(var Msg: TWMPaint);
+var
+  PS : TPaintStruct;
 begin
-  PaintHandler(Msg);
+  BeginPaint(Handle, PS);
+  EndPaint(Handle, PS);
 end;
 
 //==============================================================================
@@ -364,6 +389,27 @@ end;
 procedure TAcrylicFrame.imgCloseMouseLeave(Sender: TObject);
 begin
   imgClose.Picture.Graphic := m_pngCloseN;
+end;
+
+//==============================================================================
+procedure TAcrylicFrame.WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo);
+var
+  MinMaxInfo : PMinMaxInfo;
+begin
+  inherited;
+  MinMaxInfo := Msg.MinMaxInfo;
+
+  if m_nMaxWidth > 0 then
+    MinMaxInfo^.ptMaxTrackSize.X := m_nMaxWidth;
+
+  if m_nMaxHeight > 0 then
+    MinMaxInfo^.ptMaxTrackSize.Y := m_nMaxHeight;
+
+  if m_nMinWidth > 0 then
+    MinMaxInfo^.ptMinTrackSize.X := m_nMinWidth;
+
+  if m_nMinHeight > 0 then
+    MinMaxInfo^.ptMinTrackSize.Y := m_nMinHeight;
 end;
 
 end.

@@ -247,8 +247,8 @@ begin
   m_recSize       := TRect.Create(Left,Top,Width,Height);
   m_fsStyle       := [fsClose, fsMinimize, fsMaximize];
 
-  m_nMinHeight    := 1;
-  m_nMinWidth     := 1;
+  m_nMinHeight    := 100;
+  m_nMinWidth     := 100;
 
   m_nMaxHeight    := -1;
   m_nMaxWidth     := -1;
@@ -585,7 +585,6 @@ end;
 
 //==============================================================================
 procedure TAcrylicForm.WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo);
-{sets Size-limits for the Form}
 var
   MinMaxInfo : PMinMaxInfo;
 begin
