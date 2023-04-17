@@ -78,7 +78,7 @@ constructor TAcrylicGhostPanel.Create(AOwner : TComponent);
 begin
   Inherited;
   m_clBackColor := c_clFormBack;
-  m_clColor     := c_clFormBack;
+  m_clColor     := c_clFormColor;
   m_bColored    := False;
   m_bWithBorder := False;
   m_bGhost      := True;
@@ -110,11 +110,7 @@ begin
     else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
 
   if m_bColored then
-  begin
-    if g_bWithBlur
-      then m_bmpBuffer.FillRectS(0, 0, ClientWidth, ClientHeight, m_clColor)
-      else m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, m_clColor);
-  end;
+    m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, m_clColor);
 
   if m_bWithBorder then
     m_bmpBuffer.FrameRectTS(0, 0, ClientWidth, ClientHeight, m_clBorderColor);

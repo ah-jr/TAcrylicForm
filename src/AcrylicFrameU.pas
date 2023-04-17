@@ -267,7 +267,7 @@ begin
 
         ////////////////////////////////////////////////////////////////////////
         ///  Check if intersects other frames
-        for nIndex := 0 to pnlParent.ComponentCount - 1 do
+        for nIndex := 0 to pnlParent.ControlCount - 1 do
         begin
           if pnlParent.Controls[nIndex] is TAcrylicFrame then
           begin

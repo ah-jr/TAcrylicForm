@@ -83,7 +83,6 @@ var
   msStream  : TMemoryStream;
   saAdapter : TStreamAdapter;
 begin
-  PaintBackground;
   PaintText;
 
   //////////////////////////////////////////////////////////////////////////////

@@ -16,6 +16,8 @@ uses
   Vcl.StdCtrls,
   Vcl.ExtCtrls,
   Vcl.Imaging.pngimage,
+  GR32,
+  GR32_Backends,
   AcrylicTypesU,
   GDIPOBJ,
   GDIPAPI,
@@ -52,6 +54,7 @@ type
     m_bWithBack     : Boolean;
     m_bClickable    : Boolean;
     m_bGhost        : Boolean;
+    m_bmpBuffer     : TBitmap32;
 
     m_gdiGraphics   : TGPGraphics;
     m_gdiSolidPen   : TGPPen;
@@ -133,6 +136,8 @@ begin
   m_fFont.Size    := 8;
   m_fFont.Style   := [];
 
+  m_bmpBuffer     := TBitmap32.Create;
+
   m_gdiGraphics   := nil;
   m_gdiSolidPen   := TGPPen.Create(0);
   m_gdiBrush      := TGPSolidBrush.Create(0);
@@ -148,6 +153,7 @@ begin
   m_gdiSolidPen.Free;
   m_gdiBrush.Free;
   m_strTexts.Free;
+  m_bmpBuffer.Free;
 
   Inherited;
 end;
@@ -186,17 +192,18 @@ begin
     // Create bitmap that will contain the final result
     m_bmpPaint.SetSize(ClientWidth,ClientHeight);
 
-    if g_bWithBlur
-      then m_bmpPaint.Canvas.Brush.Color := c_clTransparent
-      else m_bmpPaint.Canvas.Brush.Color := m_clBackColor;
+    //////////////////////////////////////////////////////////////////////////////
+    // Draw background
+    PaintBackground;
 
-    m_bmpPaint.Canvas.Pen.Color := m_bmpPaint.Canvas.Brush.Color;
-    m_bmpPaint.Canvas.Rectangle(0, 0, ClientWidth, ClientHeight);
-
+    //////////////////////////////////////////////////////////////////////////////
+    // Initializes GDI
     m_gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
     m_gdiGraphics.SetSmoothingMode(SmoothingModeNone);
     m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
 
+    //////////////////////////////////////////////////////////////////////////////
+    // Draw Component
     PaintComponent;
     PaintEnabled;
 
@@ -211,40 +218,35 @@ end;
 //==============================================================================
 procedure TAcrylicControl.PaintBackground;
 var
-  nColor  : Cardinal;
-  recBack : TGPRect;
+  clColor : TAlphaColor;
 begin
-  nColor := 0;
+  m_bmpBuffer.SetSize(ClientWidth, ClientHeight);
+
+  if g_bWithBlur
+    then m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clTransparent)
+    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
 
   if m_bWithBack then
   begin
-    if Enabled then
-    begin
-      case m_msMouseState of
-        msNone    : nColor := GdiChangeColor(m_clColor, 0,  0,  0,  0);
-        msHover   : nColor := GdiChangeColor(m_clColor, 0, 25, 25, 25);
-        msClicked : nColor := GdiChangeColor(m_clColor, 0, 40, 40, 40);
-      end;
-    end
-    else
-      nColor := GdiColor(m_clColor);
+    clColor := 0;
 
-    if m_bWithBorder then
-      recBack := MakeRect(1, 1, ClientWidth - 2, ClientHeight - 2)
-    else
-      recBack := MakeRect(0, 0, ClientWidth, ClientHeight);
+    case m_msMouseState of
+      msNone    : clColor := ChangeColor(m_clColor, 0,  0,  0,  0);
+      msHover   : clColor := ChangeColor(m_clColor, 0, 25, 25, 25);
+      msClicked : clColor := ChangeColor(m_clColor, 0, 40, 40, 40);
+    end;
 
-    m_gdiBrush.SetColor(nColor);
-    m_gdiGraphics.FillRectangle(m_gdiBrush, recBack);
+    m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, clColor);
   end;
 
   if m_bWithBorder then
-  begin
-    nColor := GdiColor(m_clBorderColor);
+    m_bmpBuffer.FrameRectTS(0, 0, ClientWidth, ClientHeight, m_clBorderColor);
 
-    m_gdiSolidPen.SetWidth(1);
-    m_gdiSolidPen.SetColor(nColor);
-    m_gdiGraphics.DrawRectangle(m_gdiSolidPen, 0, 0, ClientWidth - 1, ClientHeight - 1);
+  m_bmpBuffer.Lock;
+  try
+    BitBlt(m_bmpPaint.Canvas.Handle, 0, 0, Width, Height, m_bmpBuffer.Handle, 0, 0, SRCCOPY);
+  finally
+    m_bmpBuffer.Unlock;
   end;
 end;
 
@@ -321,6 +323,7 @@ begin
     m_gdiGraphics.FillRectangle(m_gdiBrush, 1, 1, ClientWidth-2, ClientHeight-2);
   end;
 end;
+
 //==============================================================================
 procedure TAcrylicControl.PaintComponent;
 begin

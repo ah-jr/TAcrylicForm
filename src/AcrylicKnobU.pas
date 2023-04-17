@@ -130,7 +130,6 @@ procedure TAcrylicKnob.PaintComponent;
 var
   nAngle : Integer;
 begin
-  PaintBackground;
   PaintText;
 
   //////////////////////////////////////////////////////////////////////////////

@@ -57,7 +57,6 @@ end;
 //==============================================================================
 procedure TAcrylicLabel.PaintComponent;
 begin
-  PaintBackground;
   PaintText;
 end;
 

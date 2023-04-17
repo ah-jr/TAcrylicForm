@@ -13,7 +13,7 @@ const
   c_clCtrlBorder   = $34777777;
   c_clCtrlDisabled = $A0252525;
 
-  c_clFormColor    = $45000000;
+  c_clFormColor    = $85000000;
   c_clFormBorder   = $30FFFFFF;
   c_clFormBack     = $1F1F1F;
   c_clFormBlur     = $202020;

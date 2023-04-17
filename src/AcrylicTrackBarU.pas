@@ -144,8 +144,6 @@ var
 const
   c_nEPS = 0.01;
 begin
-  PaintBackground;
-
   m_gdiGraphics.SetSmoothingMode(SmoothingModeHighQuality);
   m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
   m_gdiSolidPen.SetLineJoin(LineJoinBevel);
