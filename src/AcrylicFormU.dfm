@@ -18,10 +18,11 @@ object AcrylicForm: TAcrylicForm
   PixelsPerInch = 96
   TextHeight = 13
   object pnlBackground: TAcrylicGhostPanel
-    Left = 1
-    Top = 1
-    Width = 615
-    Height = 517
+    Left = 0
+    Top = 0
+    Width = 617
+    Height = 519
+    Align = alClient
     BevelOuter = bvNone
     Color = x001F1F1F
     TabOrder = 0
@@ -29,11 +30,11 @@ object AcrylicForm: TAcrylicForm
     Colored = False
     Backcolor = 2039583
     Bordercolor = claNull
-    WithBorder = False
+    WithBorder = True
     object pnlTitleBar: TAcrylicGhostPanel
       Left = 0
       Top = 0
-      Width = 615
+      Width = 617
       Height = 41
       Align = alTop
       BevelOuter = bvNone
@@ -226,14 +227,20 @@ object AcrylicForm: TAcrylicForm
         OnMouseLeave = imgMinimizeMouseLeave
       end
     end
-    object pnlContent: TPanel
+    object pnlContent: TAcrylicGhostPanel
       Left = 0
       Top = 41
-      Width = 615
-      Height = 476
+      Width = 617
+      Height = 478
       Align = alClient
-      BevelOuter = bvNone
+      Caption = 'pnlContent'
+      Color = x85000000
       TabOrder = 1
+      Ghost = True
+      Colored = False
+      Backcolor = 2039583
+      Bordercolor = claBlack
+      WithBorder = False
     end
   end
 end

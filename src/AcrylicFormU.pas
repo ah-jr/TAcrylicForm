@@ -25,7 +25,7 @@ type
   TAcrylicForm = class(TForm)
     pnlTitleBar      : TAcrylicGhostPanel;
     pnlBackground    : TAcrylicGhostPanel;
-    pnlContent       : TPanel;
+    pnlContent       : TAcrylicGhostPanel;
     imgClose         : TImage;
     imgMaximize      : TImage;
     imgMinimize      : TImage;
@@ -74,13 +74,12 @@ type
     procedure EnableBlur    (hwndHandle : HWND; nMode: Integer);
     procedure OnAcrylicTimer(Sender     : TObject);
     procedure SetColor      (a_clColor  : TColor);
+    procedure SetBorderColor(a_clColor  : TAlphaColor);
+    procedure SetWithBorder (a_bBorder  : Boolean);
     procedure SetBlurAmount (a_btAmount : Byte);
     procedure ToggleBlur    (a_bBlur    : Boolean);
 
     function  GetWithBlur : Boolean;
-
-    procedure PaintBackground;
-    procedure PaintBorder;
 
     procedure WMNCMoving     (var Msg: TWMMoving);        message WM_MOVING;
     procedure WMNCSize       (var Msg: TWMSize);          message WM_SIZE;
@@ -94,8 +93,8 @@ type
     property Style : TAcrylicFormStyle read m_fsStyle       write m_fsStyle;
 
     property WithBlur    : Boolean     read GetWithBlur     write ToggleBlur;
-    property WithBorder  : Boolean     read m_bWithBorder   write m_bWithBorder;
-    property BorderColor : TAlphaColor read m_clBorderColor write m_clBorderColor;
+    property WithBorder  : Boolean     read m_bWithBorder   write SetWithBorder;
+    property BorderColor : TAlphaColor read m_clBorderColor write SetBorderColor;
     property BackColor   : TColor      read m_clBackColor   write m_clBackColor;
     property BlurColor   : TColor      read m_clBlurColor   write SetColor;
     property BlurAmount  : Byte        read m_btBlurAmount  write SetBlurAmount;
@@ -136,9 +135,6 @@ procedure Register;
 implementation
 
 uses
-  GDIPAPI,
-  GDIPUTIL,
-  GDIPOBJ,
   AcrylicUtilsU;
 
 {$R *.dfm}
@@ -168,9 +164,27 @@ begin
 end;
 
 //==============================================================================
+procedure TAcrylicForm.SetWithBorder(a_bBorder : Boolean);
+begin
+  m_bWithBorder := a_bBorder;
+  pnlBackground.WithBorder := m_bWithBorder;
+
+  EnableBlur(Handle, 4);
+end;
+
+//==============================================================================
 procedure TAcrylicForm.SetColor(a_clColor : TColor);
 begin
   m_clBlurColor := a_clColor;
+  EnableBlur(Handle, 4);
+end;
+
+//==============================================================================
+procedure TAcrylicForm.SetBorderColor(a_clColor : TAlphaColor);
+begin
+  m_clBorderColor := a_clColor;
+  pnlBackground.BorderColor := m_clBorderColor;
+
   EnableBlur(Handle, 4);
 end;
 
@@ -242,6 +256,10 @@ begin
   m_nMaxWidth     := -1;
 
   inherited;
+
+  pnlBackground.Align       := alNone;
+  pnlBackground.WithBorder  := m_bWithBorder;
+  pnlBackground.BorderColor := m_clBorderColor;
 end;
 
 //==============================================================================
@@ -283,44 +301,7 @@ end;
 //==============================================================================
 procedure TAcrylicForm.FormPaint(Sender: TObject);
 begin
-  PaintBackground;
-  PaintBorder;
-end;
-
-//==============================================================================
-procedure TAcrylicForm.PaintBackground;
-var
-  gdiGraphics   : TGPGraphics;
-  gdiSolidBrush : TGPSolidBrush;
-begin
-  if not WithBlur then
-  begin
-    gdiGraphics   := TGPGraphics.Create(Canvas.Handle);
-    gdiSolidBrush := TGPSolidBrush.Create(GdiColor(m_clBackColor));
-
-    gdiGraphics.FillRectangle(gdiSolidBrush, 1, 1, ClientWidth - 1, ClientHeight - 1);
-
-    gdiGraphics.Free;
-    gdiSolidBrush.Free;
-  end;
-end;
-
-//==============================================================================
-procedure TAcrylicForm.PaintBorder;
-var
-  gdiGraphics : TGPGraphics;
-  gdiSolidPen : TGPPen;
-begin
-  if m_bWithBorder then
-  begin
-    gdiGraphics := TGPGraphics.Create(Canvas.Handle);
-    gdiSolidPen := TGPPen.Create(GdiColor(m_clBorderColor), 1);
-
-    gdiGraphics.DrawRectangle(gdiSolidPen, 0, 0, ClientWidth - 1, ClientHeight - 1);
-
-    gdiGraphics.Free;
-    gdiSolidPen.Free;
-  end;
+  // Do nothing
 end;
 
 //==============================================================================
@@ -328,10 +309,10 @@ procedure TAcrylicForm.UpdatePositions;
 var
   nIconCount : Integer;
 begin
-  pnlBackground.Left    := 1;
-  pnlBackground.Top     := 1;
-  pnlBackground.Width   := ClientWidth  - 2;
-  pnlBackground.Height  := ClientHeight - 2;
+  pnlBackground.Left    := 0;
+  pnlBackground.Top     := 0;
+  pnlBackground.Width   := ClientWidth;
+  pnlBackground.Height  := ClientHeight;
 
   pnlContent.Left    := c_nBorderTriggerSize;
   pnlContent.Top     := pnlTitleBar.Height;

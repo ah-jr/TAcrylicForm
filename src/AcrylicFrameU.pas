@@ -136,7 +136,7 @@ begin
   pnlBack.Colored     := True;
   pnlBack.Color       := c_clFormColor;
   pnlBack.WithBorder  := True;
-  pnlBack.Bordercolor := c_clFormBorder;
+  pnlBack.Bordercolor := c_clFrameBorder;
 
   pnlTitle.Colored    := True;
   pnlTitle.Color      := c_clFormColor;

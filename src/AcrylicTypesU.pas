@@ -10,11 +10,12 @@ const
   c_clCtrlFont     = $FFFFFFFF;
   c_clCtrlMisc     = $FFFFFFFF;
   c_clCtrlColor    = $640F0F0F;
-  c_clCtrlBorder   = $34777777;
+  c_clCtrlBorder   = $A0050505;
   c_clCtrlDisabled = $A0252525;
 
-  c_clFormColor    = $85000000;
+  c_clFormColor    = $B0101012;
   c_clFormBorder   = $30FFFFFF;
+  c_clFrameBorder  = $644A4A4A;
   c_clFormBack     = $1F1F1F;
   c_clFormBlur     = $202020;
   c_clTransparent  = $000000;
