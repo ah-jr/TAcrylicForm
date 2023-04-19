@@ -59,8 +59,6 @@ type
 
     m_nMinHeight    : Integer;
     m_nMinWidth     : Integer;
-    m_nMaxHeight    : Integer;
-    m_nMaxWidth     : Integer;
 
     m_ptMouseOffset : TPoint;
     m_recSize       : TRect;
@@ -104,8 +102,6 @@ type
     property Resizable   : Boolean     read m_bResizable    write m_bResizable;
     property MinWidth    : Integer     read m_nMinWidth     write m_nMinWidth;
     property MinHeight   : Integer     read m_nMinHeight    write m_nMinHeight;
-    property MaxWidth    : Integer     read m_nMaxWidth     write m_nMaxWidth;
-    property MaxHeight   : Integer     read m_nMaxHeight    write m_nMaxHeight;
 
   end;
 
@@ -161,89 +157,116 @@ var
   ptMouse    : TPoint;
   nRight     : Integer;
   nBottom    : Integer;
+  recBounds  : TRect;
+  recOld     : TRect;
 begin
-  GetCursorPos(ptMouse);
-  nRight  := Width + Left;
-  nBottom := Height + Top;
-
   if not(GetKeyState(VK_LBUTTON) and $8000 <> 0) then
   begin
     m_htClickHit := HTNOWHERE;
     m_tmrMouseMove.Enabled := False;
-  end;
+  end
+  else
+  begin
+    GetCursorPos(ptMouse);
+    nRight  := Width + Left;
+    nBottom := Height + Top;
 
-  case m_htClickHit of
-    HTCAPTION:
-      begin
-        SetBounds(ptMouse.X - m_ptMouseOffset.X,
-                  ptMouse.Y - m_ptMouseOffset.Y,
-                  Width,
-                  Height);
-      end;
+    recOld.Left   := Left;
+    recOld.Top    := Top;
+    recOld.Width  := Width;
+    recOld.Height := Height;
 
-    HTTOPLEFT:
-      begin
-        SetBounds(ptMouse.X,
-                  ptMouse.Y,
-                  nRight  - ptMouse.X,
-                  nBottom - ptMouse.Y);
-      end;
+    case m_htClickHit of
+      HTCAPTION:
+        begin
+          recBounds.Left   := ptMouse.X - m_ptMouseOffset.X;
+          recBounds.Top    := ptMouse.Y - m_ptMouseOffset.Y;
+          recBounds.Width  := Width;
+          recBounds.Height := Height;
+        end;
 
-    HTTOP:
-      begin
-        SetBounds(Left,
-                  ptMouse.Y,
-                  Width,
-                  nBottom - ptMouse.Y);
-      end;
+      HTTOPLEFT:
+        begin
+          recBounds.Left   := ptMouse.X;
+          recBounds.Top    := ptMouse.Y;
+          recBounds.Width  := nRight  - ptMouse.X;
+          recBounds.Height := nBottom - ptMouse.Y;
+        end;
 
-    HTTOPRIGHT:
-      begin
-        SetBounds(Left,
-                  ptMouse.Y,
-                  ptMouse.X - Left,
-                  nBottom - ptMouse.Y);
-      end;
+      HTTOP:
+        begin
+          recBounds.Left   := Left;
+          recBounds.Top    := ptMouse.Y;
+          recBounds.Width  := Width;
+          recBounds.Height := nBottom - ptMouse.Y;
+        end;
 
-    HTRIGHT:
-      begin
-        SetBounds(Left,
-                  Top,
-                  ptMouse.X - Left,
-                  Height);
-      end;
+      HTTOPRIGHT:
+        begin
+          recBounds.Left   := Left;
+          recBounds.Top    := ptMouse.Y;
+          recBounds.Width  := ptMouse.X - Left;
+          recBounds.Height := nBottom - ptMouse.Y;
+        end;
 
-    HTBOTTOMRIGHT:
-      begin
-        SetBounds(Left,
-                  Top,
-                  ptMouse.X - Left,
-                  ptMouse.Y - Top);
-      end;
+      HTRIGHT:
+        begin
+          recBounds.Left   := Left;
+          recBounds.Top    := Top;
+          recBounds.Width  := ptMouse.X - Left;
+          recBounds.Height := Height;
+        end;
 
-    HTBOTTOM:
-      begin
-        SetBounds(Left,
-                  Top,
-                  Width,
-                  ptMouse.Y - Top);
-      end;
+      HTBOTTOMRIGHT:
+        begin
+          recBounds.Left   := Left;
+          recBounds.Top    := Top;
+          recBounds.Width  := ptMouse.X - Left;
+          recBounds.Height := ptMouse.Y - Top;
+        end;
 
-    HTBOTTOMLEFT:
-      begin
-        SetBounds(ptMouse.X,
-                  Top,
-                  nRight - ptMouse.X,
-                  ptMouse.Y - Top);
-      end;
+      HTBOTTOM:
+        begin
+          recBounds.Left   := Left;
+          recBounds.Top    := Top;
+          recBounds.Width  := Width;
+          recBounds.Height := ptMouse.Y - Top;
+        end;
 
-    HTLEFT:
-      begin
-        SetBounds(ptMouse.X,
-                  Top,
-                  nRight - ptMouse.X,
-                  Height);
-      end;
+      HTBOTTOMLEFT:
+        begin
+          recBounds.Left   := ptMouse.X;
+          recBounds.Top    := Top;
+          recBounds.Width  := nRight - ptMouse.X;
+          recBounds.Height := ptMouse.Y - Top;
+        end;
+
+      HTLEFT:
+        begin
+          recBounds.Left   := ptMouse.X;
+          recBounds.Top    := Top;
+          recBounds.Width  := nRight - ptMouse.X;
+          recBounds.Height := Height;
+        end;
+    end;
+
+    if (recBounds.Width < m_nMinWidth) then
+    begin
+      if recBounds.Left <> recOld.Left then
+        recBounds.Left := recOld.Right - m_nMinWidth;
+
+      recBounds.Width := m_nMinWidth;
+    end;
+
+    if (recBounds.Height < m_nMinHeight) then
+    begin
+      if recBounds.Top <> recOld.Top then
+        recBounds.Top := recOld.Bottom - m_nMinHeight;
+
+      recBounds.Height := m_nMinHeight;
+    end;
+
+    SetBounds(recBounds.Left, recBounds.Top, recBounds.Width, recBounds.Height);
   end;
 end;
 
@@ -324,9 +347,6 @@ begin
 
   m_nMinHeight    := 400;
   m_nMinWidth     := 400;
-
-  m_nMaxHeight    := -1;
-  m_nMaxWidth     := -1;
 
   inherited;
 
@@ -643,17 +663,8 @@ begin
   inherited;
   MinMaxInfo := Msg.MinMaxInfo;
 
-  if m_nMaxWidth > 0 then
-    MinMaxInfo^.ptMaxTrackSize.X := m_nMaxWidth;
-
-  if m_nMaxHeight > 0 then
-    MinMaxInfo^.ptMaxTrackSize.Y := m_nMaxHeight;
-
-  if m_nMinWidth > 0 then
-    MinMaxInfo^.ptMinTrackSize.X := m_nMinWidth;
-
-  if m_nMinHeight > 0 then
-    MinMaxInfo^.ptMinTrackSize.Y := m_nMinHeight;
+  MinMaxInfo^.ptMinTrackSize.X := m_nMinWidth;
+  MinMaxInfo^.ptMinTrackSize.Y := m_nMinHeight;
 end;
 
 //==============================================================================
