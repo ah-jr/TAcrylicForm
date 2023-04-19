@@ -47,7 +47,6 @@ type
 
     procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
 
-
   private
     m_bInitialized  : Boolean;
     m_clBlurColor   : TColor;
@@ -63,27 +62,31 @@ type
     m_nMaxHeight    : Integer;
     m_nMaxWidth     : Integer;
 
+    m_ptMouseOffset : TPoint;
     m_recSize       : TRect;
     m_fsStyle       : TAcrylicFormStyle;
-
-    m_tmrAcrylicChange: TTimer;
+    m_htClickHit    : Longint;
+    m_tmrMouseMove  : TTimer;
 
     procedure OnMoveOrResize;
     procedure UpdatePositions;
 
-    procedure EnableBlur    (hwndHandle : HWND; nMode: Integer);
-    procedure OnAcrylicTimer(Sender     : TObject);
-    procedure SetColor      (a_clColor  : TColor);
-    procedure SetBorderColor(a_clColor  : TAlphaColor);
-    procedure SetWithBorder (a_bBorder  : Boolean);
-    procedure SetBlurAmount (a_btAmount : Byte);
-    procedure ToggleBlur    (a_bBlur    : Boolean);
+    procedure EnableBlur      (hwndHandle : HWND);
+    procedure OnMouseMoveTimer(Sender     : TObject);
+    procedure SetColor        (a_clColor  : TColor);
+    procedure SetBorderColor  (a_clColor  : TAlphaColor);
+    procedure SetWithBorder   (a_bBorder  : Boolean);
+    procedure SetBlurAmount   (a_btAmount : Byte);
+    procedure ToggleBlur      (a_bBlur    : Boolean);
 
     function  GetWithBlur : Boolean;
 
     procedure WMNCMoving     (var Msg: TWMMoving);        message WM_MOVING;
     procedure WMNCSize       (var Msg: TWMSize);          message WM_SIZE;
     procedure WMNCHitTest    (var Msg: TWMNCHitTest);     message WM_NCHITTEST;
+    procedure WMNCMouseMove  (var Msg: TWMNCMouseMove);   message WM_NCMOUSEMOVE;
+    procedure WMNCLMouseDown (var Msg: TWMNCMButtonDown); message WM_NCLBUTTONDOWN;
+    procedure WMNCLMouseUp   (var Msg: TWMNCMButtonUp);   message WM_NCLBUTTONUP;
     procedure WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo); message WM_GETMINMAXINFO;
 
   public
@@ -129,6 +132,7 @@ const
   c_nTopIconWidth      = 46;
   c_nTopIconHeight     = 32;
   c_nBorderTriggerSize = 7;
+  c_nPollingRateInHz   = 75;
 
 procedure Register;
 
@@ -152,14 +156,94 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicForm.OnAcrylicTimer(Sender: TObject);
+procedure TAcrylicForm.OnMouseMoveTimer(Sender: TObject);
+var
+  ptMouse    : TPoint;
+  nRight     : Integer;
+  nBottom    : Integer;
 begin
+  GetCursorPos(ptMouse);
+  nRight  := Width + Left;
+  nBottom := Height + Top;
+
   if not(GetKeyState(VK_LBUTTON) and $8000 <> 0) then
   begin
-    EnableBlur(Handle, 4);
-    UpdatePositions;
+    m_htClickHit := HTNOWHERE;
+    m_tmrMouseMove.Enabled := False;
+  end;
 
-    m_tmrAcrylicChange.Enabled  := False;
+  case m_htClickHit of
+    HTCAPTION:
+      begin
+        SetBounds(ptMouse.X - m_ptMouseOffset.X,
+                  ptMouse.Y - m_ptMouseOffset.Y,
+                  Width,
+                  Height);
+      end;
+
+    HTTOPLEFT:
+      begin
+        SetBounds(ptMouse.X,
+                  ptMouse.Y,
+                  nRight  - ptMouse.X,
+                  nBottom - ptMouse.Y);
+      end;
+
+    HTTOP:
+      begin
+        SetBounds(Left,
+                  ptMouse.Y,
+                  Width,
+                  nBottom - ptMouse.Y);
+      end;
+
+    HTTOPRIGHT:
+      begin
+        SetBounds(Left,
+                  ptMouse.Y,
+                  ptMouse.X - Left,
+                  nBottom - ptMouse.Y);
+      end;
+
+    HTRIGHT:
+      begin
+        SetBounds(Left,
+                  Top,
+                  ptMouse.X - Left,
+                  Height);
+      end;
+
+    HTBOTTOMRIGHT:
+      begin
+        SetBounds(Left,
+                  Top,
+                  ptMouse.X - Left,
+                  ptMouse.Y - Top);
+      end;
+
+    HTBOTTOM:
+      begin
+        SetBounds(Left,
+                  Top,
+                  Width,
+                  ptMouse.Y - Top);
+      end;
+
+    HTBOTTOMLEFT:
+      begin
+        SetBounds(ptMouse.X,
+                  Top,
+                  nRight - ptMouse.X,
+                  ptMouse.Y - Top);
+      end;
+
+    HTLEFT:
+      begin
+        SetBounds(ptMouse.X,
+                  Top,
+                  nRight - ptMouse.X,
+                  Height);
+      end;
   end;
 end;
 
@@ -168,15 +252,12 @@ procedure TAcrylicForm.SetWithBorder(a_bBorder : Boolean);
 begin
   m_bWithBorder := a_bBorder;
   pnlBackground.WithBorder := m_bWithBorder;
-
-  EnableBlur(Handle, 4);
 end;
 
 //==============================================================================
 procedure TAcrylicForm.SetColor(a_clColor : TColor);
 begin
   m_clBlurColor := a_clColor;
-  EnableBlur(Handle, 4);
 end;
 
 //==============================================================================
@@ -184,15 +265,13 @@ procedure TAcrylicForm.SetBorderColor(a_clColor : TAlphaColor);
 begin
   m_clBorderColor := a_clColor;
   pnlBackground.BorderColor := m_clBorderColor;
-
-  EnableBlur(Handle, 4);
 end;
 
 //==============================================================================
 procedure TAcrylicForm.SetBlurAmount(a_btAmount : Byte);
 begin
   m_btBlurAmount := a_btAmount;
-  EnableBlur(Handle, 4);
+  EnableBlur(Handle);
 end;
 
 //==============================================================================
@@ -200,7 +279,7 @@ procedure TAcrylicForm.ToggleBlur(a_bBlur : Boolean);
 begin
   g_bWithBlur := a_bBlur and SupportBlur;
 
-  EnableBlur(Handle, 4);
+  EnableBlur(Handle);
   Invalidate;
 
   RefreshAcrylicControls(Self);
@@ -215,15 +294,8 @@ end;
 //==============================================================================
 procedure TAcrylicForm.OnMoveOrResize;
 begin
-  if m_bInitialized then
-  begin
-    EnableBlur(Handle, 3);
-
-    m_tmrAcrylicChange.Enabled := False;
-    m_tmrAcrylicChange.Enabled := True;
-
-    UpdatePositions;
-  end;
+  UpdatePositions;
+  Invalidate;
 end;
 
 //==============================================================================
@@ -232,10 +304,11 @@ begin
   m_bInitialized := False;
   g_bWithBlur    := SupportBlur;
 
-  m_tmrAcrylicChange          := TTimer.Create(self);
-  m_tmrAcrylicChange.Interval := 10;
-  m_tmrAcrylicChange.OnTimer  := OnAcrylicTimer;
-  m_tmrAcrylicChange.Enabled  := True;
+  m_tmrMouseMove          := TTimer.Create(self);
+  m_tmrMouseMove.Interval := 1000 div c_nPollingRateInHz;
+  m_tmrMouseMove.OnTimer  := OnMouseMoveTimer;
+  m_tmrMouseMove.Enabled  := False;
+
 
   m_clBlurColor   := c_clFormBlur;
   m_clBorderColor := c_clFormBorder;
@@ -249,8 +322,8 @@ begin
   m_recSize       := TRect.Create(Left,Top,Width,Height);
   m_fsStyle       := [fsClose, fsMinimize, fsMaximize];
 
-  m_nMinHeight    := 100;
-  m_nMinWidth     := 100;
+  m_nMinHeight    := 400;
+  m_nMinWidth     := 400;
 
   m_nMaxHeight    := -1;
   m_nMaxWidth     := -1;
@@ -265,8 +338,8 @@ end;
 //==============================================================================
 destructor TAcrylicForm.Destroy;
 begin
-  m_tmrAcrylicChange.Enabled := False;
-  m_tmrAcrylicChange.Free;
+  m_tmrMouseMove.Enabled := False;
+  m_tmrMouseMove.Free;
 
   inherited;
 end;
@@ -276,7 +349,7 @@ procedure TAcrylicForm.FormCreate(Sender: TObject);
 begin
   BorderStyle := bsNone;
   BorderIcons := [biSystemMenu, biMinimize];
-  EnableBlur(Handle, 4);
+  EnableBlur(Handle);
 
   pnlContent.Align := alNone;
 
@@ -323,12 +396,12 @@ begin
 
   imgClose.Width       := c_nTopIconWidth;
   imgClose.Height      := c_nTopIconHeight;
-  imgClose.Left        := Width - nIconCount * c_nTopIconWidth;
-  imgClose.Top         := 0;
-  imgCloseHover.Width  := c_nTopIconWidth;
-  imgCloseHover.Height := c_nTopIconHeight;
-  imgCloseHover.Left   := Width - nIconCount * c_nTopIconWidth;
-  imgCloseHover.Top    := 0;
+  imgClose.Left        := Width - nIconCount * c_nTopIconWidth - 1;
+  imgClose.Top         := 1;
+  imgCloseHover.Width  := imgClose.Width;
+  imgCloseHover.Height := imgClose.Height;
+  imgCloseHover.Left   := imgClose.Left;
+  imgCloseHover.Top    := imgClose.Top;
 
   if fsClose in m_fsStyle then
     Inc(nIconCount);
@@ -337,10 +410,10 @@ begin
   imgMaximize.Height      := imgClose.Height;
   imgMaximize.Left        := Width - nIconCount * c_nTopIconWidth;
   imgMaximize.Top         := imgClose.Top;
-  imgMaximizeHover.Width  := imgClose.Width;
-  imgMaximizeHover.Height := imgClose.Height;
-  imgMaximizeHover.Left   := Width - nIconCount * c_nTopIconWidth;
-  imgMaximizeHover.Top    := imgClose.Top;
+  imgMaximizeHover.Width  := imgMaximize.Width;
+  imgMaximizeHover.Height := imgMaximize.Height;
+  imgMaximizeHover.Left   := imgMaximize.Left;
+  imgMaximizeHover.Top    := imgMaximize.Top;
 
   if fsMaximize in m_fsStyle then
     Inc(nIconCount);
@@ -349,14 +422,14 @@ begin
   imgMinimize.Height      := imgClose.Height;
   imgMinimize.Left        := Width - nIconCount * c_nTopIconWidth;
   imgMinimize.Top         := imgClose.Top;
-  imgMinimizeHover.Width  := imgClose.Width;
-  imgMinimizeHover.Height := imgClose.Height;
-  imgMinimizeHover.Left   := Width - nIconCount * c_nTopIconWidth;
-  imgMinimizeHover.Top    := imgClose.Top;
+  imgMinimizeHover.Width  := imgMinimize.Width;
+  imgMinimizeHover.Height := imgMinimize.Height;
+  imgMinimizeHover.Left   := imgMinimize.Left;
+  imgMinimizeHover.Top    := imgMinimize.Top;
 end;
 
 //==============================================================================
-procedure TAcrylicForm.EnableBlur(hwndHandle: HWND; nMode: Integer);
+procedure TAcrylicForm.EnableBlur(hwndHandle: HWND);
 const
   WCA_ACCENT_POLICY                 = 19;
   ACCENT_ENABLE_GRADIENT            = 1;
@@ -367,12 +440,11 @@ var
   DWM10      : THandle;
   Data       : WindowCompositionAttributeData;
   Accent     : AccentPolicy;
-  nBlurLevel : Integer;
+  nMode      : Integer;
 begin
-  if not WithBlur then
-    nMode := 1;
-
-  nBlurLevel := m_btBlurAmount;
+  if not WithBlur
+    then nMode := ACCENT_ENABLE_GRADIENT
+    else nMode := ACCENT_ENABLE_ACRYLICBLURBEHIND;
 
   DWM10 := LoadLibrary('user32.dll');
 
@@ -382,7 +454,7 @@ begin
     begin
       Accent.AccentState   := nMode;
       Accent.AccentFlags   := 2;
-      Accent.GradientColor := (nBlurLevel SHL 24) or m_clBlurColor;
+      Accent.GradientColor := (m_btBlurAmount SHL 24) or m_clBlurColor;
 
       Data.Attribute  := WCA_ACCENT_POLICY;
       Data.SizeOfData := SizeOf(Accent);
@@ -497,6 +569,28 @@ begin
 end;
 
 //==============================================================================
+procedure TAcrylicForm.WMNCMouseMove(var Msg: TWMNCMouseMove);
+begin
+  //
+end;
+
+//==============================================================================
+procedure TAcrylicForm.WMNCLMouseDown(var Msg: TWMNCMButtonDown);
+begin
+  SetForegroundWindow(Handle);
+
+  m_tmrMouseMove.Enabled := True;
+  m_htClickHit           := Msg.HitTest;
+  m_ptMouseOffset        := ScreenToClient(Point(Msg.XCursor, Msg.YCursor));
+end;
+
+//==============================================================================
+procedure TAcrylicForm.WMNCLMouseUp(var Msg: TWMNCMButtonUp);
+begin
+  m_htClickHit := HTNOWHERE;
+end;
+
+//==============================================================================
 procedure TAcrylicForm.WMNCHitTest(var Msg: TWMNCHitTest);
 const
   c_nSpan = 7;
@@ -539,9 +633,6 @@ begin
     if (ScreenPt.Y <= c_nTitleBarHeight) and (Msg.Result = HTCLIENT) then
       Msg.Result := HTCAPTION;
   end;
-
-  m_tmrAcrylicChange.Enabled := False;
-  m_tmrAcrylicChange.Enabled := True;
 end;
 
 //==============================================================================

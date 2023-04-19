@@ -139,7 +139,7 @@ end;
 //==============================================================================
 function SupportBlur: Boolean;
 begin
-  Result := TOSVersion.Name = 'Windows 10';
+  Result := (TOSVersion.Name = 'Windows 10') or (TOSVersion.Name = 'Windows 11');
 end;
 
 end.
