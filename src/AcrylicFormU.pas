@@ -48,14 +48,16 @@ type
     procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
 
   private
-    m_bInitialized  : Boolean;
+    m_bInitialized           : Boolean;
+    m_bResizable             : Boolean;
+    m_bWithBorder            : Boolean;
+    m_bMaximized             : Boolean;
+    m_bDisableBlurWhenSizing : Boolean;
+
     m_clBlurColor   : TColor;
     m_clBackColor   : TColor;
     m_clBorderColor : TAlphaColor;
     m_btBlurAmount  : Byte;
-    m_bResizable    : Boolean;
-    m_bWithBorder   : Boolean;
-    m_bMaximized    : Boolean;
 
     m_nMinHeight    : Integer;
     m_nMinWidth     : Integer;
@@ -93,15 +95,16 @@ type
 
     property Style : TAcrylicFormStyle read m_fsStyle       write m_fsStyle;
 
-    property WithBlur    : Boolean     read GetWithBlur     write ToggleBlur;
-    property WithBorder  : Boolean     read m_bWithBorder   write SetWithBorder;
-    property BorderColor : TAlphaColor read m_clBorderColor write SetBorderColor;
-    property BackColor   : TColor      read m_clBackColor   write m_clBackColor;
-    property BlurColor   : TColor      read m_clBlurColor   write SetColor;
-    property BlurAmount  : Byte        read m_btBlurAmount  write SetBlurAmount;
-    property Resizable   : Boolean     read m_bResizable    write m_bResizable;
-    property MinWidth    : Integer     read m_nMinWidth     write m_nMinWidth;
-    property MinHeight   : Integer     read m_nMinHeight    write m_nMinHeight;
+    property DisableBlurWhenSizing : Boolean     read m_bDisableBlurWhenSizing write m_bDisableBlurWhenSizing;
+    property WithBlur              : Boolean     read GetWithBlur              write ToggleBlur;
+    property WithBorder            : Boolean     read m_bWithBorder            write SetWithBorder;
+    property BorderColor           : TAlphaColor read m_clBorderColor          write SetBorderColor;
+    property BackColor             : TColor      read m_clBackColor            write m_clBackColor;
+    property BlurColor             : TColor      read m_clBlurColor            write SetColor;
+    property BlurAmount            : Byte        read m_btBlurAmount           write SetBlurAmount;
+    property Resizable             : Boolean     read m_bResizable             write m_bResizable;
+    property MinWidth              : Integer     read m_nMinWidth              write m_nMinWidth;
+    property MinHeight             : Integer     read m_nMinHeight             write m_nMinHeight;
 
   end;
 
@@ -128,7 +131,7 @@ const
   c_nTopIconWidth      = 46;
   c_nTopIconHeight     = 32;
   c_nBorderTriggerSize = 7;
-  c_nPollingRateInHz   = 75;
+  c_nPollingRateInHz   = 120;
 
 procedure Register;
 
@@ -318,14 +321,14 @@ end;
 procedure TAcrylicForm.OnMoveOrResize;
 begin
   UpdatePositions;
-  Invalidate;
 end;
 
 //==============================================================================
 constructor TAcrylicForm.Create(AOwner : TComponent);
 begin
-  m_bInitialized := False;
-  g_bWithBlur    := SupportBlur;
+  m_bInitialized           := False;
+  g_bWithBlur              := SupportBlur;
+  m_bDisableBlurWhenSizing := False;
 
   m_tmrMouseMove          := TTimer.Create(self);
   m_tmrMouseMove.Interval := 1000 div c_nPollingRateInHz;
@@ -489,6 +492,7 @@ begin
     end;
   finally
     FreeLibrary(DWM10);
+    Repaint;
   end;
 end;
 
@@ -578,7 +582,6 @@ end;
 procedure TAcrylicForm.WMNCMoving(var Msg: TWMMoving);
 begin
   inherited;
-  OnMoveOrResize;
 end;
 
 //==============================================================================
@@ -597,11 +600,20 @@ end;
 //==============================================================================
 procedure TAcrylicForm.WMNCLMouseDown(var Msg: TWMNCMButtonDown);
 begin
-  SetForegroundWindow(Handle);
+  if m_bDisableBlurWhenSizing then
+  begin
+    WithBlur := False;
+    Inherited;
+    WithBlur := True;
+  end
+  else
+  begin
+    SetForegroundWindow(Handle);
 
-  m_tmrMouseMove.Enabled := True;
-  m_htClickHit           := Msg.HitTest;
-  m_ptMouseOffset        := ScreenToClient(Point(Msg.XCursor, Msg.YCursor));
+    m_tmrMouseMove.Enabled := True;
+    m_htClickHit           := Msg.HitTest;
+    m_ptMouseOffset        := ScreenToClient(Point(Msg.XCursor, Msg.YCursor));
+  end;
 end;
 
 //==============================================================================
