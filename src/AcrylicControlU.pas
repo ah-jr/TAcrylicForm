@@ -33,8 +33,17 @@ type
     procedure CMMouseLeave(var Msg: TMessage);      message CM_MOUSELEAVE;
     procedure WMNCHitTest (var Msg: TWMNCHitTest);  message WM_NCHITTEST;
 
-    procedure SetText           (a_strText   : String);
-    procedure SetTriggerDblClick(a_nDblClick : Boolean);
+    procedure SetText            (a_strText       : String);
+    procedure SetTexts           (a_strTexts      : TStringList);
+    procedure SetFont            (a_fFont         : TFont);
+    procedure SetAlignment       (a_aAlignment    : TAlignment);
+    procedure SetColor           (a_clColor       : TAlphaColor);
+    procedure SetFontColor       (a_clFontColor   : TAlphaColor);
+    procedure SetBackColor       (a_clBackColor   : TColor);
+    procedure SetBorderColor     (a_clBorderColor : TAlphaColor);
+    procedure SetWithBorder      (a_bWithBorder   : Boolean);
+    procedure SetWithBackground  (a_bWithBack     : Boolean);
+    procedure SetTriggerDblClick (a_nDblClick     : Boolean);
 
 
   protected
@@ -80,15 +89,15 @@ type
 
   published
     property Text            : String      read m_strText       write SetText;
-    property Texts           : TStringList read m_strTexts      write m_strTexts;
-    property Font            : TFont       read m_fFont         write m_fFont;
-    property Alignment       : TAlignment  read m_aAlignment    write m_aAlignment;
-    property Color           : TAlphaColor read m_clColor       write m_clColor;
-    property FontColor       : TAlphaColor read m_clFontColor   write m_clFontColor;
-    property BackColor       : TColor      read m_clBackColor   write m_clBackColor;
-    property BorderColor     : TAlphaColor read m_clBorderColor write m_clBorderColor;
-    property WithBorder      : Boolean     read m_bWithBorder   write m_bWithBorder;
-    property WithBackground  : Boolean     read m_bWithBack     write m_bWithBack;
+    property Texts           : TStringList read m_strTexts      write SetTexts;
+    property Font            : TFont       read m_fFont         write SetFont;
+    property Alignment       : TAlignment  read m_aAlignment    write SetAlignment;
+    property Color           : TAlphaColor read m_clColor       write SetColor;
+    property FontColor       : TAlphaColor read m_clFontColor   write SetFontColor;
+    property BackColor       : TColor      read m_clBackColor   write SetBackColor;
+    property BorderColor     : TAlphaColor read m_clBorderColor write SetBorderColor;
+    property WithBorder      : Boolean     read m_bWithBorder   write SetWithBorder;
+    property WithBackground  : Boolean     read m_bWithBack     write SetWithBackground;
     property Ghost           : Boolean     read m_bGhost        write m_bGhost;
     property TriggerDblClick : Boolean                          write SetTriggerDblClick;
     property Clickable       : Boolean     read m_bClickable    write m_bClickable;
@@ -162,6 +171,69 @@ end;
 procedure TAcrylicControl.SetText(a_strText : String);
 begin
   m_strText := a_strText;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetTexts(a_strTexts : TStringList);
+begin
+  m_strTexts := a_strTexts;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetFont(a_fFont : TFont);
+begin
+  m_fFont := a_fFont;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetAlignment(a_aAlignment : TAlignment);
+begin
+  m_aAlignment := a_aAlignment;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetColor(a_clColor : TAlphaColor);
+begin
+  m_clColor := a_clColor;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetFontColor(a_clFontColor : TAlphaColor);
+begin
+  m_clFontColor := a_clFontColor;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetBackColor(a_clBackColor : TColor);
+begin
+  m_clBackColor := a_clBackColor;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetBorderColor(a_clBorderColor : TAlphaColor);
+begin
+  m_clBorderColor := a_clBorderColor;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetWithBorder(a_bWithBorder : Boolean);
+begin
+  m_bWithBorder := a_bWithBorder;
+  Refresh(True);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.SetWithBackground(a_bWithBack : Boolean);
+begin
+  m_bWithBack := a_bWithBack;
   Refresh(True);
 end;
 
@@ -402,5 +474,3 @@ begin
 end;
 
 end.
-
-

@@ -375,6 +375,7 @@ begin
   EnableBlur(Handle);
 
   pnlContent.Align := alNone;
+  pnlTitleBar.Align := alNone;
 
   if WithBlur then
   begin
@@ -410,10 +411,15 @@ begin
   pnlBackground.Width   := ClientWidth;
   pnlBackground.Height  := ClientHeight;
 
+  pnlTitleBar.Left   := 1;
+  pnlTitleBar.Top    := 1;
+  pnlTitleBar.Width  := pnlBackground.Width - 2;
+  pnlTitleBar.Height := c_nTitleBarHeight;
+
   pnlContent.Left    := c_nBorderTriggerSize;
   pnlContent.Top     := pnlTitleBar.Height;
-  pnlContent.Width   := ClientWidth  - 2 * c_nBorderTriggerSize;
-  pnlContent.Height  := ClientHeight - pnlTitleBar.Height - c_nBorderTriggerSize;
+  pnlContent.Width   := pnlBackground.Width  - 2 * c_nBorderTriggerSize;
+  pnlContent.Height  := pnlBackground.Height - pnlTitleBar.Height - c_nBorderTriggerSize;
 
   nIconCount := 1;
 
