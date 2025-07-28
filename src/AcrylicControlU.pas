@@ -17,7 +17,8 @@ uses
   Vcl.ExtCtrls,
   Vcl.Imaging.pngimage,
   GR32,
-  GR32_Backends,
+  GR32_Polygons,
+  GR32_VectorUtils,
   AcrylicTypesU,
   GDIPOBJ,
   GDIPAPI,
@@ -41,6 +42,7 @@ type
     procedure SetFontColor       (a_clFontColor   : TAlphaColor);
     procedure SetBackColor       (a_clBackColor   : TColor);
     procedure SetBorderColor     (a_clBorderColor : TAlphaColor);
+    procedure SetCornerRadius    (a_dCornerRadius : Double);
     procedure SetWithBorder      (a_bWithBorder   : Boolean);
     procedure SetWithBackground  (a_bWithBack     : Boolean);
     procedure SetTriggerDblClick (a_nDblClick     : Boolean);
@@ -59,6 +61,7 @@ type
     m_clBorderColor : TAlphaColor;
     m_clReset       : TAlphaColor;
     m_fFont         : TFont;
+    m_dCornerRadius : Double;
     m_bWithBorder   : Boolean;
     m_bWithBack     : Boolean;
     m_bClickable    : Boolean;
@@ -96,6 +99,7 @@ type
     property FontColor       : TAlphaColor read m_clFontColor   write SetFontColor;
     property BackColor       : TColor      read m_clBackColor   write SetBackColor;
     property BorderColor     : TAlphaColor read m_clBorderColor write SetBorderColor;
+    property CornerRadius    : Double      read m_dCornerRadius write SetCornerRadius;
     property WithBorder      : Boolean     read m_bWithBorder   write SetWithBorder;
     property WithBackground  : Boolean     read m_bWithBack     write SetWithBackground;
     property Ghost           : Boolean     read m_bGhost        write m_bGhost;
@@ -140,6 +144,7 @@ begin
   m_clColor       := c_clCtrlColor;
   m_clBorderColor := c_clCtrlBorder;
   m_clBackColor   := c_clFormBack;
+  m_dCornerRadius := 0;
 
   m_fFont.Name    := 'Tahoma';
   m_fFont.Size    := 8;
@@ -224,6 +229,13 @@ begin
 end;
 
 //==============================================================================
+procedure TAcrylicControl.SetCornerRadius(a_dCornerRadius : Double);
+begin
+  m_dCornerRadius := a_dCornerRadius;
+  Refresh(True);
+end;
+
+//==============================================================================
 procedure TAcrylicControl.SetWithBorder(a_bWithBorder : Boolean);
 begin
   m_bWithBorder := a_bWithBorder;
@@ -264,17 +276,17 @@ begin
     // Create bitmap that will contain the final result
     m_bmpPaint.SetSize(ClientWidth,ClientHeight);
 
-    //////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Draw background
     PaintBackground;
 
-    //////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Initializes GDI
     m_gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
     m_gdiGraphics.SetSmoothingMode(SmoothingModeNone);
     m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
 
-    //////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     // Draw Component
     PaintComponent;
     PaintEnabled;
@@ -290,7 +302,8 @@ end;
 //==============================================================================
 procedure TAcrylicControl.PaintBackground;
 var
-  clColor : TAlphaColor;
+  clColor   : TAlphaColor;
+  arrPoints : TArrayOfFloatPoint;
 begin
   m_bmpBuffer.SetSize(ClientWidth, ClientHeight);
 
@@ -308,7 +321,15 @@ begin
       msClicked : clColor := ChangeColor(m_clColor, 0, 40, 40, 40);
     end;
 
-    m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, clColor);
+    if m_dCornerRadius <> 0 then
+    begin
+      arrPoints := RoundRect(FloatRect(0, 0, ClientWidth, ClientHeight), m_dCornerRadius);
+      PolygonFS(m_bmpBuffer, arrPoints, clColor);
+    end
+    else
+    begin
+      m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, clColor);
+    end;
   end;
 
   if m_bWithBorder then
