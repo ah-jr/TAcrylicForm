@@ -1,8 +1,8 @@
-# TAcrylicForm  
+# Acrylic Components
 This is a set of Delphi components adapted to use Window's Acrylic material.  
 
 The TAcrylicForm comes totally blank, with redrawn minimize/maximize/close buttons. 
-It's resizable by default, and you can change the following properties:
+It's resizable by default, and you can change properties like:
 - Color 
 - BlurAmount
 - Resizable
@@ -25,6 +25,10 @@ It uses the same API used by multiple menus in Windows 10.
 4. TAcrylicKnob       : A simple rotatory slider that can be changed by dragging the mouse or using the wheel.
 5. TAcrylicTrackBar   : A horizontal slider that can be changed by dragging the mouse or using the wheel.  
 
+Among others.
+
 # Observations
 
+- It is highly recommended add both *src* and *deps/gr32* folders to the Delphi's browsing path.
+- Acrylic effect works properly both in Windows 10 and Windows 11.
 - This set of controls can be used in windows 7 as well, but the acrylic/blur effect is turned off. In this occasion, every component will have its background painted with the color assigned to the BackColor property. 
