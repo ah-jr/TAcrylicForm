@@ -96,6 +96,8 @@ end;
 //==============================================================================
 procedure TAcrylicGhostPanel.WMNCHitTest(var Msg: TWMNCHitTest);
 begin
+  Inherited;
+
   if m_bGhost then
     Msg.Result := HTTRANSPARENT;
 end;

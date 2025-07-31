@@ -54,6 +54,9 @@ type
 
     procedure SetData(a_pData : PIntArray; a_nSize : Integer);
 
+    function GetData     : PIntArray;
+    function GetDataSize : Integer;
+
   published
     property Position       : Double      read m_dPosition       write SetPosition;
     property TitleBarHeight : Integer     read m_nTitleBarHeight write m_nTitleBarHeight;
@@ -147,6 +150,18 @@ begin
 
     RecalculatePath;
   end;
+end;
+
+//==============================================================================
+function TAcrylicTrack.GetData : PIntArray;
+begin
+  Result := m_pData;
+end;
+
+//==============================================================================
+function TAcrylicTrack.GetDataSize : Integer;
+begin
+  Result := m_nDataSize;
 end;
 
 //==============================================================================

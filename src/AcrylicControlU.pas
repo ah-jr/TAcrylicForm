@@ -67,6 +67,7 @@ type
     m_bClickable    : Boolean;
     m_bGhost        : Boolean;
     m_bmpBuffer     : TBitmap32;
+    m_nAuxId        : Integer;
 
     m_gdiGraphics   : TGPGraphics;
     m_gdiSolidPen   : TGPPen;
@@ -105,10 +106,13 @@ type
     property Ghost           : Boolean     read m_bGhost        write m_bGhost;
     property TriggerDblClick : Boolean                          write SetTriggerDblClick;
     property Clickable       : Boolean     read m_bClickable    write m_bClickable;
+    property AuxId           : Integer     read m_nAuxId        write m_nAuxId;
 
     property Enabled;
     property OnClick;
     property OnDblClick;
+    property OnMouseDown;
+    property OnMouseUp;
     property Hint;
     property ShowHint;
     property Visible;
@@ -139,6 +143,7 @@ begin
   m_fFont         := TFont.Create;
   m_bmpPaint      := TBitmap.Create;
   m_strTexts      := TStringList.Create;
+  m_nAuxId        := -1;
 
   m_clFontColor   := c_clCtrlFont;
   m_clColor       := c_clCtrlColor;
@@ -429,6 +434,9 @@ begin
   if m_bClickable then
     m_msMouseState := msNone;
 
+  if Assigned(OnMouseUp) then
+    OnMouseUp(Self, Button, Shift, X, Y);
+
   Refresh(True);
 end;
 
@@ -437,6 +445,9 @@ procedure TAcrylicControl.MouseDown(Button: TMouseButton; Shift: TShiftState; X,
 begin
   if m_bClickable then
     m_msMouseState := msClicked;
+
+  if Assigned(OnMouseDown) then
+    OnMouseDown(Self, Button, Shift, X, Y);
 
   Refresh(True);
 end;
