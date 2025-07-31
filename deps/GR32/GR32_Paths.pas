@@ -34,15 +34,31 @@ unit GR32_Paths;
 
 interface
 
-{$I GR32.inc}
+{$include GR32.inc}
+
+// Define one of the following two *QuadraticBezierCurve symbols to select
+// the algorithm used to flatten quadratic Bezier curves.
+//
+// - RecursiveQuadraticBezierCurve is the classic De Casteljau algorithm.
+//
+// - RaphLevienQuadraticBezierCurve is a new analytic algorithm which
+//   produces far less vertices for the same error tolerance.
+//
+// If none of the symbols are defined the RaphLevienQuadraticBezierCurve
+// implementation is used.
+//
+{-$define RecursiveQuadraticBezierCurve}
+{-$define RaphLevienQuadraticBezierCurve}
 
 uses
   Classes, SysUtils,
   GR32,
+  GR32_Math,
   GR32_Polygons,
   GR32_Transforms,
   GR32_Brushes,
-  GR32_Geometry;
+  GR32_Geometry,
+  GR32.Text.Types;
 
 const
   DefaultCircleSteps = 100;
@@ -57,18 +73,13 @@ type
     FCurrentPoint: TFloatPoint;
     FLastControlPoint: TFloatPoint;
     FControlPointOrigin: TControlPointOrigin;
-    FChanged: boolean;
   protected
     procedure AddPoint(const Point: TFloatPoint); virtual;
     procedure AssignTo(Dest: TPersistent); override;
-    procedure DoChanged; virtual;
   public
     constructor Create; override;
-    procedure Clear; virtual;
 
-    procedure BeginUpdate; override;
-    procedure EndUpdate; override;
-    procedure Changed; override;
+    procedure Clear; virtual;
 
     procedure BeginPath; deprecated 'No longer necessary. Path is started automatically';
     procedure EndPath(Close: boolean = False); virtual;
@@ -89,6 +100,7 @@ type
     procedure HorizontalLineToRelative(const X: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
     procedure VerticalLineTo(const Y: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
     procedure VerticalLineToRelative(const Y: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+    // Cubic beziers
     procedure CurveTo(const X1, Y1, X2, Y2, X, Y: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
     procedure CurveTo(const X2, Y2, X, Y: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
     procedure CurveTo(const C1, C2, P: TFloatPoint); overload; virtual;
@@ -97,6 +109,7 @@ type
     procedure CurveToRelative(const X2, Y2, X, Y: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
     procedure CurveToRelative(const C1, C2, P: TFloatPoint); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
     procedure CurveToRelative(const C2, P: TFloatPoint); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+    // Quadratic bezier
     procedure ConicTo(const X1, Y1, X, Y: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
     procedure ConicTo(const P1, P: TFloatPoint); overload; virtual;
     procedure ConicTo(const X, Y: TFloat); overload; {$IFDEF USEINLINING} inline; {$ENDIF}
@@ -108,7 +121,7 @@ type
 
     // Polylines
     procedure Arc(const P: TFloatPoint; StartAngle, EndAngle, Radius: TFloat);
-    procedure PolyLine(const APoints: TArrayOfFloatPoint); virtual;
+    procedure PolyLine(const APoints: TArrayOfFloatPoint; AOffset: integer = 0); virtual;
     procedure PolyPolyLine(const APoints: TArrayOfArrayOfFloatPoint); virtual;
 
     // Closed Polygons
@@ -173,7 +186,6 @@ type
     procedure DrawPath(const Path: TFlattenedPath); virtual; abstract;
   public
     property Transformation: TTransformation read FTransformation write SetTransformation;
-    function Path: TFlattenedPath; deprecated 'No longer necessary - Just reference the Canvas itself instead';
   end;
 
   { TCanvas32 }
@@ -195,9 +207,14 @@ type
     constructor Create(ABitmap: TBitmap32); reintroduce; virtual;
     destructor Destroy; override;
 
-    procedure RenderText(X, Y: TFloat; const Text: string); overload;
+    procedure RenderText(X, Y: TFloat; const Text: string; Flags: Cardinal); overload;
     procedure RenderText(const DstRect: TFloatRect; const Text: string; Flags: Cardinal); overload;
-    function MeasureText(const DstRect: TFloatRect; const Text: string; Flags: Cardinal): TFloatRect;
+    function MeasureText(const DstRect: TFloatRect; const Text: string; Flags: Cardinal): TFloatRect; overload;
+
+    procedure RenderText(X, Y: TFloat; const Text: string); overload;
+    procedure RenderText(X, Y: TFloat; const Text: string; const Layout: TTextLayout); overload;
+    procedure RenderText(const DstRect: TFloatRect; const Text: string; const Layout: TTextLayout); overload;
+    function MeasureText(const DstRect: TFloatRect; const Text: string; const Layout: TTextLayout): TFloatRect; overload;
 
     property Bitmap: TBitmap32 read FBitmap;
     property Renderer: TPolygonRenderer32 read FRenderer write SetRenderer;
@@ -206,8 +223,8 @@ type
   end;
 
 var
-  CBezierTolerance: TFloat = 0.25;
-  QBezierTolerance: TFloat = 0.25;
+  CBezierTolerance: TFloat = DefaultBezierTolerance;
+  QBezierTolerance: TFloat = DefaultBezierTolerance;
 
 type
   TAddPointEvent = procedure(const Point: TFloatPoint) of object;
@@ -215,8 +232,8 @@ type
 implementation
 
 uses
-  Math, {$IFDEF FPC}Types, {$ENDIF} {$IFDEF COMPILERXE2_UP}Types, {$ENDIF}
-  GR32_Math,
+  Math,
+  Types,
   GR32_Backends,
   GR32_VectorUtils;
 
@@ -241,50 +258,210 @@ begin
 end;
 
 procedure CubicBezierCurve(const P1, P2, P3, P4: TFloatPoint; const AddPoint: TAddPointEvent; const Tolerance: TFloat);
-var
-  P12, P23, P34, P123, P234, P1234: TFloatPoint;
-begin
-  if CubicBezierFlatness(P1, P2, P3, P4) < Tolerance then
-    AddPoint(P1)
-  else
-  begin
-    P12.X   := (P1.X + P2.X) * 0.5;
-    P12.Y   := (P1.Y + P2.Y) * 0.5;
-    P23.X   := (P2.X + P3.X) * 0.5;
-    P23.Y   := (P2.Y + P3.Y) * 0.5;
-    P34.X   := (P3.X + P4.X) * 0.5;
-    P34.Y   := (P3.Y + P4.Y) * 0.5;
-    P123.X  := (P12.X + P23.X) * 0.5;
-    P123.Y  := (P12.Y + P23.Y) * 0.5;
-    P234.X  := (P23.X + P34.X) * 0.5;
-    P234.Y  := (P23.Y + P34.Y) * 0.5;
-    P1234.X := (P123.X + P234.X) * 0.5;
-    P1234.Y := (P123.Y + P234.Y) * 0.5;
 
-    CubicBezierCurve(P1, P12, P123, P1234, AddPoint, Tolerance);
-    CubicBezierCurve(P1234, P234, P34, P4, AddPoint, Tolerance);
+  procedure DoCubicBezierCurve(const P1, P2, P3, P4: TFloatPoint);
+  var
+    P12, P23, P34, P123, P234, P1234: TFloatPoint;
+  begin
+    if CubicBezierFlatness(P1, P2, P3, P4) < Tolerance then
+      AddPoint(P1)
+    else
+    begin
+      P12.X   := (P1.X + P2.X) * 0.5;
+      P12.Y   := (P1.Y + P2.Y) * 0.5;
+      P23.X   := (P2.X + P3.X) * 0.5;
+      P23.Y   := (P2.Y + P3.Y) * 0.5;
+      P34.X   := (P3.X + P4.X) * 0.5;
+      P34.Y   := (P3.Y + P4.Y) * 0.5;
+      P123.X  := (P12.X + P23.X) * 0.5;
+      P123.Y  := (P12.Y + P23.Y) * 0.5;
+      P234.X  := (P23.X + P34.X) * 0.5;
+      P234.Y  := (P23.Y + P34.Y) * 0.5;
+      P1234.X := (P123.X + P234.X) * 0.5;
+      P1234.Y := (P123.Y + P234.Y) * 0.5;
+
+      DoCubicBezierCurve(P1, P12, P123, P1234);
+      DoCubicBezierCurve(P1234, P234, P34, P4);
+    end;
   end;
+
+begin
+  DoCubicBezierCurve(P1, P2, P3, P4);
 end;
 
-procedure QuadraticBezierCurve(const P1, P2, P3: TFloatPoint; const AddPoint: TAddPointEvent; const Tolerance: TFloat);
-var
-  P12, P23, P123: TFloatPoint;
-begin
-  if QuadraticBezierFlatness(P1, P2, P3) < Tolerance then
-    AddPoint(P1)
-  else
-  begin
-    P12.X := (P1.X + P2.X) * 0.5;
-    P12.Y := (P1.Y + P2.Y) * 0.5;
-    P23.X := (P2.X + P3.X) * 0.5;
-    P23.Y := (P2.Y + P3.Y) * 0.5;
-    P123.X := (P12.X + P23.X) * 0.5;
-    P123.Y := (P12.Y + P23.Y) * 0.5;
+//------------------------------------------------------------------------------
+//
+//      Quadratic Bezier curve flattening
+//
+//------------------------------------------------------------------------------
+// Glyph cache access point.
+//------------------------------------------------------------------------------
+type
+  TQuadraticBezierCurve = procedure(const P1, P2, P3: TFloatPoint; const AddPoint: TAddPointEvent; const Tolerance: TFloat);
 
-    QuadraticBezierCurve(P1, P12, P123, AddPoint, Tolerance);
-    QuadraticBezierCurve(P123, P23, P3, AddPoint, Tolerance);
+
+//------------------------------------------------------------------------------
+// Recursive subdivision using Paul de Casteljau's algorithm
+//------------------------------------------------------------------------------
+procedure RecursiveQuadraticBezierCurve(const P1, P2, P3: TFloatPoint; const AddPoint: TAddPointEvent; const Tolerance: TFloat);
+
+  procedure DoQuadraticBezierCurve(const P1, P2, P3: TFloatPoint);
+  var
+    P12, P23, P123: TFloatPoint;
+  begin
+    if QuadraticBezierFlatness(P1, P2, P3) < Tolerance then
+      AddPoint(P1)
+    else
+    begin
+      P12.X := (P1.X + P2.X) * 0.5;
+      P12.Y := (P1.Y + P2.Y) * 0.5;
+      P23.X := (P2.X + P3.X) * 0.5;
+      P23.Y := (P2.Y + P3.Y) * 0.5;
+      P123.X := (P12.X + P23.X) * 0.5;
+      P123.Y := (P12.Y + P23.Y) * 0.5;
+
+      DoQuadraticBezierCurve(P1, P12, P123);
+      DoQuadraticBezierCurve(P123, P23, P3);
+    end;
   end;
+
+begin
+  DoQuadraticBezierCurve(P1, P2, P3);
 end;
+
+
+//------------------------------------------------------------------------------
+// Analytic subdivision using Raph Levien's algorithm
+// License: Apache 2.0
+// https://www.apache.org/licenses/LICENSE-2.0
+//------------------------------------------------------------------------------
+procedure RaphLevienQuadraticBezierCurve(const P1, P2, P3: TFloatPoint; const AddPoint: TAddPointEvent; const Tolerance: TFloat);
+var
+  x0, x2, Scale: Single;
+
+  // Determine the x values and scaling to map to y=x^2
+  procedure MapToBasic;
+  var
+    ddX: Single;
+    ddY: Single;
+    u0: Single;
+    u2: Single;
+    Cross: Single;
+    OneOverCross: Single;
+  begin
+    ddX := 2 * P2.X - P1.X - P3.X;
+    ddY := 2 * P2.Y - P1.Y - P3.Y;
+    u0 := (P2.X - P1.X) * ddX + (P2.Y - P1.Y) * ddY;
+    u2 := (P3.X - P2.X) * ddX + (P3.Y - P2.Y) * ddY;
+    Cross := (P3.X - P1.X) * ddY - (P3.Y - P1.Y) * ddX;
+
+    // Fix sporadic error with rasterization of some fonts
+    if (Cross = 0) then
+    begin
+      Scale := 0;
+      exit;
+    end;
+
+    OneOverCross := 1 / Cross;
+
+    x0 := u0 * OneOverCross;
+    x2 := u2 * OneOverCross;
+    // There's probably a more elegant formulation of this...
+    Scale := Abs(Cross) / (GR32_Math.Hypot(ddX, ddY) * Abs(x2 - x0));
+  end;
+
+  // Compute an approximation to int (1 + 4x^2) ^ -0.25 dx
+  // This isn't especially good but will do.
+  function ApproxMyint(x: Single): Single; {$IFDEF USEINLINING} inline; {$ENDIF}
+  const
+    d: Single = 0.67;
+  begin
+    Result := x / (1 - d + Math.Power(Math.IntPower(d, 4) + 0.25 * x * x, 0.25));
+  end;
+
+  // Approximate the inverse of the function above.
+  // This is better.
+  function ApproxInvMyint(x: Single): Single; {$IFDEF USEINLINING} inline; {$ENDIF}
+  const
+    b: Single = 0.39;
+  begin
+    Result := x * (1 - b + Sqrt(b * b + 0.25 * x * x));
+  end;
+
+  procedure Evaluate(t: Single);
+  var
+    mt: Single;
+    mt_mt: Single;
+    t_mt: Single;
+    t_t: Single;
+    Point: TFloatPoint;
+  begin
+    mt := 1 - t;
+    mt_mt := mt * mt;
+    t_mt := t * mt;
+    t_t := t * t;
+
+    Point.X := P1.X * mt_mt + 2 * P2.X * t_mt + P3.X * t_t;
+    Point.Y := P1.Y * mt_mt + 2 * P2.Y * t_mt + P3.Y * t_t;
+
+    AddPoint(Point);
+  end;
+
+var
+  a0: Single;
+  a2: Single;
+  a2_less_a0: Single;
+  Count: integer;
+  OneOverCount: Single;
+  u0: Single;
+  u2: Single;
+  u2_less_u0: Single;
+  OneOver_u2_less_u0: Single;
+  i: integer;
+  u: Single;
+  t: Single;
+begin
+  MapToBasic;
+
+  a0 := ApproxMyint(x0);
+  a2 := ApproxMyint(x2);
+  a2_less_a0 := a2 - a0;
+
+  Count := Ceil(0.5 * Abs(a2_less_a0) * Sqrt(Scale / Tolerance));
+
+  if (Count = 0) then
+    exit;
+
+  OneOverCount := 1 / Count;
+
+  u0 := ApproxInvMyint(a0);
+  u2 := ApproxInvMyint(a2);
+  u2_less_u0 := u2 - u0;
+  OneOver_u2_less_u0 := 1 / u2_less_u0;
+
+  Evaluate(0);
+
+  for i := 1 to Count-1 do
+  begin
+    u := ApproxInvMyint(a0 + ((a2_less_a0) * i) * OneOverCount);
+    t := (u - u0) * OneOver_u2_less_u0;
+    Evaluate(t);
+  end;
+
+  Evaluate(1);
+end;
+
+{$if (not defined(RecursiveQuadraticBezierCurve)) and (not defined(RaphLevienQuadraticBezierCurve))}
+  {$define RaphLevienQuadraticBezierCurve}
+{$ifend}
+
+var
+  QuadraticBezierCurve: TQuadraticBezierCurve =
+{$if defined(RecursiveQuadraticBezierCurve)}
+    RecursiveQuadraticBezierCurve;
+{$elseif defined(RaphLevienQuadraticBezierCurve)}
+    RaphLevienQuadraticBezierCurve;
+{$ifend}
 
 
 //============================================================================//
@@ -295,35 +472,6 @@ constructor TCustomPath.Create;
 begin
   inherited;
   FControlPointOrigin := cpNone;
-end;
-
-procedure TCustomPath.BeginUpdate;
-begin
-  inherited BeginUpdate;
-end;
-
-procedure TCustomPath.EndUpdate;
-begin
-  inherited EndUpdate;
-
-  if (UpdateCount = 0) and (FChanged) then
-  begin
-    FChanged := False;
-    DoChanged;
-  end;
-end;
-
-procedure TCustomPath.Changed;
-begin
-  BeginUpdate;
-  FChanged := True;
-  EndUpdate;
-end;
-
-procedure TCustomPath.DoChanged;
-begin
-  // Execute OnChange event
-  inherited Changed;
 end;
 
 procedure TCustomPath.AddPoint(const Point: TFloatPoint);
@@ -364,7 +512,6 @@ end;
 procedure TCustomPath.Clear;
 begin
   FControlPointOrigin := cpNone;
-  FChanged := False;
 end;
 
 procedure TCustomPath.ClosePath;
@@ -569,7 +716,9 @@ begin
   BeginUpdate;
 
   MoveTo(APoints[0]); // Implicitly ends any current path
-  PolyLine(APoints);
+
+  // Offset=1 because we've already added the first vertex
+  PolyLine(APoints, 1);
   EndPath(True);
 
   EndUpdate;
@@ -590,16 +739,16 @@ begin
   EndUpdate;
 end;
 
-procedure TCustomPath.PolyLine(const APoints: TArrayOfFloatPoint);
+procedure TCustomPath.PolyLine(const APoints: TArrayOfFloatPoint; AOffset: integer);
 var
   i: Integer;
 begin
-  if Length(APoints) = 0 then
+  if (AOffset > High(APoints)) then
     Exit;
 
   BeginUpdate;
 
-  for i := 0 to High(APoints) do
+  for i := AOffset to High(APoints) do
     LineTo(APoints[i]);
 
   EndUpdate;
@@ -710,18 +859,21 @@ end;
 
 procedure TFlattenedPath.AddPoint(const Point: TFloatPoint);
 var
-  n: Integer;
+  p: TFloatPoint;
 begin
   if (FPointIndex = 0) then
     DoBeginPath;
 
+  // Work around for Delphi compiler bug.
+  // We'll get an AV on the assignment below without it.
+  p := Point;
+
   // Grow buffer if required
-  n := Length(FPoints);
-  if (FPointIndex >= n) then
-    SetLength(FPoints, n + VertexBufferSizeGrow);
+  if (FPointIndex > High(FPoints)) then
+    SetLength(FPoints, Length(FPoints) + VertexBufferSizeGrow);
 
   // Add vertex to buffer
-  FPoints[FPointIndex] := Point;
+  FPoints[FPointIndex] := p;
   Inc(FPointIndex);
 end;
 
@@ -783,11 +935,6 @@ begin
   Clear;
 end;
 
-function TCustomCanvas.Path: TFlattenedPath;
-begin
-  Result := Self;
-end;
-
 procedure TCustomCanvas.SetTransformation(const Value: TTransformation);
 begin
   if FTransformation <> Value then
@@ -805,7 +952,10 @@ begin
   begin
     TCanvas32(Dest).BeginUpdate;
     inherited;
-    TCanvas32(Dest).FBitmap := FBitmap; // TODO : Shouldn't this be .FBitmap.Assign(FBitmap)?
+    // DONE : Shouldn't this be .FBitmap.Assign(FBitmap)?
+    // No, because TCanvas32 doesn't own the bitmap; It just references it.
+    TCanvas32(Dest).FBitmap := FBitmap;
+
     TCanvas32(Dest).FRenderer.Assign(FRenderer);
     TCanvas32(Dest).FBrushes.Assign(FBrushes);
     TCanvas32(Dest).Changed;
@@ -845,6 +995,7 @@ procedure TCanvas32.DrawPath(const Path: TFlattenedPath);
 var
   ClipRect: TFloatRect;
   i: Integer;
+  Closed: boolean;
 begin
   if (Length(Path.Path) = 0) then
     exit;
@@ -855,14 +1006,16 @@ begin
   // Simple case: All paths are closed or all paths are open
   if (Path.ClosedCount = 0) or (Path.ClosedCount = Length(Path.Path)) then
   begin
+    Closed := (Path.ClosedCount > 0);
     for i := 0 to FBrushes.Count-1 do
       if FBrushes[i].Visible then
-        FBrushes[i].PolyPolygonFS(Renderer, Path.Path, ClipRect, Transformation, (Path.ClosedCount > 0));
+        FBrushes[i].PolyPolygonFS(Renderer, Path.Path, ClipRect, Transformation, Closed);
   end else
   // Not so simple case: Some paths are closed, some are open
   begin
     for i := 0 to FBrushes.Count-1 do
-      FBrushes[i].PolyPolygonFS(Renderer, Path.Path, ClipRect, Transformation, Path.PathClosed);
+      if FBrushes[i].Visible then
+        FBrushes[i].PolyPolygonMixedFS(Renderer, Path.Path, ClipRect, Transformation, Path.PathClosed);
   end;
 end;
 
@@ -877,34 +1030,78 @@ begin
   Result := FRenderer.ClassName;
 end;
 
-function TCanvas32.MeasureText(const DstRect: TFloatRect; const Text: string; Flags: Cardinal): TFloatRect;
+function TCanvas32.MeasureText(const DstRect: TFloatRect; const Text: string; const Layout: TTextLayout): TFloatRect;
 var
   TextToPath: ITextToPathSupport;
+  TextToPath2: ITextToPathSupport2;
 begin
-  if (not Supports(Bitmap.Backend, ITextToPathSupport, TextToPath)) then
+  if (Supports(Bitmap.Backend, ITextToPathSupport2, TextToPath2)) then
+    Result := TextToPath2.MeasureText(DstRect, Text, Layout)
+  else
+  if (Supports(Bitmap.Backend, ITextToPathSupport, TextToPath)) then
+    Result := TextToPath.MeasureText(DstRect, Text, LayoutToTextFlags(Layout))
+  else
     raise Exception.Create(RCStrInpropriateBackend);
+end;
 
-  Result := TextToPath.MeasureText(DstRect, Text, Flags);
+function TCanvas32.MeasureText(const DstRect: TFloatRect; const Text: string; Flags: Cardinal): TFloatRect;
+var
+  Layout: TTextLayout;
+begin
+  Layout := DefaultTextLayout;
+  TextFlagsToLayout(Flags, Layout);
+  Result := MeasureText(DstRect, Text, Layout);
+end;
+
+procedure TCanvas32.RenderText(const DstRect: TFloatRect; const Text: string; const Layout: TTextLayout);
+var
+  TextToPath: ITextToPathSupport;
+  TextToPath2: ITextToPathSupport2;
+begin
+  if (Supports(Bitmap.Backend, ITextToPathSupport2, TextToPath2)) then
+    TextToPath2.TextToPath(Self, DstRect, Text, Layout)
+  else
+  if (Supports(Bitmap.Backend, ITextToPathSupport, TextToPath)) then
+    TextToPath.TextToPath(Self, DstRect, Text, LayoutToTextFlags(Layout))
+  else
+    raise Exception.Create(RCStrInpropriateBackend);
 end;
 
 procedure TCanvas32.RenderText(const DstRect: TFloatRect; const Text: string; Flags: Cardinal);
 var
-  TextToPath: ITextToPathSupport;
+  Layout: TTextLayout;
 begin
-  if (not Supports(Bitmap.Backend, ITextToPathSupport, TextToPath)) then
-    raise Exception.Create(RCStrInpropriateBackend);
-
-  TextToPath.TextToPath(Self, DstRect, Text, Flags);
+  Layout := DefaultTextLayout;
+  TextFlagsToLayout(Flags, Layout);
+  RenderText(DstRect, Text, Layout);
 end;
 
 procedure TCanvas32.RenderText(X, Y: TFloat; const Text: string);
+begin
+  RenderText(X, Y, Text, DefaultTextLayout);
+end;
+
+procedure TCanvas32.RenderText(X, Y: TFloat; const Text: string; const Layout: TTextLayout);
 var
   TextToPath: ITextToPathSupport;
+  TextToPath2: ITextToPathSupport2;
 begin
-  if (not Supports(Bitmap.Backend, ITextToPathSupport, TextToPath)) then
+  if (Supports(Bitmap.Backend, ITextToPathSupport2, TextToPath2)) then
+    TextToPath2.TextToPath(Self, X, Y, Text, Layout)
+  else
+  if (Supports(Bitmap.Backend, ITextToPathSupport, TextToPath)) then
+    TextToPath.TextToPath(Self, X, Y, Text, LayoutToTextFlags(Layout))
+  else
     raise Exception.Create(RCStrInpropriateBackend);
+end;
 
-  TextToPath.TextToPath(Self, X, Y, Text);
+procedure TCanvas32.RenderText(X, Y: TFloat; const Text: string; Flags: Cardinal);
+var
+  Layout: TTextLayout;
+begin
+  Layout := DefaultTextLayout;
+  TextFlagsToLayout(Flags, Layout);
+  RenderText(X, Y, Text, Layout);
 end;
 
 procedure TCanvas32.SetRenderer(ARenderer: TPolygonRenderer32);
@@ -924,7 +1121,7 @@ var
 begin
   if (Value <> '') and (FRenderer.ClassName <> Value) and (PolygonRendererList <> nil) then
   begin
-    RendererClass := TPolygonRenderer32Class(PolygonRendererList.Find(Value));
+    RendererClass := PolygonRendererList.Find(Value);
     if (RendererClass <> nil) then
       Renderer := RendererClass.Create;
   end;

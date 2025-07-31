@@ -38,17 +38,13 @@ unit GR32_Filters;
 
 interface
 
-{$I GR32.inc}
+{$include GR32.inc}
 
 {$IFDEF TARGET_X64}
-{$DEFINE PUREPASCAL}
+{$DEFINE PUREPASCAL} // It seems the asm implementations haven't been ported to 64-bit
 {$ENDIF}
 
 uses
-{$IFDEF FPC}
-{$ELSE}
-  Windows,
-{$ENDIF}
   Classes, SysUtils, GR32;
 
 { Basic processing }
@@ -82,7 +78,8 @@ procedure CheckParams(Dst, Src: TCustomBitmap32; ResizeDst: Boolean = True);
 implementation
 
 uses
-  {$IFDEF COMPILERXE2_UP}Types, {$ENDIF} GR32_System, GR32_Bindings,
+  Types,
+  GR32_Bindings,
   GR32_Lowlevel;
 
 const
@@ -1650,49 +1647,44 @@ end;
 
 {CPU target and feature Function templates}
 
-const
-  FID_ANDLINE = 0;
-  FID_ORLINE = 1;
-  FID_XORLINE = 2;
-  FID_ANDLINEEX = 3;
-  FID_ORLINEEX = 4;
-  FID_XORLINEEX = 5;
-
 var
   Registry: TFunctionRegistry;
 
 procedure RegisterBindings;
 begin
   Registry := NewRegistry('GR32_Filters bindings');
-  Registry.RegisterBinding(FID_ANDLINE, @@LogicalMaskLineAnd);
-  Registry.RegisterBinding(FID_ORLINE, @@LogicalMaskLineOr);
-  Registry.RegisterBinding(FID_XORLINE, @@LogicalMaskLineXor);
-  Registry.RegisterBinding(FID_ANDLINEEX, @@LogicalMaskLineAndEx);
-  Registry.RegisterBinding(FID_ORLINEEX, @@LogicalMaskLineOrEx);
-  Registry.RegisterBinding(FID_XORLINEEX, @@LogicalMaskLineXorEx);
+  Registry.RegisterBinding(@@LogicalMaskLineAnd, 'LogicalMaskLineAnd');
+  Registry.RegisterBinding(@@LogicalMaskLineOr, 'LogicalMaskLineOr');
+  Registry.RegisterBinding(@@LogicalMaskLineXor, 'LogicalMaskLineXor');
+  Registry.RegisterBinding(@@LogicalMaskLineAndEx, 'LogicalMaskLineAndEx');
+  Registry.RegisterBinding(@@LogicalMaskLineOrEx, 'LogicalMaskLineOrEx');
+  Registry.RegisterBinding(@@LogicalMaskLineXorEx, 'LogicalMaskLineXorEx');
 
-  Registry.Add(FID_ANDLINE, @AndLine_Pas);
-  Registry.Add(FID_ORLINE, @OrLine_Pas);
-  Registry.Add(FID_XORLINE, @XorLine_Pas);
-  Registry.Add(FID_ANDLINEEX, @AndLineEx_Pas);
-  Registry.Add(FID_ORLINEEX, @OrLineEx_Pas);
-  Registry.Add(FID_XORLINEEX, @XorLineEx_Pas);
+  Registry[@@LogicalMaskLineAnd].Add(   @AndLine_Pas,   [isPascal]).Name := 'AndLine_Pas';
+  Registry[@@LogicalMaskLineOr].Add(    @OrLine_Pas,    [isPascal]).Name := 'OrLine_Pas';
+  Registry[@@LogicalMaskLineXor].Add(   @XorLine_Pas,   [isPascal]).Name := 'XorLine_Pas';
+  Registry[@@LogicalMaskLineAndEx].Add( @AndLineEx_Pas, [isPascal]).Name := 'AndLineEx_Pas';
+  Registry[@@LogicalMaskLineOrEx].Add(  @OrLineEx_Pas,  [isPascal]).Name := 'OrLineEx_Pas';
+  Registry[@@LogicalMaskLineXorEx].Add( @XorLineEx_Pas, [isPascal]).Name := 'XorLineEx_Pas';
 
 {$IFNDEF PUREPASCAL}
-  Registry.Add(FID_ANDLINE, @AndLine_ASM);
-  Registry.Add(FID_ORLINE, @OrLine_ASM);
-  Registry.Add(FID_XORLINE, @XorLine_ASM);
-  Registry.Add(FID_ANDLINEEX, @AndLineEx_ASM);
-  Registry.Add(FID_ORLINEEX, @OrLineEx_ASM);
-  Registry.Add(FID_XORLINEEX, @XorLineEx_ASM);
+  Registry[@@LogicalMaskLineAnd].Add(   @AndLine_ASM,   [isAssembler]).Name := 'AndLine_ASM';
+  Registry[@@LogicalMaskLineOr].Add(    @OrLine_ASM,    [isAssembler]).Name := 'OrLine_ASM';
+  Registry[@@LogicalMaskLineXor].Add(   @XorLine_ASM,   [isAssembler]).Name := 'XorLine_ASM';
+  Registry[@@LogicalMaskLineAndEx].Add( @AndLineEx_ASM, [isAssembler]).Name := 'AndLineEx_ASM';
+  Registry[@@LogicalMaskLineOrEx].Add(  @OrLineEx_ASM,  [isAssembler]).Name := 'OrLineEx_ASM';
+  Registry[@@LogicalMaskLineXorEx].Add( @XorLineEx_ASM, [isAssembler]).Name := 'XorLineEx_ASM';
+
+  // TODO : rewrite MMX implementations using SSE
 {$IFNDEF OMIT_MMX}
-  Registry.Add(FID_ANDLINEEX, @AndLineEx_MMX, [ciMMX]);
-  Registry.Add(FID_ORLINEEX, @OrLineEx_MMX, [ciMMX]);
-  Registry.Add(FID_XORLINEEX, @XorLineEx_MMX, [ciMMX]);
-  Registry.Add(FID_ANDLINEEX, @AndLineEx_EMMX, [ciEMMX]);
-  Registry.Add(FID_ORLINEEX, @OrLineEx_EMMX, [ciEMMX]);
-  Registry.Add(FID_XORLINEEX, @XorLineEx_EMMX, [ciEMMX]);
+  Registry[@@LogicalMaskLin].Add(@AndLineEx_MMX, [isMMX]).Name := 'AndLineEx_MMX';
+  Registry[@@LogicalMaskLineOrLi].Add(@OrLineEx_MMX, [isMMX]).Name := 'OrLineEx_MMX';
+  Registry[@@LogicalMaskLineXorLi].Add(@XorLineEx_MMX, [isMMX]).Name := 'XorLineEx_MMX';
+  Registry[@@LogicalMaskLineAndEx].Add(@AndLineEx_EMMX, [isExMMX]).Name := 'AndLineEx_EMMX';
+  Registry[@@LogicalMaskLineOrEx].Add(@OrLineEx_EMMX, [isExMMX]).Name := 'OrLineEx_EMMX';
+  Registry[@@LogicalMaskLineXorEx].Add(@XorLineEx_EMMX, [isExMMX]).Name := 'XorLineEx_EMMX';
 {$ENDIF}
+
 {$ENDIF}
 
   Registry.RebindAll;

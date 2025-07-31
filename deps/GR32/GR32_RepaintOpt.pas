@@ -29,40 +29,44 @@ unit GR32_RepaintOpt;
  * Portions created by the Initial Developer are Copyright (C) 2005-2009
  * the Initial Developer. All Rights Reserved.
  *
- * Contributor(s):
- *
  * ***** END LICENSE BLOCK ***** *)
 
 interface
 
-{$I GR32.inc}
+{$include GR32.inc}
 
 uses
 {$IFDEF FPC}
   LCLIntf,
-{$ELSE}
-  Types, Windows,
 {$ENDIF}
-  Classes, SysUtils, GR32, GR32_Containers, GR32_Layers;
+  Generics.Defaults,
+  Generics.Collections,
+  Classes, SysUtils,
+  GR32,
+  GR32_Containers,
+  GR32_Layers;
+
+{$if defined(FPC) or (CompilerVersion < 35.0)}
+type
+  TNoRefCountObject = TSingletonImplementation;
+{$ifend}
 
 type
   { TCustomRepaintOptimizer }
-  TCustomRepaintOptimizer = class
+  TCustomRepaintOptimizer = class(TNoRefCountObject)
+  private type
+    TLayerCollectionList = TList<TLayerCollection>;
   private
     FEnabled: Boolean;
-    FLayerCollections: TList;
+    FLayerCollections: TLayerCollectionList;
     FInvalidRects: TRectList;
     FBuffer: TBitmap32;
   protected
     function GetEnabled: Boolean; virtual;
     procedure SetEnabled(const Value: Boolean); virtual;
-    property LayerCollections: TList read FLayerCollections write FLayerCollections;
+    property LayerCollections: TLayerCollectionList read FLayerCollections;
     property Buffer: TBitmap32 read FBuffer write FBuffer;
     property InvalidRects: TRectList read FInvalidRects write FInvalidRects;
-
-    // LayerCollection handler
-    procedure LayerCollectionNotifyHandler(Sender: TLayerCollection;
-      Action: TLayerListNotification; Layer: TCustomLayer; Index: Integer); virtual; abstract;
   public
     constructor Create(Buffer: TBitmap32; InvalidRects: TRectList); virtual;
     destructor Destroy; override;
@@ -80,8 +84,6 @@ type
     procedure PerformOptimization; virtual; abstract;
 
     // handlers
-    procedure AreaUpdateHandler(Sender: TObject; const Area: TRect; const Info: Cardinal); virtual; abstract;
-    procedure LayerUpdateHandler(Sender: TObject; Layer: TCustomLayer); virtual; abstract;
     procedure BufferResizedHandler(const NewWidth, NewHeight: Integer); virtual; abstract;
 
     property Enabled: Boolean read GetEnabled write SetEnabled;
@@ -106,24 +108,22 @@ begin
   Inc(Area.Right, Dx); Inc(Area.Bottom, Dy);
 end;
 
-type
-  TLayerCollectionAccess = class(TLayerCollection);
-
 { TCustomRepaintManager }
 
 constructor TCustomRepaintOptimizer.Create(Buffer: TBitmap32; InvalidRects: TRectList);
 begin
-  FLayerCollections := TList.Create;
+  inherited Create;
   FInvalidRects := InvalidRects;
   FBuffer := Buffer;
 end;
 
 destructor TCustomRepaintOptimizer.Destroy;
 var
-  I: Integer;
+  i: Integer;
 begin
-  for I := 0 to FLayerCollections.Count - 1 do
-    UnregisterLayerCollection(TLayerCollection(FLayerCollections[I]));
+  if (FLayerCollections <> nil) then
+    for i := FLayerCollections.Count-1 downto 0 do
+      UnregisterLayerCollection(FLayerCollections[i]);
 
   FLayerCollections.Free;
   inherited;
@@ -141,17 +141,23 @@ end;
 
 procedure TCustomRepaintOptimizer.RegisterLayerCollection(Layers: TLayerCollection);
 begin
-  if FLayerCollections.IndexOf(Layers) = -1 then
+  if (FLayerCollections = nil) then
+    FLayerCollections := TLayerCollectionList.Create;
+
+  if not FLayerCollections.Contains(Layers) then
   begin
     FLayerCollections.Add(Layers);
-    TLayerCollectionAccess(Layers).OnListNotify := LayerCollectionNotifyHandler;
+    Layers.Subscribe(Self);
   end;
 end;
 
 procedure TCustomRepaintOptimizer.UnregisterLayerCollection(Layers: TLayerCollection);
 begin
-  TLayerCollectionAccess(Layers).OnListNotify := nil;
-  FLayerCollections.Remove(Layers);
+  if (FLayerCollections <> nil) and FLayerCollections.Contains(Layers) then
+  begin
+    Layers.Unsubscribe(Self);
+    FLayerCollections.Remove(Layers);
+  end;
 end;
 
 procedure TCustomRepaintOptimizer.BeginPaint;

@@ -32,7 +32,9 @@ unit GR32_Blurs;
 
 interface
 
-{$I GR32.inc}
+{$include GR32.inc}
+
+{$message 'The functions in the GR32_Blurs unit are being deprecated in favor of the GR32.Blur unit'}
 
 uses
   {$IFDEF FPC}
@@ -40,56 +42,63 @@ uses
   {$ELSE}
     Windows, Types,
   {$ENDIF}
-    SysUtils, Classes, Math, GR32;
+    SysUtils, Classes, Math, GR32, GR32.Blur;
 
 type
   TBlurFunction = procedure(Bitmap32: TBitmap32; Radius: TFloat);
-  TBlurFunctionBounds = procedure(Bitmap32: TBitmap32; Radius: TFloat;
-    const Bounds: TRect);
-  TBlurFunctionRegion = procedure(Bitmap32: TBitmap32; Radius: TFloat;
-    const BlurRegion: TArrayOfFloatPoint);
+  TBlurFunctionBounds = procedure(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect);
+  TBlurFunctionRegion = procedure(Bitmap32: TBitmap32; Radius: TFloat; const BlurRegion: TArrayOfFloatPoint);
 
-procedure GaussianBlur(Bitmap32: TBitmap32; Radius: TFloat); overload;
-procedure GaussianBlur(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload;
-procedure GaussianBlur(Bitmap32: TBitmap32; Radius: TFloat;
-  const BlurRegion: TArrayOfFloatPoint); overload;
+(*
 
-procedure GaussianBlurGamma(Bitmap32: TBitmap32; Radius: TFloat); overload;
-procedure GaussianBlurGamma(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload;
-procedure GaussianBlurGamma(Bitmap32: TBitmap32; Radius: TFloat;
-  const BlurRegion: TArrayOfFloatPoint); overload;
+GaussianBlur appears to be based on Mario Klingemann's "stackblur" algorithm which
+in turn is a "reinvention" of a simple sliding-accumulator box blur. It performs what
+corresponds to a two pass box blur (i.e. a triangle blur).
+https://web.archive.org/web/20200811093037/http://incubator.quasimondo.com/processing/fast_blur_deluxe.php
+https://underdestruction.com/2004/02/25/stackblur-2004/
 
-procedure FastBlur(Bitmap32: TBitmap32; Radius: TFloat); overload;
-procedure FastBlur(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload;
-procedure FastBlur(Bitmap32: TBitmap32; Radius: TFloat;
-  const BlurRegion: TArrayOfFloatPoint); overload;
+*)
+procedure GaussianBlur(Bitmap32: TBitmap32; Radius: TFloat); overload; deprecated 'Use Blur32 in GR32.Blur instead';
+procedure GaussianBlur(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload; deprecated 'Use Blur32 in GR32.Blur instead';
+procedure GaussianBlur(Bitmap32: TBitmap32; Radius: TFloat; const BlurRegion: TArrayOfFloatPoint); overload; deprecated 'Use Blur32 in GR32.Blur instead';
 
-procedure FastBlurGamma(Bitmap32: TBitmap32; Radius: TFloat); overload;
-procedure FastBlurGamma(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload;
-procedure FastBlurGamma(Bitmap32: TBitmap32; Radius: TFloat;
-  const BlurRegion: TArrayOfFloatPoint); overload;
+procedure GaussianBlurGamma(Bitmap32: TBitmap32; Radius: TFloat); overload; deprecated 'Use GammaBlur32 in GR32.Blur instead';
+procedure GaussianBlurGamma(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload; deprecated 'Use Blur32 in GR32.Blur instead';
+procedure GaussianBlurGamma(Bitmap32: TBitmap32; Radius: TFloat; const BlurRegion: TArrayOfFloatPoint); overload; deprecated 'Use Blur32 in GR32.Blur instead';
 
-procedure MotionBlur(Bitmap32: TBitmap32;
-  Dist, AngleDeg: TFloat; Bidirectional: Boolean = True); overload;
-procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
-  const Bounds: TRect; Bidirectional: Boolean = True); overload;
-procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
-  const BlurRegion: TArrayOfFloatPoint; Bidirectional: Boolean = True); overload;
+(*
 
-procedure MotionBlurGamma(Bitmap32: TBitmap32;
-  Dist, AngleDeg: TFloat; Bidirectional: Boolean = True); overload;
-procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
-  const Bounds: TRect; Bidirectional: Boolean = True); overload;
-procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
-  const BlurRegion: TArrayOfFloatPoint; Bidirectional: Boolean = True); overload;
+FastBlur: Three pass box blur
+
+*)
+procedure FastBlur(Bitmap32: TBitmap32; Radius: TFloat); overload; deprecated 'Use Blur32 in GR32.Blur instead';
+procedure FastBlur(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload; deprecated 'Use Blur32 in GR32.Blur instead';
+procedure FastBlur(Bitmap32: TBitmap32; Radius: TFloat; const BlurRegion: TArrayOfFloatPoint); overload; deprecated 'Use Blur32 in GR32.Blur instead';
+
+procedure FastBlurGamma(Bitmap32: TBitmap32; Radius: TFloat); overload; deprecated 'Use GammaBlur32 in GR32.Blur instead';
+procedure FastBlurGamma(Bitmap32: TBitmap32; Radius: TFloat; const Bounds: TRect); overload; deprecated 'Use GammaBlur32 in GR32.Blur instead';
+procedure FastBlurGamma(Bitmap32: TBitmap32; Radius: TFloat; const BlurRegion: TArrayOfFloatPoint); overload; deprecated 'Use GammaBlur32 in GR32.Blur instead';
+
+(*
+
+MotionBlur: One-dimensional blur with rotation (rotate, blur horizontal, rotate back)
+
+*)
+procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat; Bidirectional: Boolean = True); overload;
+procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat; const Bounds: TRect; Bidirectional: Boolean = True); overload;
+procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat; const BlurRegion: TArrayOfFloatPoint; Bidirectional: Boolean = True); overload;
+
+procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat; Bidirectional: Boolean = True); overload;
+procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat; const Bounds: TRect; Bidirectional: Boolean = True); overload;
+procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat; const BlurRegion: TArrayOfFloatPoint; Bidirectional: Boolean = True); overload;
 
 const
-  GaussianBlurSimple: array [Boolean] of TBlurFunction = (GaussianBlur, GaussianBlurGamma);
-  GaussianBlurBounds: array [Boolean] of TBlurFunctionBounds = (GaussianBlur, GaussianBlurGamma);
-  GaussianBlurRegion: array [Boolean] of TBlurFunctionRegion = (GaussianBlur, GaussianBlurGamma);
-  FastBlurSimple: array [Boolean] of TBlurFunction = (FastBlur, FastBlurGamma);
-  FastBlurBounds: array [Boolean] of TBlurFunctionBounds = (FastBlur, FastBlurGamma);
-  FastBlurRegion: array [Boolean] of TBlurFunctionRegion = (FastBlur, FastBlurGamma);
+  GaussianBlurSimple: array [Boolean] of TBlurFunction = (Blur32, GammaBlur32) deprecated 'This const will be removed. Make a local copy of it instead';
+  GaussianBlurBounds: array [Boolean] of TBlurFunctionBounds = (Blur32, GammaBlur32) deprecated 'This const will be removed. Make a local copy of it instead';
+  GaussianBlurRegion: array [Boolean] of TBlurFunctionRegion = (Blur32, GammaBlur32) deprecated 'This const will be removed. Make a local copy of it instead';
+  FastBlurSimple: array [Boolean] of TBlurFunction = (Blur32, GammaBlur32) deprecated 'This const will be removed. Make a local copy of it instead';
+  FastBlurBounds: array [Boolean] of TBlurFunctionBounds = (Blur32, GammaBlur32) deprecated 'This const will be removed. Make a local copy of it instead';
+  FastBlurRegion: array [Boolean] of TBlurFunctionRegion = (Blur32, GammaBlur32) deprecated 'This const will be removed. Make a local copy of it instead';
 
 implementation
 
@@ -224,9 +233,9 @@ begin
       with ImagePixels[Q] do
       begin
         PreMulArray[X].A := A;
-        PreMulArray[X].R := DivTable[R, A];
-        PreMulArray[X].G := DivTable[G, A];
-        PreMulArray[X].B := DivTable[B, A];
+        PreMulArray[X].R := MulDiv255Table[R, A];
+        PreMulArray[X].G := MulDiv255Table[G, A];
+        PreMulArray[X].B := MulDiv255Table[B, A];
         Inc(Q);
       end;
 
@@ -275,9 +284,9 @@ begin
       with ImagePixels[RowOffset + X] do
       begin
         A := (SumRec.A div SumRec.Sum);
-        R := RcTable[A, (SumRec.R div SumRec.Sum)];
-        G := RcTable[A, (SumRec.G div SumRec.Sum)];
-        B := RcTable[A, (SumRec.B div SumRec.Sum)];
+        R := DivMul255Table[A, (SumRec.R div SumRec.Sum)];
+        G := DivMul255Table[A, (SumRec.G div SumRec.Sum)];
+        B := DivMul255Table[A, (SumRec.B div SumRec.Sum)];
       end;
     end;
     Inc(RowOffset, ImageWidth);
@@ -296,7 +305,6 @@ var
   GaussLUT: array of array of Cardinal;
   PreMulArray: array of TColor32Entry;
 
-  Alpha: Cardinal;
   Mask: TBitmap32;
   Clr, MaskClr: TColor32Entry;
   Pts: TArrayOfFloatPoint;
@@ -363,9 +371,9 @@ begin
         with ImagePixels[Q] do
         begin
           PreMulArray[X].A := A;
-          PreMulArray[X].R := DivTable[R, A];
-          PreMulArray[X].G := DivTable[G, A];
-          PreMulArray[X].B := DivTable[B, A];
+          PreMulArray[X].R := MulDiv255Table[R, A];
+          PreMulArray[X].G := MulDiv255Table[G, A];
+          PreMulArray[X].B := MulDiv255Table[B, A];
           Inc(Q);
         end;
 
@@ -418,21 +426,20 @@ begin
           if (MaskClr.A < 255) then
           begin
             Clr.A := SumRec.A div SumRec.Sum;
-            Clr.R := RcTable[Clr.A, SumRec.R div SumRec.Sum];
-            Clr.G := RcTable[Clr.A, SumRec.G div SumRec.Sum];
-            Clr.B := RcTable[Clr.A, SumRec.B div SumRec.Sum];
+            Clr.R := DivMul255Table[Clr.A, SumRec.R div SumRec.Sum];
+            Clr.G := DivMul255Table[Clr.A, SumRec.G div SumRec.Sum];
+            Clr.B := DivMul255Table[Clr.A, SumRec.B div SumRec.Sum];
             BlendMemEx(Clr.ARGB, ARGB, MaskClr.A);
           end else
           begin
             A := SumRec.A div SumRec.Sum;
-            R := RcTable[A, SumRec.R div SumRec.Sum];
-            G := RcTable[A, SumRec.G div SumRec.Sum];
-            B := RcTable[A, SumRec.B div SumRec.Sum];
+            R := DivMul255Table[A, SumRec.R div SumRec.Sum];
+            G := DivMul255Table[A, SumRec.G div SumRec.Sum];
+            B := DivMul255Table[A, SumRec.B div SumRec.Sum];
           end;
       end;
       Inc(RowOffset, ImageWidth);
     end;
-    EMMS;
   finally
     Mask.Free;
   end;
@@ -497,9 +504,9 @@ begin
       with ImagePixels[Q] do
       begin
         PreMulArray[X].A := A;
-        PreMulArray[X].R := DivTable[GAMMA_DECODING_TABLE[R], A];
-        PreMulArray[X].G := DivTable[GAMMA_DECODING_TABLE[G], A];
-        PreMulArray[X].B := DivTable[GAMMA_DECODING_TABLE[B], A];
+        PreMulArray[X].R := MulDiv255Table[GAMMA_DECODING_TABLE[R], A];
+        PreMulArray[X].G := MulDiv255Table[GAMMA_DECODING_TABLE[G], A];
+        PreMulArray[X].B := MulDiv255Table[GAMMA_DECODING_TABLE[B], A];
         Inc(Q);
       end;
 
@@ -548,9 +555,9 @@ begin
       with ImagePixels[RowOffset + X] do
       begin
         A := (SumRec.A div SumRec.Sum);
-        R := GAMMA_ENCODING_TABLE[RcTable[A, (SumRec.R div SumRec.Sum)]];
-        G := GAMMA_ENCODING_TABLE[RcTable[A, (SumRec.G div SumRec.Sum)]];
-        B := GAMMA_ENCODING_TABLE[RcTable[A, (SumRec.B div SumRec.Sum)]];
+        R := GAMMA_ENCODING_TABLE[DivMul255Table[A, (SumRec.R div SumRec.Sum)]];
+        G := GAMMA_ENCODING_TABLE[DivMul255Table[A, (SumRec.G div SumRec.Sum)]];
+        B := GAMMA_ENCODING_TABLE[DivMul255Table[A, (SumRec.B div SumRec.Sum)]];
       end;
     end;
     Inc(RowOffset, ImageWidth);
@@ -569,7 +576,6 @@ var
   GaussLUT: array of array of Cardinal;
   PreMulArray: array of TColor32Entry;
 
-  Alpha: Cardinal;
   Mask: TBitmap32;
   Clr, MaskClr: TColor32Entry;
   Pts: TArrayOfFloatPoint;
@@ -636,9 +642,9 @@ begin
         with ImagePixels[Q] do
         begin
           PreMulArray[X].A := A;
-          PreMulArray[X].R := DivTable[GAMMA_DECODING_TABLE[R], A];
-          PreMulArray[X].G := DivTable[GAMMA_DECODING_TABLE[G], A];
-          PreMulArray[X].B := DivTable[GAMMA_DECODING_TABLE[B], A];
+          PreMulArray[X].R := MulDiv255Table[GAMMA_DECODING_TABLE[R], A];
+          PreMulArray[X].G := MulDiv255Table[GAMMA_DECODING_TABLE[G], A];
+          PreMulArray[X].B := MulDiv255Table[GAMMA_DECODING_TABLE[B], A];
           Inc(Q);
         end;
 
@@ -691,21 +697,20 @@ begin
           if (MaskClr.A < 255) then
           begin
             Clr.A := SumRec.A div SumRec.Sum;
-            Clr.R := GAMMA_ENCODING_TABLE[RcTable[Clr.A, SumRec.R div SumRec.Sum]];
-            Clr.G := GAMMA_ENCODING_TABLE[RcTable[Clr.A, SumRec.G div SumRec.Sum]];
-            Clr.B := GAMMA_ENCODING_TABLE[RcTable[Clr.A, SumRec.B div SumRec.Sum]];
+            Clr.R := GAMMA_ENCODING_TABLE[DivMul255Table[Clr.A, SumRec.R div SumRec.Sum]];
+            Clr.G := GAMMA_ENCODING_TABLE[DivMul255Table[Clr.A, SumRec.G div SumRec.Sum]];
+            Clr.B := GAMMA_ENCODING_TABLE[DivMul255Table[Clr.A, SumRec.B div SumRec.Sum]];
             BlendMemEx(Clr.ARGB, ARGB, MaskClr.A);
           end else
           begin
             A := SumRec.A div SumRec.Sum;
-            R := GAMMA_ENCODING_TABLE[RcTable[A, SumRec.R div SumRec.Sum]];
-            G := GAMMA_ENCODING_TABLE[RcTable[A, SumRec.G div SumRec.Sum]];
-            B := GAMMA_ENCODING_TABLE[RcTable[A, SumRec.B div SumRec.Sum]];
+            R := GAMMA_ENCODING_TABLE[DivMul255Table[A, SumRec.R div SumRec.Sum]];
+            G := GAMMA_ENCODING_TABLE[DivMul255Table[A, SumRec.G div SumRec.Sum]];
+            B := GAMMA_ENCODING_TABLE[DivMul255Table[A, SumRec.B div SumRec.Sum]];
           end;
       end;
       Inc(RowOffset, ImageWidth);
     end;
-    EMMS;
   finally
     Mask.Free;
   end;
@@ -755,9 +760,9 @@ begin
     for X := RecLeft to RecRight do
       with ImgPixel^ do
       begin
-        R := DivTable[R, A];
-        G := DivTable[G, A];
-        B := DivTable[B, A];
+        R := MulDiv255Table[R, A];
+        G := MulDiv255Table[G, A];
+        B := MulDiv255Table[B, A];
         Inc(ImgPixel);
       end;
   end;
@@ -885,9 +890,9 @@ begin
     ImgPixel := PColor32Entry(@Bitmap32.ScanLine[Y][RecLeft]);
     for X := RecLeft to RecRight do
     begin
-      ImgPixel.R := RcTable[ImgPixel.A, ImgPixel.R];
-      ImgPixel.G := RcTable[ImgPixel.A, ImgPixel.G];
-      ImgPixel.B := RcTable[ImgPixel.A, ImgPixel.B];
+      ImgPixel.R := DivMul255Table[ImgPixel.A, ImgPixel.R];
+      ImgPixel.G := DivMul255Table[ImgPixel.A, ImgPixel.G];
+      ImgPixel.B := DivMul255Table[ImgPixel.A, ImgPixel.B];
       Inc(ImgPixel);
     end;
   end;
@@ -939,9 +944,9 @@ begin
     Inc(ImgPixel, RecLeft);
     for X := RecLeft to RecRight do
     begin
-      ImgPixel.R := DivTable[ImgPixel.R, ImgPixel.A];
-      ImgPixel.G := DivTable[ImgPixel.G, ImgPixel.A];
-      ImgPixel.B := DivTable[ImgPixel.B, ImgPixel.A];
+      ImgPixel.R := MulDiv255Table[ImgPixel.R, ImgPixel.A];
+      ImgPixel.G := MulDiv255Table[ImgPixel.G, ImgPixel.A];
+      ImgPixel.B := MulDiv255Table[ImgPixel.B, ImgPixel.A];
       Inc(ImgPixel);
     end;
   end;
@@ -1120,7 +1125,6 @@ begin
           else if (MaskClr.A = 255) then
             ImagePixel^ := DivideToColor32(SumRec);
         end;
-        EMMS;
       end;
     end;
 
@@ -1131,9 +1135,9 @@ begin
       Inc(ImgPixel, RecLeft);
       for X := RecLeft to RecRight do
       begin
-        ImgPixel.R := RcTable[ImgPixel.A, ImgPixel.R];
-        ImgPixel.G := RcTable[ImgPixel.A, ImgPixel.G];
-        ImgPixel.B := RcTable[ImgPixel.A, ImgPixel.B];
+        ImgPixel.R := DivMul255Table[ImgPixel.A, ImgPixel.R];
+        ImgPixel.G := DivMul255Table[ImgPixel.A, ImgPixel.G];
+        ImgPixel.B := DivMul255Table[ImgPixel.A, ImgPixel.B];
         Inc(ImgPixel);
       end;
     end;
@@ -1184,9 +1188,9 @@ begin
     for X := RecLeft to RecRight do
       with ImgPixel^ do
       begin
-        R := DivTable[GAMMA_DECODING_TABLE[R], A];
-        G := DivTable[GAMMA_DECODING_TABLE[G], A];
-        B := DivTable[GAMMA_DECODING_TABLE[B], A];
+        R := MulDiv255Table[GAMMA_DECODING_TABLE[R], A];
+        G := MulDiv255Table[GAMMA_DECODING_TABLE[G], A];
+        B := MulDiv255Table[GAMMA_DECODING_TABLE[B], A];
         Inc(ImgPixel);
       end;
   end;
@@ -1313,9 +1317,9 @@ begin
     ImgPixel := PColor32Entry(@Bitmap32.ScanLine[Y][RecLeft]);
     for X := RecLeft to RecRight do
     begin
-      ImgPixel.R := GAMMA_ENCODING_TABLE[RcTable[ImgPixel.A, ImgPixel.R]];
-      ImgPixel.G := GAMMA_ENCODING_TABLE[RcTable[ImgPixel.A, ImgPixel.G]];
-      ImgPixel.B := GAMMA_ENCODING_TABLE[RcTable[ImgPixel.A, ImgPixel.B]];
+      ImgPixel.R := GAMMA_ENCODING_TABLE[DivMul255Table[ImgPixel.A, ImgPixel.R]];
+      ImgPixel.G := GAMMA_ENCODING_TABLE[DivMul255Table[ImgPixel.A, ImgPixel.G]];
+      ImgPixel.B := GAMMA_ENCODING_TABLE[DivMul255Table[ImgPixel.A, ImgPixel.B]];
       Inc(ImgPixel);
     end;
   end;
@@ -1368,9 +1372,9 @@ begin
     Inc(ImgPixel, RecLeft);
     for X := RecLeft to RecRight do
     begin
-      ImgPixel.R := DivTable[GAMMA_DECODING_TABLE[ImgPixel.R], ImgPixel.A];
-      ImgPixel.G := DivTable[GAMMA_DECODING_TABLE[ImgPixel.G], ImgPixel.A];
-      ImgPixel.B := DivTable[GAMMA_DECODING_TABLE[ImgPixel.B], ImgPixel.A];
+      ImgPixel.R := MulDiv255Table[GAMMA_DECODING_TABLE[ImgPixel.R], ImgPixel.A];
+      ImgPixel.G := MulDiv255Table[GAMMA_DECODING_TABLE[ImgPixel.G], ImgPixel.A];
+      ImgPixel.B := MulDiv255Table[GAMMA_DECODING_TABLE[ImgPixel.B], ImgPixel.A];
       Inc(ImgPixel);
     end;
   end;
@@ -1549,7 +1553,6 @@ begin
           else if (MaskClr.A = 255) then
             ImagePixel^ := DivideToColor32(SumRec);
         end;
-        EMMS;
       end;
     end;
 
@@ -1560,9 +1563,9 @@ begin
       Inc(ImgPixel, RecLeft);
       for X := RecLeft to RecRight do
       begin
-        ImgPixel.R := GAMMA_ENCODING_TABLE[RcTable[ImgPixel.A, ImgPixel.R]];
-        ImgPixel.G := GAMMA_ENCODING_TABLE[RcTable[ImgPixel.A, ImgPixel.G]];
-        ImgPixel.B := GAMMA_ENCODING_TABLE[RcTable[ImgPixel.A, ImgPixel.B]];
+        ImgPixel.R := GAMMA_ENCODING_TABLE[DivMul255Table[ImgPixel.A, ImgPixel.R]];
+        ImgPixel.G := GAMMA_ENCODING_TABLE[DivMul255Table[ImgPixel.A, ImgPixel.G]];
+        ImgPixel.B := GAMMA_ENCODING_TABLE[DivMul255Table[ImgPixel.A, ImgPixel.B]];
         Inc(ImgPixel);
       end;
     end;
@@ -1576,34 +1579,14 @@ end;
 
 procedure MotionBlur(Bitmap32: TBitmap32;
   Dist, AngleDeg: TFloat; Bidirectional: Boolean = True);
-var
-  Pts: TArrayOfFloatPoint;
 begin
-  SetLength(Pts, 4);
-  with Bitmap32.BoundsRect do
-  begin
-    Pts[0] := FloatPoint(Left, Top);
-    Pts[1] := FloatPoint(Right, Top);
-    Pts[2] := FloatPoint(Right, Bottom);
-    Pts[3] := FloatPoint(Left, Bottom);
-  end;
-  MotionBlur(Bitmap32, Dist, AngleDeg, Pts, Bidirectional);
+  MotionBlur(Bitmap32, Dist, AngleDeg, Rectangle(Bitmap32.BoundsRect), Bidirectional);
 end;
 
 procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
   const Bounds: TRect; Bidirectional: Boolean = True);
-var
-  Pts: TArrayOfFloatPoint;
 begin
-  SetLength(Pts, 4);
-  with Bounds do
-  begin
-    Pts[0] := FloatPoint(Left, Top);
-    Pts[1] := FloatPoint(Right, Top);
-    Pts[2] := FloatPoint(Right, Bottom);
-    Pts[3] := FloatPoint(Left, Bottom);
-  end;
-  MotionBlur(Bitmap32, Dist, AngleDeg, Pts, Bidirectional);
+  MotionBlur(Bitmap32, Dist, AngleDeg, Rectangle(Bounds), Bidirectional);
 end;
 
 procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
@@ -1611,7 +1594,6 @@ procedure MotionBlur(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
 var
   LL, RR, XX, I, X, Y, RadiusI, Passes: Integer;
   ImagePixel, ImagePixel2, ImagePixel3: PColor32Entry;
-  ImagePixels, ImagePixels2: PColor32EntryArray;
   SumRec: TSumRecord;
   Pixels: array of TSumRecord;
   Mask: TBitmap32;
@@ -1622,7 +1604,7 @@ var
   Affine: TAffineTransformation;
   BmpCutout: TBitmap32;
   BmpRotated: TBitmap32;
-  PrevIsBlank, ThisIsBlank: boolean;
+  FloatBounds: TFloatRect;
 begin
   if Dist < 1 then
     Exit
@@ -1638,12 +1620,8 @@ begin
     Passes := 3;
 
 
-  with PolygonBounds(BlurRegion) do
-    Bounds := Rect(Floor(Left), Floor(Top), Ceil(Right), Ceil(Bottom));
-  Bounds.Left := Max(Bounds.Left, 0);
-  Bounds.Top := Max(Bounds.Top, 0);
-  Bounds.Right := Min(Bounds.Right, Bitmap32.Width - 1);
-  Bounds.Bottom := Min(Bounds.Bottom, Bitmap32.Height - 1);
+  Bounds := MakeRect(PolygonBounds(BlurRegion), rrOutside);
+  Bounds.Intersect(Rect(0, 0, Bitmap32.Width-1, Bitmap32.Height-1));
 
   Affine := TAffineTransformation.Create;
   BmpCutout := TBitmap32.Create;
@@ -1666,9 +1644,9 @@ begin
       ImagePixel := PColor32Entry(BmpCutout.ScanLine[Y]);
       for X := 0 to BmpCutout.Width - 1 do
       begin
-        ImagePixel.R := DivTable[ImagePixel.R, ImagePixel.A];
-        ImagePixel.G := DivTable[ImagePixel.G, ImagePixel.A];
-        ImagePixel.B := DivTable[ImagePixel.B, ImagePixel.A];
+        ImagePixel.R := MulDiv255Table[ImagePixel.R, ImagePixel.A];
+        ImagePixel.G := MulDiv255Table[ImagePixel.G, ImagePixel.A];
+        ImagePixel.B := MulDiv255Table[ImagePixel.B, ImagePixel.A];
         Inc(ImagePixel);
       end;
     end;
@@ -1676,13 +1654,11 @@ begin
     // Rotate BmpCutout into BmpRotated ...
     Affine.SrcRect := FloatRect(BmpCutout.BoundsRect);
     Affine.Rotate(180 - AngleDeg);
-    with Affine.GetTransformedBounds do
-    begin
-      Mask.SetSize(Round(Right - Left) + 1, Round(Bottom - Top) + 1);
-      BmpRotated.SetSize(Mask.Width, Mask.Height);
-      Dx := Left; Dy := Top;
-      Affine.Translate(-Dx, -Dy);
-    end;
+    FloatBounds := Affine.GetTransformedBounds;
+    Mask.SetSize(Round(FloatBounds.Width) + 1, Round(FloatBounds.Height) + 1);
+    BmpRotated.SetSize(Mask.Width, Mask.Height);
+    Dx := FloatBounds.Left; Dy := FloatBounds.Top;
+    Affine.Translate(-Dx, -Dy);
     Transform(BmpRotated, BmpCutout, Affine);
 
     // Create a rotated mask ...
@@ -1726,7 +1702,8 @@ begin
 
         LL := 0;
         RR := RadiusI;
-        if RR >= BmpRotated.Width then RR := BmpRotated.Width - 1;
+        if RR >= BmpRotated.Width then
+          RR := BmpRotated.Width - 1;
         ResetSumRecord(SumRec);
 
         // update first in row ...
@@ -1763,6 +1740,7 @@ begin
               Dec(SumRec.B, B);
               Dec(SumRec.Sum, Sum);
             end;
+
           if RR < BmpRotated.Width then
             with Pixels[RR] do
             begin
@@ -1777,15 +1755,15 @@ begin
 
           if (SumRec.Sum = 0) or (MaskClr.A = 0) then
             Continue
-          else if (I = Passes) then
+          else
+          if (I = Passes) then
           begin
             Clr := DivideToColor32(SumRec);
             BlendMemEx(Clr.ARGB, ImagePixel^.ARGB, MaskClr.A);
-          end
-          else if (MaskClr.A = 255) then
+          end else
+          if (MaskClr.A = 255) then
             ImagePixel^ := DivideToColor32(SumRec);
         end;
-        EMMS;
       end;
 
     // un-rotate the now blurred image back into BmpCutout ...
@@ -1801,9 +1779,9 @@ begin
       ImagePixel := PColor32Entry(BmpCutout.ScanLine[Y]);
       for X := 0 to BmpCutout.Width - 1 do
       begin
-        ImagePixel.R := RcTable[ImagePixel.A, ImagePixel.R];
-        ImagePixel.G := RcTable[ImagePixel.A, ImagePixel.G];
-        ImagePixel.B := RcTable[ImagePixel.A, ImagePixel.B];
+        ImagePixel.R := DivMul255Table[ImagePixel.A, ImagePixel.R];
+        ImagePixel.G := DivMul255Table[ImagePixel.A, ImagePixel.G];
+        ImagePixel.B := DivMul255Table[ImagePixel.A, ImagePixel.B];
         Inc(ImagePixel);
       end;
     end;
@@ -1839,34 +1817,14 @@ end;
 
 procedure MotionBlurGamma(Bitmap32: TBitmap32;
   Dist, AngleDeg: TFloat; Bidirectional: Boolean = True);
-var
-  Pts: TArrayOfFloatPoint;
 begin
-  SetLength(Pts, 4);
-  with Bitmap32.BoundsRect do
-  begin
-    Pts[0] := FloatPoint(Left, Top);
-    Pts[1] := FloatPoint(Right, Top);
-    Pts[2] := FloatPoint(Right, Bottom);
-    Pts[3] := FloatPoint(Left, Bottom);
-  end;
-  MotionBlurGamma(Bitmap32, Dist, AngleDeg, Pts, Bidirectional);
+  MotionBlurGamma(Bitmap32, Dist, AngleDeg, Rectangle(Bitmap32.BoundsRect), Bidirectional);
 end;
 
 procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
   const Bounds: TRect; Bidirectional: Boolean = True);
-var
-  Pts: TArrayOfFloatPoint;
 begin
-  SetLength(Pts, 4);
-  with Bounds do
-  begin
-    Pts[0] := FloatPoint(Left, Top);
-    Pts[1] := FloatPoint(Right, Top);
-    Pts[2] := FloatPoint(Right, Bottom);
-    Pts[3] := FloatPoint(Left, Bottom);
-  end;
-  MotionBlurGamma(Bitmap32, Dist, AngleDeg, Pts, Bidirectional);
+  MotionBlurGamma(Bitmap32, Dist, AngleDeg, Rectangle(Bounds), Bidirectional);
 end;
 
 procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
@@ -1874,7 +1832,6 @@ procedure MotionBlurGamma(Bitmap32: TBitmap32; Dist, AngleDeg: TFloat;
 var
   LL, RR, XX, I, X, Y, RadiusI, Passes: Integer;
   ImagePixel, ImagePixel2, ImagePixel3: PColor32Entry;
-  ImagePixels, ImagePixels2: PColor32EntryArray;
   SumRec: TSumRecord;
   Pixels: array of TSumRecord;
   Mask: TBitmap32;
@@ -1885,7 +1842,7 @@ var
   Affine: TAffineTransformation;
   BmpCutout: TBitmap32;
   BmpRotated: TBitmap32;
-  PrevIsBlank, ThisIsBlank: boolean;
+  FloatBounds: TFloatRect;
 begin
   if Dist < 1 then
     Exit
@@ -1901,12 +1858,8 @@ begin
     Passes := 3;
 
 
-  with PolygonBounds(BlurRegion) do
-    Bounds := Rect(Floor(Left), Floor(Top), Ceil(Right), Ceil(Bottom));
-  Bounds.Left := Max(Bounds.Left, 0);
-  Bounds.Top := Max(Bounds.Top, 0);
-  Bounds.Right := Min(Bounds.Right, Bitmap32.Width - 1);
-  Bounds.Bottom := Min(Bounds.Bottom, Bitmap32.Height - 1);
+  Bounds := MakeRect(PolygonBounds(BlurRegion), rrOutside);
+  Bounds.Intersect(Rect(0, 0, Bitmap32.Width-1, Bitmap32.Height-1));
 
   Affine := TAffineTransformation.Create;
   BmpCutout := TBitmap32.Create;
@@ -1929,9 +1882,9 @@ begin
       ImagePixel := PColor32Entry(BmpCutout.ScanLine[Y]);
       for X := 0 to BmpCutout.Width - 1 do
       begin
-        ImagePixel.R := DivTable[GAMMA_DECODING_TABLE[ImagePixel.R], ImagePixel.A];
-        ImagePixel.G := DivTable[GAMMA_DECODING_TABLE[ImagePixel.G], ImagePixel.A];
-        ImagePixel.B := DivTable[GAMMA_DECODING_TABLE[ImagePixel.B], ImagePixel.A];
+        ImagePixel.R := MulDiv255Table[GAMMA_DECODING_TABLE[ImagePixel.R], ImagePixel.A];
+        ImagePixel.G := MulDiv255Table[GAMMA_DECODING_TABLE[ImagePixel.G], ImagePixel.A];
+        ImagePixel.B := MulDiv255Table[GAMMA_DECODING_TABLE[ImagePixel.B], ImagePixel.A];
         Inc(ImagePixel);
       end;
     end;
@@ -1939,13 +1892,12 @@ begin
     // Rotate BmpCutout into BmpRotated ...
     Affine.SrcRect := FloatRect(BmpCutout.BoundsRect);
     Affine.Rotate(180 - AngleDeg);
-    with Affine.GetTransformedBounds do
-    begin
-      Mask.SetSize(Round(Right - Left) + 1, Round(Bottom - Top) + 1);
-      BmpRotated.SetSize(Mask.Width, Mask.Height);
-      Dx := Left; Dy := Top;
-      Affine.Translate(-Dx, -Dy);
-    end;
+
+    FloatBounds := Affine.GetTransformedBounds;
+    Mask.SetSize(Round(FloatBounds.Width) + 1, Round(FloatBounds.Height) + 1);
+    BmpRotated.SetSize(Mask.Width, Mask.Height);
+    Dx := FloatBounds.Left; Dy := FloatBounds.Top;
+    Affine.Translate(-Dx, -Dy);
     Transform(BmpRotated, BmpCutout, Affine);
 
     // Create a rotated mask ...
@@ -2026,6 +1978,7 @@ begin
               Dec(SumRec.B, B);
               Dec(SumRec.Sum, Sum);
             end;
+
           if RR < BmpRotated.Width then
             with Pixels[RR] do
             begin
@@ -2040,15 +1993,15 @@ begin
 
           if (SumRec.Sum = 0) or (MaskClr.A = 0) then
             Continue
-          else if (I = Passes) then
+          else
+          if (I = Passes) then
           begin
             Clr := DivideToColor32(SumRec);
             BlendMemEx(Clr.ARGB, ImagePixel^.ARGB, MaskClr.A);
-          end
-          else if (MaskClr.A = 255) then
+          end else
+          if (MaskClr.A = 255) then
             ImagePixel^ := DivideToColor32(SumRec);
         end;
-        EMMS;
       end;
 
     // un-rotate the now blurred image back into BmpCutout ...
@@ -2064,9 +2017,9 @@ begin
       ImagePixel := PColor32Entry(BmpCutout.ScanLine[Y]);
       for X := 0 to BmpCutout.Width - 1 do
       begin
-        ImagePixel.R := GAMMA_ENCODING_TABLE[RcTable[ImagePixel.A, ImagePixel.R]];
-        ImagePixel.G := GAMMA_ENCODING_TABLE[RcTable[ImagePixel.A, ImagePixel.G]];
-        ImagePixel.B := GAMMA_ENCODING_TABLE[RcTable[ImagePixel.A, ImagePixel.B]];
+        ImagePixel.R := GAMMA_ENCODING_TABLE[DivMul255Table[ImagePixel.A, ImagePixel.R]];
+        ImagePixel.G := GAMMA_ENCODING_TABLE[DivMul255Table[ImagePixel.A, ImagePixel.G]];
+        ImagePixel.B := GAMMA_ENCODING_TABLE[DivMul255Table[ImagePixel.A, ImagePixel.B]];
         Inc(ImagePixel);
       end;
     end;

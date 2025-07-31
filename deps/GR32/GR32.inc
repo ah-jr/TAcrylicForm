@@ -26,14 +26,9 @@
  * Portions created by the Initial Developer are Copyright (C) 2000-2009
  * the Initial Developer. All Rights Reserved.
  *
- * Contributor(s):
- *   Andre Beckedorf <Andre@metaException.de>
- *   Michael Hansen <dyster_tid@hotmail.com>
- *   Christian Budde <Christian@aixcoustic.com>
- *
  * ***** END LICENSE BLOCK ***** *)
 
- {$I GR32_Compiler.inc}
+ {$include GR32_Compiler.inc}
 
 
 (* Symbol PUREPASCAL:
@@ -48,23 +43,11 @@
       any assmbler code. The code is slower, but probably more platform
       independent.
 
-      (Defined by default for FPC and DARWIN targets in GR32_Compilers.INC.)
+      (Defined by default for some targets in GR32_Compilers.INC.)
 
 *)
 
   {-$DEFINE PUREPASCAL}
-
-
-
-(* Symbol DEPRECATEDMODE :
-   -----------------------
-
-      Defines if GR32 should behave like version 1.7.x and down.
-
-   NOTE: Support for this will be dropped at some time and is only provided
-   for transition *)
-
-  {-$DEFINE DEPRECATEDMODE}
 
 
 
@@ -117,16 +100,6 @@
 
 
 
-(* Symbol XPTHEMES :
-   -----------------
-
-    Enable support for windows xp themes. Eventually undefine if GR32 should
-    be used within a DLL *)
-
-  {$DEFINE XPTHEMES}
-
-
-
 (* Symbol USEMULTITHREADING :
    --------------------------
 
@@ -156,27 +129,6 @@
 
 
 
-(*
-  Symbol OMIT_MMX:
-  ----------------
-
-     If defined MMX optimizations are not used (omitted)
-
-   For faster pixel/color processing, MMX can be used which results in a huge
-   performance boost over PUREPASCAL code or native assembler code.
-   However, there's a penalty (a call to EMMS) when switching between FPU and
-   MMX registers. This call is not necessary when SSE2 is available. Though,
-   for backward compatibility it is necessary to call EMMS even if SSE2 is used.
-
-   NOTE: On every x64 system SSE2 is available and thus MMX support is not
-   necessary. In fact it is problematic in case the Delphi XE2 compiler is used.
-*)
-
-  {-$DEFINE OMIT_MMX}
-  {$IFDEF TARGET_x64}
-    {$DEFINE OMIT_MMX}
-  {$ENDIF}
-
 
 (*
   Symbol OMIT_SSE2:
@@ -190,19 +142,6 @@
 *)
 
   {-$DEFINE OMIT_SSE2}
-
-
-(*
-  Symbol: USEGR32GAMMA
-  --------------------
-
-    If defined the polygon rasterizer will use the GR32 gamma correction LUT.
-
-  Disable for a slight performance increase.
-*)
-
-{$DEFINE USEGR32GAMMA}
-
 
 
 (*
@@ -244,48 +183,24 @@
 
 {-$DEFINE RGBA_FORMAT}
 
-(*
-  Symbol: NOHINTING
-  -----------------
-
-    Disables font hinting by default when using TextToPath() method.
-
-  It is usually preferrable to disable hinting when using a high quality
-  polygon renderer like VPR. However, hinting can sometimes improve
-  visual quality when rendering small text (text is adjusted to pixel
-  boundaries which makes it more crisp.)
-*)
-
-{$DEFINE NOHINTING}
-
 
 (*
-  Symbol: NOHORIZONTALHINTING
-  ---------------------------
+  Symbol: IGNORE_HINTING_DEPRECATED
+  -------------------
 
-    Disables horizontal font hinting when using TextToPath() method.
+     Hinting is no longer supported and reference to or use of the hinting
+     interfaces will produce a compiler warning.
+     If this is a problem you can define the IGNORE_HINTING_DEPRECATED
+     symbol to supress the warnings.
 
-  The following should not be used in conjunction with NOHINTING.
-  It will attempt to address the problem of extreme font hinting in the
-  GDI by disabling horizontal, but keeping vertical hinting.
+     Be aware through that the hinting stuff will be deleted sooner or
+     later.
 *)
-
-{-$DEFINE NOHORIZONTALHINTING}
-
-
-(*
-  Symbol: USEKERNING
-  -----------------
-
-    Enables font kerning when using TextToPath() method.
-
-  Kerning is the process of adjusting the spacing between characters in a
-  proportional font, usually to achieve a visually pleasing result. However,
-  parsing for kerning pairs is quite expensive in terms of CPU usage while the
-  effect is often very little. Thus kerning is not enabled by default.
-*)
-
-{-$DEFINE USEKERNING}
-
+{-$define IGNORE_HINTING_DEPRECATED}
 
 {-$DEFINE TEST_BLENDMEMRGB128SSE4}
+{$define GR32_WRAPMODE_REFLECT}
+
+// MMX (and EMMX) is no longer supported on any platform.
+{$define OMIT_MMX}
+

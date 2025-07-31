@@ -35,20 +35,15 @@ unit GR32_Containers;
 
 interface
 
-{$I GR32.inc}
+{$include GR32.inc}
 
 uses
-{$IFDEF FPC}
-  {$IFDEF Windows}
-  Windows,
-  {$ELSE}
+  Generics.Collections,
   Types,
-  {$ENDIF}
-{$ELSE}
-  Types, Windows,
-{$ENDIF}
   RTLConsts,
-  GR32, SysUtils, Classes, TypInfo;
+  SysUtils,
+  Classes,
+  TypInfo;
 
 const
   BUCKET_MASK = $FF;               
@@ -153,6 +148,7 @@ type
   public
     destructor Destroy; override;
     function Add(const Rect: TRect): Integer;
+    procedure Assign(Source: TRectList);
     procedure Clear; virtual;
     procedure Delete(Index: Integer);
     procedure Exchange(Index1, Index2: Integer);
@@ -169,22 +165,16 @@ type
 
   { TClassList }
   { This is a class that maintains a list of classes. }
-  TClassList = class(TList)
-  protected
-    function GetItems(Index: Integer): TClass;
-    procedure SetItems(Index: Integer; AClass: TClass);
+  TCustomClassList<T> = class(TList<T>)
+  private
+    function GetClassName(Index: integer): string;
   public
-    function Add(AClass: TClass): Integer;
-    function Extract(Item: TClass): TClass;
-    function Remove(AClass: TClass): Integer;
-    function IndexOf(AClass: TClass): Integer;
-    function First: TClass;
-    function Last: TClass;
-    function Find(const AClassName: string): TClass;
+    function Find(const AClassName: string): T;
     procedure GetClassNames(Strings: TStrings);
-    procedure Insert(Index: Integer; AClass: TClass);
-    property Items[Index: Integer]: TClass read GetItems write SetItems; default;
+    property ClassNames[Index: integer]: string read GetClassName;
   end;
+
+  TClassList = class(TCustomClassList<TClass>);
 
 
   PLinkedNode = ^TLinkedNode;
@@ -427,11 +417,7 @@ function TPointerMap.Exists(Item: PItem; out BucketIndex, ItemIndex: Integer): B
 var
   I: Integer;
 begin
-{$IFDEF HAS_NATIVEINT}
   BucketIndex := NativeUInt(Item) shr 8 and BUCKET_MASK; // KISS pointer hash(TM)
-{$ELSE}
-  BucketIndex := Cardinal(Item) shr 8 and BUCKET_MASK; // KISS pointer hash(TM)
-{$ENDIF}
   // due to their randomness, pointers most commonly differ at byte 1, we use
   // this characteristic for our hash and just apply the mask to it.
   // Worst case scenario happens when most changes are at byte 0, which causes
@@ -453,15 +439,7 @@ var
   BucketIndex, ItemIndex: Integer;
 begin
   if not Exists(Item, BucketIndex, ItemIndex) then
-{$IFDEF FPC}
-    raise EListError.CreateFmt(SItemNotFound, [Item])
-{$ELSE}
-{$IFDEF HAS_NATIVEINT}
-    raise EListError.CreateFmt(SItemNotFound, [NativeInt(Item)])
-{$ELSE}
-    raise EListError.CreateFmt(SItemNotFound, [Integer(Item)])
-{$ENDIF}
-{$ENDIF}
+    raise EListError.CreateFmt(SItemNotFound, [NativeUInt(Item)])
   else
     Result := FBuckets[BucketIndex].Items[ItemIndex].Data;
 end;
@@ -471,15 +449,7 @@ var
   BucketIndex, ItemIndex: Integer;
 begin
   if not Exists(Item, BucketIndex, ItemIndex) then
-{$IFDEF FPC}
-    raise EListError.CreateFmt(SItemNotFound, [Item])
-{$ELSE}
-{$IFDEF HAS_NATIVEINT}
-    raise EListError.CreateFmt(SItemNotFound, [NativeInt(Item)])
-{$ELSE}
-    raise EListError.CreateFmt(SItemNotFound, [Integer(Item)])
-{$ENDIF}
-{$ENDIF}
+    raise EListError.CreateFmt(SItemNotFound, [NativeUInt(Item)])
   else
     FBuckets[BucketIndex].Items[ItemIndex].Data := Data;
 end;
@@ -541,6 +511,13 @@ begin
   Inc(FCount);
 end;
 
+procedure TRectList.Assign(Source: TRectList);
+begin
+  SetCount(Source.Count);
+  if (FCount > 0) then
+    System.Move(Source.FList^, FList^, FCount * SizeOf(TRect));
+end;
+
 procedure TRectList.Clear;
 begin
   SetCount(0);
@@ -589,7 +566,7 @@ end;
 function TRectList.IndexOf(const Rect: TRect): Integer;
 begin
   Result := 0;
-  while (Result < FCount) and not EqualRect(FList^[Result], Rect) do
+  while (Result < FCount) and not (FList^[Result] = Rect) do
     Inc(Result);
   if Result = FCount then
     Result := -1;
@@ -659,70 +636,54 @@ end;
 
 { TClassList }
 
-function TClassList.Add(AClass: TClass): Integer;
-begin
-  Result := inherited Add(AClass);
-end;
-
-function TClassList.Extract(Item: TClass): TClass;
-begin
-  Result := TClass(inherited Extract(Item));
-end;
-
-function TClassList.Find(const AClassName: string): TClass;
+function TCustomClassList<T>.Find(const AClassName: string): T;
 var
-  I: Integer;
+  i: Integer;
 begin
-  Result := nil;
-  for I := 0 to Count - 1 do
-    if TClass(List[I]).ClassName = AClassName then
+  Result := Default(T);
+  for i := 0 to Count - 1 do
+    if ClassNames[i] = AClassName then
     begin
-      Result := TClass(List[I]);
-      Break;
+      Result := Items[i];
+      break;
     end;
 end;
 
-function TClassList.First: TClass;
-begin
-  Result := TClass(inherited First);
-end;
-
-procedure TClassList.GetClassNames(Strings: TStrings);
+function TCustomClassList<T>.GetClassName(Index: integer): string;
+{$if not defined(FRAMEWORK_LCL)}
+{$if (CompilerVersion < 35.0)} // Pre-Delphi 11
 var
-  I: Integer;
+  n: T;
+  Item: pointer;
 begin
-  for I := 0 to Count - 1 do
-    Strings.Add(TClass(List[I]).ClassName);
+  n := Self.List[Index];
+  Item := @n;
+  Result := TClass(Item^).ClassName;
 end;
-
-function TClassList.GetItems(Index: Integer): TClass;
+{$else} // Delphi 11+
+var
+  List: arrayofT;
+  Item: pointer;
 begin
-  Result := TClass(inherited Items[Index]);
+  // Yes, it's a horror but Delphi doesn't allow us to specify
+  // a meta class generic constraint :-/
+  List := Self.List;
+  Item := @List[Index];
+  Result := TClass(Item^).ClassName;
 end;
-
-function TClassList.IndexOf(AClass: TClass): Integer;
+{$ifend}
+{$else} // FRAMEWORK_LCL
 begin
-  Result := inherited IndexOf(AClass);
+  Result := TClass(FItems[Index]).ClassName;
 end;
+{$ifend}
 
-procedure TClassList.Insert(Index: Integer; AClass: TClass);
+procedure TCustomClassList<T>.GetClassNames(Strings: TStrings);
+var
+  i: Integer;
 begin
-  inherited Insert(Index, AClass);
-end;
-
-function TClassList.Last: TClass;
-begin
-  Result := TClass(inherited Last);
-end;
-
-function TClassList.Remove(AClass: TClass): Integer;
-begin
-  Result := inherited Remove(AClass);
-end;
-
-procedure TClassList.SetItems(Index: Integer; AClass: TClass);
-begin
-  inherited Items[Index] := AClass;
+  for i := 0 to Count - 1 do
+    Strings.Add(ClassNames[i]);
 end;
 
 { TLinkedList }
@@ -762,6 +723,8 @@ end;
 destructor TLinkedList.Destroy;
 begin
   Clear;
+
+  inherited Destroy;
 end;
 
 procedure TLinkedList.DoFreeData(Data: Pointer);
@@ -862,3 +825,4 @@ begin
 end;
 
 end.
+

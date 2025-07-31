@@ -28,18 +28,28 @@ unit GR32_VectorUtils;
  * Portions created by the Initial Developer are Copyright (C) 2008-2012
  * the Initial Developer. All Rights Reserved.
  *
- * Contributor(s):
- *
  * ***** END LICENSE BLOCK ***** *)
 
 interface
 
-{$I GR32.inc}
+{$include GR32.inc}
 
 {$BOOLEVAL OFF}
 
+{-$define GR32_OFFSET_CLIPPER}
+{-$define GR32_OFFSET_ANGUS}
+{-$define GR32_OFFSET_REF}
+
+{$if (not defined(GR32_OFFSET_REF)) and (not defined(GR32_OFFSET_CLIPPER)) and (not defined(GR32_OFFSET_ANGUS))}
+  // We need at least one implementation. Fallback to the reference implementation.
+  {$define GR32_OFFSET_REF}
+{$ifend}
+
 uses
-  Math, {$IFDEF FPC}Types, {$ENDIF} {$IFDEF COMPILERXE2_UP}Types, {$ENDIF}
+{$if defined(UseInlining)}
+  Types,
+{$ifend}
+  Math,
   GR32,
   GR32_Transforms,
   GR32_Polygons;
@@ -54,8 +64,8 @@ function InSignedRange(const X, X1, X2: TFixed): Boolean; overload; {$IFDEF USEI
 function Intersect(const A1, A2, B1, B2: TFloatPoint; out P: TFloatPoint): Boolean; overload;
 function Intersect(const A1, A2, B1, B2: TFixedPoint; out P: TFixedPoint): Boolean; overload;
 
-function VertexReduction(Points: TArrayOfFloatPoint; Epsilon: TFloat = 1): TArrayOfFloatPoint; overload;
-function VertexReduction(Points: TArrayOfFixedPoint; Epsilon: TFixed = FixedOne): TArrayOfFixedPoint; overload;
+function VertexReduction(const Points: TArrayOfFloatPoint; Epsilon: TFloat = 1): TArrayOfFloatPoint; overload;
+function VertexReduction(const Points: TArrayOfFixedPoint; Epsilon: TFixed = FixedOne): TArrayOfFixedPoint; overload;
 
 function ClosePolygon(const Points: TArrayOfFloatPoint): TArrayOfFloatPoint; overload;
 function ClosePolygon(const Points: TArrayOfFixedPoint): TArrayOfFixedPoint; overload;
@@ -75,33 +85,20 @@ function DelaunayTriangulation(Points: TArrayOfFloatPoint): TArrayOfTriangleVert
 
 function BuildNormals(const Points: TArrayOfFloatPoint): TArrayOfFloatPoint; overload;
 function BuildNormals(const Points: TArrayOfFixedPoint): TArrayOfFixedPoint; overload;
-function Grow(const Points: TArrayOfFloatPoint; const Normals: TArrayOfFloatPoint;
-  const Delta: TFloat; JoinStyle: TJoinStyle = jsMiter;
-  Closed: Boolean = True; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload;
-function Grow(const Points: TArrayOfFloatPoint;
-  const Delta: TFloat; JoinStyle: TJoinStyle = jsMiter;
-  Closed: Boolean = True; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload;
-function Grow(const Points: TArrayOfFixedPoint; const Normals: TArrayOfFixedPoint;
-  const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter;
-  Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload;
-function Grow(const Points: TArrayOfFixedPoint;
-  const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter;
-  Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload;
-function ReversePolygon(const Points: TArrayOfFloatPoint): TArrayOfFloatPoint; overload;
-function ReversePolygon(const Points: TArrayOfFixedPoint): TArrayOfFixedPoint; overload;
 
-function BuildPolyline(const Points: TArrayOfFloatPoint; StrokeWidth: TFloat;
-  JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt;
-  MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload;
-function BuildPolyPolyLine(const Points: TArrayOfArrayOfFloatPoint;
-  Closed: Boolean; StrokeWidth: TFloat; JoinStyle: TJoinStyle = jsMiter;
-  EndStyle: TEndStyle = esButt; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfArrayOfFloatPoint; overload;
-function BuildPolyline(const Points: TArrayOfFixedPoint; StrokeWidth: TFixed;
-  JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt;
-  MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload;
-function BuildPolyPolyLine(const Points: TArrayOfArrayOfFixedPoint;
-  Closed: Boolean; StrokeWidth: TFixed; JoinStyle: TJoinStyle = jsMiter;
-  EndStyle: TEndStyle = esButt; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfArrayOfFixedPoint; overload;
+function Grow(const Points: TArrayOfFloatPoint; const Normals: TArrayOfFloatPoint; const Delta: TFloat; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload; {$ifndef GR32_OFFSET_REF} deprecated; {$ENDIF} {$IFDEF USEINLINING} inline; {$ENDIF}
+function Grow(const Points: TArrayOfFloatPoint; const Delta: TFloat; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function Grow(const Points: TArrayOfFixedPoint; const Normals: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload; {$ifndef GR32_OFFSET_REF} deprecated; {$ENDIF} {$IFDEF USEINLINING} inline; {$ENDIF}
+function Grow(const Points: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+
+function ReversePolygon(const Points: TArrayOfFloatPoint): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function ReversePolygon(const Points: TArrayOfFixedPoint): TArrayOfFixedPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+
+function BuildPolyLine(const Points: TArrayOfFloatPoint; StrokeWidth: TFloat; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function BuildPolyPolyLine(const Points: TArrayOfArrayOfFloatPoint; Closed: Boolean; StrokeWidth: TFloat; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function BuildPolyLine(const Points: TArrayOfFixedPoint; StrokeWidth: TFixed; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function BuildPolyPolyLine(const Points: TArrayOfArrayOfFixedPoint; Closed: Boolean; StrokeWidth: TFixed; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfArrayOfFixedPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+
 function BuildDashedLine(const Points: TArrayOfFloatPoint;
   const DashArray: TArrayOfFloat; DashOffset: TFloat = 0;
   Closed: Boolean = False): TArrayOfArrayOfFloatPoint; overload;
@@ -111,8 +108,6 @@ function BuildDashedLine(const Points: TArrayOfFixedPoint;
 
 function ClipPolygon(const Points: TArrayOfFloatPoint; const ClipRect: TFloatRect): TArrayOfFloatPoint; overload;
 function ClipPolygon(const Points: TArrayOfFixedPoint; const ClipRect: TFixedRect): TArrayOfFixedPoint; overload;
-function CatPolyPolygon(const P1, P2: TArrayOfArrayOfFloatPoint): TArrayOfArrayOfFloatPoint; overload;
-function CatPolyPolygon(const P1, P2: TArrayOfArrayOfFixedPoint): TArrayOfArrayOfFixedPoint; overload;
 
 function CalculateCircleSteps(Radius: TFloat): Cardinal; {$IFDEF USEINLINING} inline; {$ENDIF}
 function BuildArc(const P: TFloatPoint; StartAngle, EndAngle, Radius: TFloat; Steps: Integer): TArrayOfFloatPoint; overload;
@@ -146,21 +141,18 @@ function Ellipse(const R: TFloatRect): TArrayOfFloatPoint; overload; {$IFDEF INL
 function Ellipse(const R: TRect; Steps: Integer): TArrayOfFloatPoint; overload; {$IFDEF INLINING_ENHANCED_RECORDS} inline; {$ENDIF}
 function Ellipse(const R: TFloatRect; Steps: Integer): TArrayOfFloatPoint; overload; {$IFDEF INLINING_ENHANCED_RECORDS} inline; {$ENDIF}
 
-function Star(const P: TFloatPoint; const InnerRadius, OuterRadius: TFloat;
-  Vertices: Integer = 5; Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
-function Star(const X, Y, InnerRadius, OuterRadius: TFloat;
-  Vertices: Integer = 5; Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
-function Star(const P: TFloatPoint; const Radius: TFloat; Vertices: Integer = 5;
-  Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
-function Star(const X, Y, Radius: TFloat; Vertices: Integer = 5;
-  Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
-function Rectangle(const R: TFloatRect): TArrayOfFloatPoint; {$IFDEF USEINLINING} inline; {$ENDIF}
+function Star(const P: TFloatPoint; const InnerRadius, OuterRadius: TFloat; Vertices: Integer = 5; Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function Star(const X, Y, InnerRadius, OuterRadius: TFloat; Vertices: Integer = 5; Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function Star(const P: TFloatPoint; const Radius: TFloat; Vertices: Integer = 5; Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function Star(const X, Y, Radius: TFloat; Vertices: Integer = 5; Rotation: TFloat = 0): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function Rectangle(const R: TRect): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
+function Rectangle(const R: TFloatRect): TArrayOfFloatPoint; overload; {$IFDEF USEINLINING} inline; {$ENDIF}
 function RoundRect(const R: TFloatRect; const Radius: TFloat): TArrayOfFloatPoint; {$IFDEF USEINLINING} inline; {$ENDIF}
 
 function PolygonBounds(const Points: TArrayOfFloatPoint): TFloatRect; overload;
 function PolygonBounds(const Points: TArrayOfFixedPoint): TFixedRect; overload;
-function PolypolygonBounds(const Points: TArrayOfArrayOfFloatPoint): TFloatRect; overload;
-function PolypolygonBounds(const Points: TArrayOfArrayOfFixedPoint): TFixedRect; overload;
+function PolyPolygonBounds(const Points: TArrayOfArrayOfFloatPoint): TFloatRect; overload;
+function PolyPolygonBounds(const Points: TArrayOfArrayOfFixedPoint): TFixedRect; overload;
 
 function ScalePolygon(const Points: TArrayOfFloatPoint; ScaleX, ScaleY: TFloat): TArrayOfFloatPoint; overload;
 function ScalePolygon(const Points: TArrayOfFixedPoint; ScaleX, ScaleY: TFixed): TArrayOfFixedPoint; overload;
@@ -202,10 +194,57 @@ function FixedPointToFloatPoint(const Points: TArrayOfArrayOfFixedPoint): TArray
 function FloatPointToFixedPoint(const Points: TArrayOfFloatPoint): TArrayOfFixedPoint; overload; {$IFDEF USEINLINING}inline;{$ENDIF}
 function FloatPointToFixedPoint(const Points: TArrayOfArrayOfFloatPoint): TArrayOfArrayOfFixedPoint; overload; {$IFDEF USEINLINING}inline;{$ENDIF}
 
+
+//------------------------------------------------------------------------------
+//
+//      TPolyLineBuilder
+//
+//------------------------------------------------------------------------------
+// Abstract base class for polygon offsetter backends.
+// Primarily for internal use.
+//------------------------------------------------------------------------------
+type
+  TPolyLineBuilder = class abstract
+  protected
+    // Float
+    class function Grow(const Points: TArrayOfFloatPoint; const Normals: TArrayOfFloatPoint; const Delta: TFloat; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload; virtual; abstract;
+    // Fixed
+    class function Grow(const Points: TArrayOfFixedPoint; const Normals: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload; virtual;
+  public
+    class function SupportedJoinStyles: TJoinStyles; virtual;
+    class function SupportedEndStyles: TEndStyles; virtual;
+
+    // Float
+    class function Grow(const Points: TArrayOfFloatPoint; const Delta: TFloat; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload; virtual;
+    // Fixed
+    class function Grow(const Points: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter; Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload; virtual;
+
+    // Float
+    class function BuildPolyLine(const Points: TArrayOfFloatPoint; StrokeWidth: TFloat; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfFloatPoint; overload; virtual; abstract;
+    class function BuildPolyPolyLine(const Points: TArrayOfArrayOfFloatPoint; Closed: Boolean; StrokeWidth: TFloat; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFloat = DEFAULT_MITER_LIMIT): TArrayOfArrayOfFloatPoint; overload; virtual; abstract;
+    // Fixed
+    class function BuildPolyLine(const Points: TArrayOfFixedPoint; StrokeWidth: TFixed; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload; virtual;
+    class function BuildPolyPolyLine(const Points: TArrayOfArrayOfFixedPoint; Closed: Boolean; StrokeWidth: TFixed; JoinStyle: TJoinStyle = jsMiter; EndStyle: TEndStyle = esButt; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfArrayOfFixedPoint; overload; virtual;
+  end;
+
+  TPolylineBuilderClass = class of TPolyLineBuilder;
+
+var
+  PolylineBuilder: TPolylineBuilderClass;
+
+
+//------------------------------------------------------------------------------
+
 implementation
 
 uses
-  SysUtils,
+{$if defined(GR32_OFFSET_CLIPPER)}
+  GR32_VectorUtils.Clipper2,
+{$elseif defined(GR32_OFFSET_ANGUS)}
+  GR32_VectorUtils.Angus,
+{$else}
+  GR32_VectorUtils.Reference,
+{$ifend}
   GR32_Math,
   GR32_Geometry,
   GR32_LowLevel;
@@ -281,166 +320,163 @@ begin
   end;
 end;
 
-function RamerDouglasPeucker(Points: TArrayOfFloatPoint; FirstIndex,
-  LastIndex: Integer; Epsilon: TFloat = 1): TArrayOfFloatPoint; overload;
+
+//------------------------------------------------------------------------------
+//
+//      RamerDouglasPeucker
+//
+//------------------------------------------------------------------------------
+// Ramer-Douglas-Peucker line simplification.
+//
+// References:
+//
+// - Urs Ramer
+//   "An iterative procedure for the polygonal approximation of plane curves".
+//   Computer Graphics and Image Processing.
+//   Volume 1, Issue 3, November 1972, Pages 244-256
+//
+// - David H. Douglas & Thomas K. Peucker
+//   "Algorithms for the reduction of the number of points required to represent
+//   a digitized line or its caricature".
+//   Cartographica: The International Journal for Geographic Information and
+//   Geovisualization. Volume 10 Issue 2, December 1973, Pages 112–122.
+//
+//------------------------------------------------------------------------------
+// This implementation performs the following optimizations, compared to common
+// reference implementations:
+// - The distance calculations avoids use of Sqrt and Abs by comparing squared
+//   values.
+// - Static expressions are evaluated outside the loop.
+//------------------------------------------------------------------------------
+function RamerDouglasPeuckerSquared(const Points: TArrayOfFloatPoint; FirstIndex,
+  LastIndex: Integer; EpsilonSquared: TFloat): TArrayOfFloatPoint; overload;
 var
+  DistX, DistY, DistXY: TFloat;
+  Numerator, Denominator: TFloat;
   Index, DeltaMaxIndex: Integer;
-  Delta, DeltaMax: TFloat;
-  Parts: array [0 .. 1] of TArrayOfFloatPoint;
+  DeltaSquared, DeltaSquaredMax: TFloat;
+  Parts: array[0..1] of TArrayOfFloatPoint;
+  FirstPoint, LastPoint, p: PFloatPoint;
 begin
-  if LastIndex - FirstIndex > 1 then
+  FirstPoint := @Points[FirstIndex];
+  LastPoint := @Points[LastIndex];
+
+  if LastIndex - FirstIndex <= 1 then
   begin
-    // find the point with the maximum distance
-    DeltaMax := 0;
-    DeltaMaxIndex := 0;
-    for Index := FirstIndex + 1 to LastIndex - 1 do
-    begin
-      with Points[LastIndex] do
-        Delta := Abs((Points[Index].x - x) * (Points[FirstIndex].y - y) -
-          (Points[Index].y - y) * (Points[FirstIndex].x - x));
-      if Delta > DeltaMax then
-      begin
-        DeltaMaxIndex := Index;
-        DeltaMax := Delta;
-      end;
-    end;
+    SetLength(Result, 2);
+    Result[0] := FirstPoint^;
+    Result[1] := LastPoint^;
+    exit;
+  end;
 
-    // if max distance is greater than epsilon, recursively simplify
-    if DeltaMax >= Epsilon * GR32_Math.Hypot(Points[FirstIndex].x - Points[LastIndex].x,
-      Points[FirstIndex].y - Points[LastIndex].y) then
-    begin
-      // Recursive call
-      Parts[0] := RamerDouglasPeucker(Points, FirstIndex, DeltaMaxIndex, Epsilon);
-      Parts[1] := RamerDouglasPeucker(Points, DeltaMaxIndex, LastIndex, Epsilon);
+  DistX := LastPoint.X - FirstPoint.X;
+  DistY := LastPoint.Y - FirstPoint.Y;
+  DistXY := FirstPoint.X * LastPoint.Y - LastPoint.X * FirstPoint.Y;
+  Denominator := Sqr(DistX) + Sqr(DistY); // Squared distance
+  if (Denominator <> 0.0) then
+    Denominator := 1 / Denominator;
 
-      // Build the result list
-      SetLength(Result, Length(Parts[0]) + Length(Parts[1]) - 1);
-      Move(Parts[0, 0], Result[0], (Length(Parts[0]) - 1) * SizeOf(TFloatPoint));
-      Move(Parts[1, 0], Result[Length(Parts[0]) - 1], Length(Parts[1]) *
-        SizeOf(TFloatPoint));
-      Exit;
+
+  // Find the point with the maximum distance
+  DeltaSquaredMax := 0;
+  DeltaMaxIndex := 0;
+  for Index := FirstIndex + 1 to LastIndex - 1 do
+  begin
+    p := @Points[Index];
+    // Perpendicular distance, squared
+    Numerator := DistXY + DistX * p.Y - DistY * p.X;
+    DeltaSquared := Denominator * Sqr(Numerator);
+
+    if DeltaSquared >= DeltaSquaredMax then
+    begin
+      DeltaMaxIndex := Index;
+      DeltaSquaredMax := DeltaSquared;
     end;
   end;
 
-  SetLength(Result, 2);
-  Result[0] := Points[FirstIndex];
-  Result[1] := Points[LastIndex];
+
+  // If max distance is greater than Epsilon, recursively simplify
+  if (DeltaSquaredMax >= EpsilonSquared) or (Denominator = 0.0) then
+  begin
+    // Recurse
+    Parts[0] := RamerDouglasPeuckerSquared(Points, FirstIndex, DeltaMaxIndex, EpsilonSquared);
+    Parts[1] := RamerDouglasPeuckerSquared(Points, DeltaMaxIndex, LastIndex, EpsilonSquared);
+
+    // Build the result list
+    SetLength(Result, Length(Parts[0]) + Length(Parts[1]) - 1);
+    Move(Parts[0, 0], Result[0], (Length(Parts[0]) - 1) * SizeOf(TFloatPoint));
+    Move(Parts[1, 0], Result[Length(Parts[0]) - 1], Length(Parts[1]) * SizeOf(TFloatPoint));
+  end else
+  begin
+    SetLength(Result, 2);
+    Result[0] := FirstPoint^;
+    Result[1] := LastPoint^;
+  end;
 end;
 
-function RamerDouglasPeucker(Points: TArrayOfFixedPoint; FirstIndex,
-  LastIndex: Integer; Epsilon: TFixed = 1): TArrayOfFixedPoint; overload;
-var
-  Index, DeltaMaxIndex: Integer;
-  Delta, DeltaMax: TFixed;
-  Parts: array [0 .. 1] of TArrayOfFixedPoint;
+//------------------------------------------------------------------------------
 
-
-  //Finds the perpendicular distance from a point to a straight line.
-  //The coordinates of the point are specified as $ptX and $ptY.
-  //The line passes through points l1 and l2, specified respectively with their
-  //coordinates $l1x and $l1y, and $l2x and $l2y
-  function PerpendicularDistance(ptX, ptY, l1x, l1y, l2x, l2y: TFixed): TFixed;
-  var
-    Slope, PassThroughY: TFixed;
-  begin
-    if (l2x = l1x) then
-    begin
-      //vertical lines - treat this case specially to avoid divide by zero
-      Result := Abs(ptX - l2x);
-    end
-    else
-    begin
-      Slope := FixedDiv(l2y-l1y, l2x-l1x);
-      PassThroughY := FixedMul(0 - l1x, Slope) + l1y;
-      Result := FixedDiv(Abs(FixedMul(Slope, ptX) - ptY + PassThroughY),
-        FixedSqrtHP(FixedSqr(Slope) + 1));
-    end;
-  end;
-
+function RamerDouglasPeucker(const Points: TArrayOfFloatPoint; FirstIndex,
+  LastIndex: Integer; Epsilon: TFloat): TArrayOfFloatPoint; overload;
 begin
-  if LastIndex - FirstIndex > 1 then
-  begin
-    // find the point with the maximum distance
-    DeltaMax := 0;
-    DeltaMaxIndex := 0;
-    for Index := FirstIndex + 1 to LastIndex - 1 do
-    begin
-      Delta := PerpendicularDistance(
-        Points[Index].x, Points[Index].y,
-        Points[FirstIndex].x, Points[FirstIndex].y,
-        Points[LastIndex].x, Points[LastIndex].y);
-      if Delta > DeltaMax then
-      begin
-        DeltaMaxIndex := Index;
-        DeltaMax := Delta;
-      end;
-    end;
-
-    // if max distance is greater than epsilon, recursively simplify
-    if DeltaMax > Epsilon then
-    begin
-      // Recursive call
-      Parts[0] := RamerDouglasPeucker(Points, FirstIndex, DeltaMaxIndex, Epsilon);
-      Parts[1] := RamerDouglasPeucker(Points, DeltaMaxIndex, LastIndex, Epsilon);
-
-      // Build the result list
-      SetLength(Result, Length(Parts[0]) + Length(Parts[1]) - 1);
-      Move(Parts[0, 0], Result[0], (Length(Parts[0]) - 1) * SizeOf(TFixedPoint));
-      Move(Parts[1, 0], Result[Length(Parts[0]) - 1], Length(Parts[1]) * SizeOf(TFixedPoint));
-      Exit;
-    end;
-  end;
-
-  SetLength(Result, 2);
-  Result[0] := Points[FirstIndex];
-  Result[1] := Points[LastIndex];
+  Result := RamerDouglasPeuckerSquared(Points, FirstIndex, LastIndex, Sqr(Epsilon));
 end;
 
-function VertexReduction(Points: TArrayOfFloatPoint; Epsilon: TFloat = 1): TArrayOfFloatPoint;
+
+//------------------------------------------------------------------------------
+//
+//      VertexReduction
+//
+//------------------------------------------------------------------------------
+// First do a simple and cheap line simplification and then do a regular
+// Ramer-Douglas-Peucker simplification. The first step vastly improves the
+// performance of the Ramer-Douglas-Peucker simplification for most cases.
+//------------------------------------------------------------------------------
+function VertexReduction(const Points: TArrayOfFloatPoint; Epsilon: TFloat): TArrayOfFloatPoint;
 var
   Index: Integer;
+  Count: integer;
   SqrEpsilon: TFloat;
 begin
+  if (Length(Points) = 0) then
+    Exit(nil);
+
+  // Initial line simplification; Ignore points closer than Epsilon to each other
   SqrEpsilon := Sqr(Epsilon);
-  SetLength(Result, 1);
+  SetLength(Result, Length(Points)); // Make room for all points to avoid reallocation
   Result[0] := Points[0];
+  Count := 1;
   Index := 1;
   while Index < Length(Points) do
   begin
-    if SqrDistance(Result[Length(Result) - 1], Points[Index]) > SqrEpsilon then
+    if SqrDistance(Result[Count-1], Points[Index]) > SqrEpsilon then
     begin
-      SetLength(Result, Length(Result) + 1);
-      Result[Length(Result) - 1] := Points[Index];
+      Result[Count] := Points[Index];
+      Inc(Count);
     end;
     Inc(Index);
   end;
 
-  if Length(Result) > 2 then
-    Result := RamerDouglasPeucker(Result, 0, Length(Result) - 1, Epsilon);
+  // Ramer-Douglas-Peucker line simplification
+  if Count > 2 then
+    Result := RamerDouglasPeuckerSquared(Result, 0, Count-1, SqrEpsilon)
+  else
+    SetLength(Result, Count); // Trim to actually used size
 end;
 
-function VertexReduction(Points: TArrayOfFixedPoint; Epsilon: TFixed): TArrayOfFixedPoint;
-var
-  Index: Integer;
-  SqrEpsilon: TFixed;
+//------------------------------------------------------------------------------
+
+function VertexReduction(const Points: TArrayOfFixedPoint; Epsilon: TFixed): TArrayOfFixedPoint;
 begin
-  SqrEpsilon := FixedSqr(Epsilon);
-  SetLength(Result, 1);
-  Result[0] := Points[0];
-  Index := 1;
-  while Index < Length(Points) do
-  begin
-    if SqrDistance(Result[Length(Result) - 1], Points[Index]) > SqrEpsilon then
-    begin
-      SetLength(Result, Length(Result) + 1);
-      Result[Length(Result) - 1] := Points[Index];
-    end;
-    Inc(Index);
-  end;
+  if (Length(Points) = 0) then
+    Exit(nil);
 
-  if Length(Result) > 2 then
-    Result := RamerDouglasPeucker(Points, 0, Length(Points) - 1, Epsilon);
+  // Use float points; A fixed points version of RamerDouglasPeucker is unfortunately
+  // not possible due to integer overflows.
+  Result := FloatPointToFixedPoint(VertexReduction(FixedPointToFloatPoint(Points), Epsilon*FixedToFloat));
 end;
+
+//------------------------------------------------------------------------------
 
 function ClosePolygon(const Points: TArrayOfFloatPoint): TArrayOfFloatPoint;
 var
@@ -482,6 +518,11 @@ begin
   Result[L] := P1;
 end;
 
+// Note:
+// ClipLine has been copied to GR32 to avoid referencing this unit there since that would
+// prevent inlining here of GR32 functions due to
+// H2456 Inline function '%s' has not been expanded because contained unit '%s' uses compiling unit '%s'
+// Make sure to keep the two functions in sync!
 function ClipLine(var X1, Y1, X2, Y2: Integer; MinX, MinY, MaxX, MaxY: Integer): Boolean;
 var
   C1, C2: Integer;
@@ -758,6 +799,12 @@ begin
   Recurse(0, High(Values));
 end;
 
+// Delaunay Triangulation
+// Based on Paul Bourke's implementation of the Bowyer-Watson algorithm.
+// References:
+//   http://paulbourke.net/papers/triangulate/
+//   https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm
+// Note: GR32_ColorGradients contains a custom version of this function. Keep both in sync.
 function DelaunayTriangulation(Points: TArrayOfFloatPoint): TArrayOfTriangleVertexIndices;
 var
   Complete: array of Byte;
@@ -818,6 +865,11 @@ const
     begin
       M1 := -(Pt2.X - Pt1.X) / (Pt2.Y - Pt1.Y);
       M2 := -(Pt3.X - Pt2.X) / (Pt3.Y - Pt2.Y);
+      if Abs(M1 - M2) < CTolerance then
+      begin
+        Result := False;
+        Exit;
+      end;
       MX1 := (Pt1.X + Pt2.X) * 0.5;
       MX2 := (Pt2.X + Pt3.X) * 0.5;
       MY1 := (Pt1.Y + Pt2.Y) * 0.5;
@@ -1109,7 +1161,7 @@ var
   AbsRadius: TFloat;
 begin
   AbsRadius := Abs(Radius);
-  Result := Trunc(Pi / (ArcCos(AbsRadius / (AbsRadius + 0.125))));
+  Result := Max(2, Trunc(Pi / (ArcCos(AbsRadius / (AbsRadius + 0.125)))));
 end;
 
 function Circle(const P: TFloatPoint; const Radius: TFloat;
@@ -1119,7 +1171,7 @@ var
   M: TFloat;
   C, D: TFloatPoint;
 begin
-  if Steps <= 0 then
+  if Steps <= 1 then
     Steps := CalculateCircleSteps(Radius);
 
   SetLength(Result, Steps);
@@ -1400,6 +1452,15 @@ begin
   end;
 end;
 
+function Rectangle(const R: TRect): TArrayOfFloatPoint;
+begin
+  SetLength(Result, 4);
+  Result[0] := FloatPoint(R.TopLeft);
+  Result[1] := FloatPoint(R.Right, R.Top);
+  Result[2] := FloatPoint(R.BottomRight);
+  Result[3] := FloatPoint(R.Left, R.Bottom);
+end;
+
 function Rectangle(const R: TFloatRect): TArrayOfFloatPoint;
 begin
   SetLength(Result, 4);
@@ -1412,10 +1473,16 @@ end;
 function RoundRect(const R: TFloatRect; const Radius: TFloat): TArrayOfFloatPoint;
 var
   R2: TFloatRect;
+  CornerRadius: TFloat;
 begin
+  // Constrain radius to half width & height
+  CornerRadius := Min(Radius, Min(R.Width / 2, R.Height / 2));
+
   R2 := R;
-  GR32.InflateRect(R2, -Radius, -Radius);
-  Result := Grow(Rectangle(R2), Radius, jsRound, True);
+  // Shrink box and then...
+  GR32.InflateRect(R2, -CornerRadius, -CornerRadius);
+  // ...Grow it with rounded corners
+  Result := Grow(Rectangle(R2), CornerRadius, jsRound, True);
 end;
 
 function BuildNormals(const Points: TArrayOfFloatPoint): TArrayOfFloatPoint;
@@ -1485,322 +1552,64 @@ begin
   end;
 end;
 
-function Grow(const Points: TArrayOfFloatPoint; const Normals: TArrayOfFloatPoint;
-  const Delta: TFloat; JoinStyle: TJoinStyle; Closed: Boolean; MiterLimit: TFloat): TArrayOfFloatPoint; overload;
-const
-  BUFFSIZEINCREMENT = 128;
-  MINDISTPIXEL = 1.414; // just a little bit smaller than sqrt(2),
-  // -> set to about 2.5 for a similar output with the previous version
-var
-  I, L, H: Integer;
-  ResSize, BuffSize: Integer;
-  PX, PY: TFloat;
-  AngleInv, RMin: TFloat;
-  A, B, Dm: TFloatPoint;
-
-  procedure AddPoint(const LongDeltaX, LongDeltaY: TFloat);
-  begin
-    if ResSize = BuffSize then
-    begin
-      Inc(BuffSize, BUFFSIZEINCREMENT);
-      SetLength(Result, BuffSize);
-    end;
-    Result[ResSize] := FloatPoint(PX + LongDeltaX, PY + LongDeltaY);
-    Inc(ResSize);
-  end;
-
-  procedure AddMitered(const X1, Y1, X2, Y2: TFloat);
-  var
-    R, CX, CY: TFloat;
-  begin
-    CX := X1 + X2;
-    CY := Y1 + Y2;
-
-    R := X1 * CX + Y1 * CY; //(1 - cos(ï¿½))  (range: 0 <= R <= 2)
-    if R < RMin then
-    begin
-      AddPoint(Delta * X1, Delta * Y1);
-      AddPoint(Delta * X2, Delta * Y2);
-    end
-    else
-    begin
-      R := Delta / R;
-      AddPoint(CX * R, CY * R)
-    end;
-  end;
-
-  procedure AddBevelled(const X1, Y1, X2, Y2: TFloat);
-  var
-    R: TFloat;
-  begin
-    R := X1 * Y2 - X2 * Y1; // cross product
-    if R * Delta <= 0 then  // ie angle is concave
-      AddMitered(X1, Y1, X2, Y2)
-    else
-    begin
-      AddPoint(Delta * X1, Delta * Y1);
-      AddPoint(Delta * X2, Delta * Y2);
-    end;
-  end;
-
-  procedure AddRoundedJoin(const X1, Y1, X2, Y2: TFloat);
-  var
-    sinA, cosA, A, d: TFloat;
-    steps: Integer;
-    ii, m,n: Integer;
-    C, C2, C3: TFloatPoint;
-  begin
-    sinA := X1 * Y2 - X2 * Y1;
-    cosA := X1 * X2 + Y1 * Y2;
-    A := ArcTan2(sinA, cosA);
-    steps := Round(Abs(A * AngleInv));
-
-    if sinA < 0 then
-      Dm.Y := -Abs(Dm.Y) else
-      Dm.Y := Abs(Dm.Y);
-
-    if sinA * Delta < 0 then  // ie angle is concave
-    begin
-      A := Delta / (cosA +1);
-      //C = offset pt of concave vertex ...
-      C.X := PX + (X1 + X2) * A;
-      C.Y := PY + (Y1 + Y2) * A;
-
-      if (I = 0) then m := H else m := I -1;
-      if I = H then n := 0 else n := I +1;
-      A := Min(SqrDistance(Points[m], Points[I]),
-        SqrDistance(Points[n], Points[I]));
-
-      if SqrDistance(C, Points[I]) > A then
-      begin
-        //there's no room to draw anything ...
-        //now get the perpendic. offset from pt2 ...
-        C2.X := X1 * Delta;
-        C2.Y := Y1 * Delta;
-        C3.X := X2 * Delta;
-        C3.Y := Y2 * Delta;
-        //this will create a self-intersection but it also ensures that
-        //the offset will be maintained beyond this intersection ...
-        AddPoint(C2.X, C2.Y);
-        AddPoint(C3.X, C3.Y);
-        Exit;
-      end;
-      A := Sqrt(A);
-
-      //get the point on the both edges that's same distance from
-      //the concave vertex as its closest adjacent vertex.
-      //nb: using unit normals as unit vectors here ...
-      C2.X := PX + Y1 * A;
-      C2.Y := PY - X1 * A;
-      C3.X := PX - Y2 * A;
-      C3.Y := PY + X2 * A;
-
-      //now Delta offset these points ...
-      C2.X := C2.X + X1 * Delta;
-      C2.Y := C2.Y + Y1 * Delta;
-      C3.X := C3.X + X2 * Delta;
-      C3.Y := C3.Y + Y2 * Delta;
-
-      //this will do Delta/MiterLimit radius rounding of concavities ...
-      if SqrDistance(C2, C3) < Sqr(Delta *2/MiterLimit) then
-        d := Sqrt(SqrDistance(C2, C3))/2 else
-        d := Delta/MiterLimit;
-
-      //move point(PX,PY) across the offset path so the
-      //rounding path will curve around this new point ...
-      A := (d + Delta) / (cosA +1);
-      PX := PX + (X1 + X2) * A;
-      PY := PY + (Y1 + Y2) * A;
-
-      C2.X := -X1 * d;
-      C2.Y := -Y1 * d;
-      AddPoint(C2.X, C2.Y);
-      for ii := 1 to steps -1 do
-      begin
-        C2 := FloatPoint(
-          C2.X * Dm.X - Dm.Y * C2.Y,
-          C2.X * Dm.Y + C2.Y * Dm.X);
-        AddPoint(C2.X, C2.Y);
-      end;
-    end
-    else
-    begin
-      C.X := X1 * Delta;
-      C.Y := Y1 * Delta;
-      AddPoint(C.X, C.Y);
-      for ii := 1 to steps - 1 do
-      begin
-        C := FloatPoint(
-          C.X * Dm.X - C.Y * Dm.Y,
-          C.Y * Dm.X + C.X * Dm.Y);
-        AddPoint(C.X, C.Y);
-      end;
-    end;
-  end;
-
-  procedure AddJoin(const X, Y, X1, Y1, X2, Y2: TFloat);
-  begin
-    PX := X;
-    PY := Y;
-    case JoinStyle of
-      jsMiter: AddMitered(A.X, A.Y, B.X, B.Y);
-      jsBevel: AddBevelled(A.X, A.Y, B.X, B.Y);
-      jsRoundEx: AddRoundedJoin(A.X, A.Y, B.X, B.Y);
-      else if (X1 * Y2 - X2 * Y1) * Delta < 0 then //miter when concave
-        AddMitered(A.X, A.Y, B.X, B.Y) else
-        AddRoundedJoin(A.X, A.Y, B.X, B.Y);
-    end;
-  end;
-
-begin
-  Result := nil;
-
-  if Length(Points) <= 1 then Exit;
-  RMin := 2 / Sqr(MiterLimit);
-
-  H := High(Points) - Ord(not Closed);
-  while (H >= 0) and (Normals[H].X = 0) and (Normals[H].Y = 0) do Dec(H);
-
-{** all normals zeroed => Exit }
-  if H < 0 then Exit;
-
-  L := 0;
-  while (Normals[L].X = 0) and (Normals[L].Y = 0) do Inc(L);
-
-  if Closed then
-    A := Normals[H]
-  else
-    A := Normals[L];
-
-  ResSize := 0;
-  BuffSize := BUFFSIZEINCREMENT;
-  SetLength(Result, BuffSize);
-
-  // prepare
-  if JoinStyle in [jsRound, jsRoundEx] then
-  begin
-    Dm.X := 1 - 0.5 * Min(3, Sqr(MINDISTPIXEL / Abs(Delta)));
-    Dm.Y := Sqrt(1 - Sqr(Dm.X));
-    AngleInv := 1 / ArcCos(Dm.X);
-  end;
-
-  for I := L to H do
-  begin
-    B := Normals[I];
-    if (B.X = 0) and (B.Y = 0) then Continue;
-    with Points[I] do AddJoin(X, Y, A.X, A.Y, B.X, B.Y);
-    A := B;
-  end;
-  if not Closed then
-    with Points[High(Points)] do AddJoin(X, Y, A.X, A.Y, A.X, A.Y);
-  SetLength(Result, ResSize);
-end;
-
-function Grow(const Points: TArrayOfFloatPoint;
-  const Delta: TFloat; JoinStyle: TJoinStyle; Closed: Boolean;
-  MiterLimit: TFloat): TArrayOfFloatPoint; overload;
-var
-  Normals: TArrayOfFloatPoint;
-begin
-  Normals := BuildNormals(Points);
-  Result := Grow(Points, Normals, Delta, JoinStyle, Closed, MiterLimit);
-end;
-
 // Converts an array of points in TFixed format to an array of points in TFloat format
-function FixedPointToFloatPoint(const Points: TArrayOfFixedPoint)
-  : TArrayOfFloatPoint;
+function FixedPointToFloatPoint(const Points: TArrayOfFixedPoint): TArrayOfFloatPoint;
 var
   Index: Integer;
 begin
-  if Length(Points) > 0 then
+  SetLength(Result, Length(Points));
+  for Index := 0 to Length(Points) - 1 do
   begin
-    SetLength(Result, Length(Points));
-    for Index := 0 to Length(Points) - 1 do
-    begin
-      Result[Index].X := Points[Index].X * FixedToFloat;
-      Result[Index].Y := Points[Index].Y * FixedToFloat;
-    end;
+    Result[Index].X := Points[Index].X * FixedToFloat;
+    Result[Index].Y := Points[Index].Y * FixedToFloat;
   end;
 end;
 
 // Converts an array of array of points in TFixed format to an array of array of points in TFloat format
-function FixedPointToFloatPoint(const Points: TArrayOfArrayOfFixedPoint)
-  : TArrayOfArrayOfFloatPoint;
+function FixedPointToFloatPoint(const Points: TArrayOfArrayOfFixedPoint): TArrayOfArrayOfFloatPoint;
 var
   Index, PointIndex: Integer;
 begin
-  if Length(Points) > 0 then
+  SetLength(Result, Length(Points));
+  for Index := 0 to Length(Points) - 1 do
   begin
-    SetLength(Result, Length(Points));
-    for Index := 0 to Length(Points) - 1 do
+    SetLength(Result[Index], Length(Points[Index]));
+    for PointIndex := 0 to Length(Points[Index]) - 1 do
     begin
-      SetLength(Result[Index], Length(Points[Index]));
-      for PointIndex := 0 to Length(Points[Index]) - 1 do
-      begin
-        Result[Index, PointIndex].X := Points[Index, PointIndex].X * FixedToFloat;
-        Result[Index, PointIndex].Y := Points[Index, PointIndex].Y * FixedToFloat;
-      end;
+      Result[Index, PointIndex].X := Points[Index, PointIndex].X * FixedToFloat;
+      Result[Index, PointIndex].Y := Points[Index, PointIndex].Y * FixedToFloat;
     end;
   end;
 end;
 
 // Converts an array of points in TFixed format to an array of points in TFloat format
-function FloatPointToFixedPoint(const Points: TArrayOfFloatPoint)
-  : TArrayOfFixedPoint;
+function FloatPointToFixedPoint(const Points: TArrayOfFloatPoint): TArrayOfFixedPoint;
 var
   Index: Integer;
 begin
-  if Length(Points) > 0 then
+  SetLength(Result, Length(Points));
+  for Index := 0 to Length(Points) - 1 do
   begin
-    SetLength(Result, Length(Points));
-    for Index := 0 to Length(Points) - 1 do
-    begin
-      Result[Index].X := Fixed(Points[Index].X);
-      Result[Index].Y := Fixed(Points[Index].Y);
-    end;
+    Result[Index].X := Fixed(Points[Index].X);
+    Result[Index].Y := Fixed(Points[Index].Y);
   end;
 end;
 
 // Converts an array of array of points in TFixed format to an array of array of points in TFloat format
-function FloatPointToFixedPoint(const Points: TArrayOfArrayOfFloatPoint)
-  : TArrayOfArrayOfFixedPoint;
+function FloatPointToFixedPoint(const Points: TArrayOfArrayOfFloatPoint): TArrayOfArrayOfFixedPoint;
 var
   Index, PointIndex: Integer;
 begin
-  if Length(Points) > 0 then
+  SetLength(Result, Length(Points));
+  for Index := 0 to Length(Points) - 1 do
   begin
-    SetLength(Result, Length(Points));
-    for Index := 0 to Length(Points) - 1 do
+    SetLength(Result[Index], Length(Points[Index]));
+    for PointIndex := 0 to Length(Points[Index]) - 1 do
     begin
-      SetLength(Result[Index], Length(Points[Index]));
-      for PointIndex := 0 to Length(Points[Index]) - 1 do
-      begin
-        Result[Index, PointIndex].X := Fixed(Points[Index, PointIndex].X);
-        Result[Index, PointIndex].Y := Fixed(Points[Index, PointIndex].Y);
-      end;
+      Result[Index, PointIndex].X := Fixed(Points[Index, PointIndex].X);
+      Result[Index, PointIndex].Y := Fixed(Points[Index, PointIndex].Y);
     end;
   end;
-end;
-
-function Grow(const Points: TArrayOfFixedPoint; const Normals: TArrayOfFixedPoint;
-  const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter;
-  Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload;
-var
-  tmp: TArrayOfFloatPoint;
-begin
-  tmp := Grow(FixedPointToFloatPoint(Points), FixedPointToFloatPoint(Normals),
-    Delta * FixedToFloat, JoinStyle, Closed, MiterLimit * FixedToFloat);
-  result := FloatPointToFixedPoint(tmp);
-end;
-
-function Grow(const Points: TArrayOfFixedPoint;
-  const Delta: TFixed; JoinStyle: TJoinStyle = jsMiter;
-  Closed: Boolean = True; MiterLimit: TFixed = DEFAULT_MITER_LIMIT_FIXED): TArrayOfFixedPoint; overload;
-var
-  Normals: TArrayOfFixedPoint;
-begin
-  Normals := BuildNormals(Points);
-  Result := Grow(Points, Normals, Delta, JoinStyle, Closed, MiterLimit);
 end;
 
 function ReversePolygon(const Points: TArrayOfFloatPoint): TArrayOfFloatPoint;
@@ -1823,192 +1632,6 @@ begin
   Dec(L);
   for I := 0 to L do
     Result[I] := Points[L - I];
-end;
-
-function BuildLineEnd(const P, N: TFloatPoint; const W: TFloat;
-  EndStyle: TEndStyle): TArrayOfFloatPoint; overload;
-var
-  a1, a2: TFloat;
-begin
-  case EndStyle of
-    esButt:
-      begin
-        Result := nil;
-      end;
-    esSquare:
-      begin
-        SetLength(Result, 2);
-        Result[0].X := P.X + (N.X - N.Y) * W;
-        Result[0].Y := P.Y + (N.Y + N.X) * W;
-        Result[1].X := P.X - (N.X + N.Y) * W;
-        Result[1].Y := P.Y - (N.Y - N.X) * W;
-      end;
-    esRound:
-      begin
-        a1 := ArcTan2(N.Y, N.X);
-        a2 := ArcTan2(-N.Y, -N.X);
-        if a2 < a1 then a2 := a2 + TWOPI;
-        Result := BuildArc(P, a1, a2, W);
-      end;
-  end;
-end;
-
-function BuildLineEnd(const P, N: TFixedPoint; const W: TFixed;
-  EndStyle: TEndStyle): TArrayOfFixedPoint; overload;
-var
-  a1, a2: TFloat;
-begin
-  case EndStyle of
-    esButt:
-      begin
-        Result := nil;
-      end;
-    esSquare:
-      begin
-        SetLength(Result, 2);
-        Result[0].X := P.X + (N.X - N.Y) * W;
-        Result[0].Y := P.Y + (N.Y + N.X) * W;
-        Result[1].X := P.X - (N.X + N.Y) * W;
-        Result[1].Y := P.Y - (N.Y - N.X) * W;
-      end;
-    esRound:
-      begin
-        a1 := ArcTan2(N.Y, N.X);
-        a2 := ArcTan2(-N.Y, -N.X);
-        if a2 < a1 then a2 := a2 + TWOPI;
-        Result := BuildArc(P, a1, a2, W);
-      end;
-  end;
-end;
-
-function BuildPolyline(const Points: TArrayOfFloatPoint; StrokeWidth: TFloat;
-  JoinStyle: TJoinStyle; EndStyle: TEndStyle; MiterLimit: TFloat): TArrayOfFloatPoint;
-var
-  L, H: Integer;
-  Normals: TArrayOfFloatPoint;
-  P1, P2, E1, E2: TArrayOfFloatPoint;
-  V: TFloat;
-  P: PFloatPoint;
-begin
-  Result := nil;
-  V := StrokeWidth * 0.5;
-  Normals := BuildNormals(Points);
-
-  H := High(Points) - 1;
-  while (H >= 0) and (Normals[H].X = 0) and (Normals[H].Y = 0) do Dec(H);
-  if H < 0 then Exit;
-  L := 0;
-  while (Normals[L].X = 0) and (Normals[L].Y = 0) do Inc(L);
-
-  P1 := Grow(Points, Normals, V, JoinStyle, False, MiterLimit);
-  P2 := ReversePolygon(Grow(Points, Normals, -V, JoinStyle, False, MiterLimit));
-
-  E1 := BuildLineEnd(Points[0], Normals[L], -V, EndStyle);
-  E2 := BuildLineEnd(Points[High(Points)], Normals[H], V, EndStyle);
-
-  SetLength(Result, Length(P1) + Length(P2) + Length(E1) + Length(E2));
-  P := @Result[0];
-  Move(E1[0], P^, Length(E1) * SizeOf(TFloatPoint)); Inc(P, Length(E1));
-  Move(P1[0], P^, Length(P1) * SizeOf(TFloatPoint)); Inc(P, Length(P1));
-  Move(E2[0], P^, Length(E2) * SizeOf(TFloatPoint)); Inc(P, Length(E2));
-  Move(P2[0], P^, Length(P2) * SizeOf(TFloatPoint));
-end;
-
-function BuildPolyPolyLine(const Points: TArrayOfArrayOfFloatPoint;
-  Closed: Boolean; StrokeWidth: TFloat; JoinStyle: TJoinStyle;
-  EndStyle: TEndStyle; MiterLimit: TFloat): TArrayOfArrayOfFloatPoint;
-var
-  I: Integer;
-  P1, P2: TArrayOfFloatPoint;
-  Dst: TArrayOfArrayOfFloatPoint;
-  Normals: TArrayOfFloatPoint;
-  HalfStrokeWidth: TFloat;
-begin
-  if Closed then
-  begin
-    SetLength(Dst, Length(Points) * 2);
-    HalfStrokeWidth := StrokeWidth * 0.5;
-    for I := 0 to High(Points) do
-    begin
-      Normals := BuildNormals(Points[I]);
-      P1 := Grow(Points[I], Normals, HalfStrokeWidth, JoinStyle, True, MiterLimit);
-      P2 := Grow(Points[I], Normals, -HalfStrokeWidth, JoinStyle, True, MiterLimit);
-      Dst[I * 2] := P1;
-      Dst[I * 2 + 1] := ReversePolygon(P2);
-    end;
-  end
-  else
-  begin
-    SetLength(Dst, Length(Points));
-    for I := 0 to High(Points) do
-      Dst[I] := BuildPolyline(Points[I], StrokeWidth, JoinStyle, EndStyle, MiterLimit);
-  end;
-  Result := Dst;
-end;
-
-function BuildPolyline(const Points: TArrayOfFixedPoint; StrokeWidth: TFixed;
-  JoinStyle: TJoinStyle; EndStyle: TEndStyle; MiterLimit: TFixed): TArrayOfFixedPoint;
-var
-  L, H: Integer;
-  Normals: TArrayOfFixedPoint;
-  P1, P2, E1, E2: TArrayOfFixedPoint;
-  V: TFixed;
-  P: PFixedPoint;
-begin
-  Result := nil;
-  V := StrokeWidth shr 1;
-  Normals := BuildNormals(Points);
-
-  H := High(Points) - 1;
-  while (H >= 0) and (Normals[H].X = 0) and (Normals[H].Y = 0) do Dec(H);
-  if H < 0 then Exit;
-  L := 0;
-  while (Normals[L].X = 0) and (Normals[L].Y = 0) do Inc(L);
-
-  P1 := Grow(Points, Normals, V, JoinStyle, False, MiterLimit);
-  P2 := ReversePolygon(Grow(Points, Normals, -V, JoinStyle, False, MiterLimit));
-
-  E1 := BuildLineEnd(Points[0], Normals[L], -V, EndStyle);
-  E2 := BuildLineEnd(Points[High(Points)], Normals[H], V, EndStyle);
-
-  SetLength(Result, Length(P1) + Length(P2) + Length(E1) + Length(E2));
-  P := @Result[0];
-  Move(E1[0], P^, Length(E1) * SizeOf(TFixedPoint)); Inc(P, Length(E1));
-  Move(P1[0], P^, Length(P1) * SizeOf(TFixedPoint)); Inc(P, Length(P1));
-  Move(E2[0], P^, Length(E2) * SizeOf(TFixedPoint)); Inc(P, Length(E2));
-  Move(P2[0], P^, Length(P2) * SizeOf(TFixedPoint));
-end;
-
-function BuildPolyPolyLine(const Points: TArrayOfArrayOfFixedPoint;
-  Closed: Boolean; StrokeWidth: TFixed; JoinStyle: TJoinStyle;
-  EndStyle: TEndStyle; MiterLimit: TFixed): TArrayOfArrayOfFixedPoint;
-var
-  I: Integer;
-  P1, P2: TArrayOfFixedPoint;
-  Dst: TArrayOfArrayOfFixedPoint;
-  Normals: TArrayOfFixedPoint;
-  HalfStrokeWidth: TFixed;
-begin
-  if Closed then
-  begin
-    SetLength(Dst, Length(Points) * 2);
-    HalfStrokeWidth := StrokeWidth shr 1;
-    for I := 0 to High(Points) do
-    begin
-      Normals := BuildNormals(Points[I]);
-      P1 := Grow(Points[I], Normals, HalfStrokeWidth, JoinStyle, True, MiterLimit);
-      P2 := Grow(Points[I], Normals, -HalfStrokeWidth, JoinStyle, True, MiterLimit);
-      Dst[I * 2] := P1;
-      Dst[I * 2 + 1] := ReversePolygon(P2);
-    end;
-  end
-  else
-  begin
-    SetLength(Dst, Length(Points));
-    for I := 0 to High(Points) do
-      Dst[I] := BuildPolyline(Points[I], StrokeWidth, JoinStyle, EndStyle);
-  end;
-  Result := Dst;
 end;
 
 function BuildDashedLine(const Points: TArrayOfFloatPoint;
@@ -2088,7 +1711,7 @@ begin
   DashOffset := Wrap(DashOffset, V);
 
   DashOffset := DashOffset - V;
-  while DashOffset < 0 do
+  while (DashOffset < 0) and (DashIndex < High(DashArray)) do
   begin
     Inc(DashIndex);
     DashOffset := DashOffset + DashArray[DashIndex];
@@ -2108,7 +1731,12 @@ begin
     AddDash(0);
     len1 := Length(Result[0]);
     len2 := Length(Result[J]);
-    if (len1 > 0) and (len2 > 0) then
+    // Only merge if the first and last points are contributing on a dash
+    {$IFNDEF FPC}
+      if (len1 > 0) and (len2 > 0) and (Result[0][0] = Result[J][len2 - 1]) then
+    {$ELSE}
+      if (len1 > 0) and (len2 > 0) and (Result[0][0].X = Result[J][len2 - 1].X) and (Result[0][0].Y = Result[J][len2 - 1].Y) then
+    {$ENDIF}
     begin
       SetLength(Result[0], len1 + len2 -1);
       Move(Result[0][0], Result[0][len2 - 1], SizeOf(TFloatPoint) * len1);
@@ -2118,7 +1746,8 @@ begin
     end;
   end;
 
-  if (J >= 0) and (Length(Result[J]) = 0) then SetLength(Result, J);
+  if (J >= 0) and (Length(Result[J]) = 0) then
+    SetLength(Result, J);
 end;
 
 function BuildDashedLine(const Points: TArrayOfFixedPoint;
@@ -2581,33 +2210,13 @@ ExitProc:
 {$ENDIF}
 end;
 
-function CatPolyPolygon(const P1, P2: TArrayOfArrayOfFloatPoint): TArrayOfArrayOfFloatPoint;
-var
-  L1, L2: Integer;
-begin
-  L1 := Length(P1);
-  L2 := Length(P2);
-  SetLength(Result, L1 + L2);
-  Move(P1[0], Result[0], L1 * SizeOf(TFloatPoint));
-  Move(P2[0], Result[L1], L2 * SizeOf(TFloatPoint));
-end;
-
-function CatPolyPolygon(const P1, P2: TArrayOfArrayOfFixedPoint): TArrayOfArrayOfFixedPoint; overload;
-var
-  L1, L2: Integer;
-begin
-  L1 := Length(P1);
-  L2 := Length(P2);
-  SetLength(Result, L1 + L2);
-  Move(P1[0], Result[0], L1 * SizeOf(TFixedPoint));
-  Move(P2[0], Result[L1], L2 * SizeOf(TFixedPoint));
-end;
-
 function PolygonBounds(const Points: TArrayOfFloatPoint): TFloatRect;
 var
   I: Integer;
 begin
-  Assert(Length(Points) > 0);
+  if (Length(Points) = 0) then
+    Exit(Default(TFloatRect));
+
   Result.Left := Points[0].X;
   Result.Top := Points[0].Y;
   Result.Right := Points[0].X;
@@ -2625,7 +2234,9 @@ function PolygonBounds(const Points: TArrayOfFixedPoint): TFixedRect;
 var
   I: Integer;
 begin
-  Assert(Length(Points) > 0);
+  if (Length(Points) = 0) then
+    Exit(Default(TFixedRect));
+
   Result.Left := Points[0].X;
   Result.Top := Points[0].Y;
   Result.Right := Points[0].X;
@@ -2639,13 +2250,14 @@ begin
   end;
 end;
 
-function PolypolygonBounds(const Points: TArrayOfArrayOfFloatPoint): TFloatRect;
+function PolyPolygonBounds(const Points: TArrayOfArrayOfFloatPoint): TFloatRect;
 var
   i: Integer;
   R: TFloatRect;
   AnyValid: boolean;
 begin
-  Assert(Length(Points) > 0);
+  if (Length(Points) = 0) then
+    Exit(Default(TFloatRect));
 
   AnyValid := False;
 
@@ -2671,16 +2283,19 @@ begin
         Result.Bottom := R.Bottom;
     end;
   end;
-  Assert(AnyValid);
+
+  if (not AnyValid) then
+    Exit(Default(TFloatRect));
 end;
 
-function PolypolygonBounds(const Points: TArrayOfArrayOfFixedPoint): TFixedRect;
+function PolyPolygonBounds(const Points: TArrayOfArrayOfFixedPoint): TFixedRect;
 var
   i: Integer;
   R: TFixedRect;
   AnyValid: boolean;
 begin
-  Assert(Length(Points) > 0);
+  if (Length(Points) = 0) then
+    Exit(Default(TFixedRect));
 
   AnyValid := False;
 
@@ -2706,7 +2321,9 @@ begin
         Result.Bottom := R.Bottom;
     end;
   end;
-  Assert(AnyValid);
+
+  if (not AnyValid) then
+    Exit(Default(TFixedRect));
 end;
 
 
@@ -2983,15 +2600,13 @@ begin
 end;
 
 // Copy data from Polygon to simple PolyPolygon (using 1 sub polygon only)
-function PolyPolygon(const Points: TArrayOfFloatPoint)
-  : TArrayOfArrayOfFloatPoint;
+function PolyPolygon(const Points: TArrayOfFloatPoint): TArrayOfArrayOfFloatPoint;
 begin
   SetLength(Result, 1);
   Result[0] := Points;
 end;
 
-function PolyPolygon(const Points: TArrayOfFixedPoint)
-  : TArrayOfArrayOfFixedPoint;
+function PolyPolygon(const Points: TArrayOfFixedPoint): TArrayOfArrayOfFixedPoint;
 begin
   SetLength(Result, 1);
   Result[0] := Points;
@@ -3065,4 +2680,155 @@ begin
   end;
 end;
 
+
+//------------------------------------------------------------------------------
+//
+//      TPolyLineBuilder
+//
+//------------------------------------------------------------------------------
+// Abstract base class for Grow and BuildPoly*line implementations.
+//------------------------------------------------------------------------------
+class function TPolyLineBuilder.SupportedEndStyles: TEndStyles;
+begin
+  Result := [];
+end;
+
+class function TPolyLineBuilder.SupportedJoinStyles: TJoinStyles;
+begin
+  Result := [];
+end;
+
+//------------------------------------------------------------------------------
+
+class function TPolyLineBuilder.BuildPolyLine(const Points: TArrayOfFixedPoint; StrokeWidth: TFixed; JoinStyle: TJoinStyle;
+  EndStyle: TEndStyle; MiterLimit: TFixed): TArrayOfFixedPoint;
+var
+  FloatPoints, FloatResult: TArrayOfFloatPoint;
+begin
+  FloatPoints := FixedPointToFloatPoint(Points);
+
+  // Defer to float implementation
+  FloatResult := BuildPolyLine(FloatPoints, StrokeWidth*FixedOne, JoinStyle, EndStyle, MiterLimit*FixedOne);
+
+  if (Length(FloatResult) > 0) then
+    Result := FloatPointToFixedPoint(FloatResult)
+  else
+    SetLength(Result, 0);
+end;
+
+//------------------------------------------------------------------------------
+
+class function TPolyLineBuilder.BuildPolyPolyLine(const Points: TArrayOfArrayOfFixedPoint; Closed: Boolean; StrokeWidth: TFixed;
+  JoinStyle: TJoinStyle; EndStyle: TEndStyle; MiterLimit: TFixed): TArrayOfArrayOfFixedPoint;
+var
+  FloatPoints, FloatResult: GR32.TArrayOfArrayOfFloatPoint;
+begin
+  FloatPoints := FixedPointToFloatPoint(Points);
+
+  // Defer to float implementation
+  FloatResult := BuildPolyPolyLine(FloatPoints, Closed, StrokeWidth*FixedOne, JoinStyle, EndStyle, MiterLimit*FixedOne);
+
+  if (Length(FloatResult) > 0) then
+    Result := FloatPointToFixedPoint(FloatResult)
+  else
+    SetLength(Result, 0);
+end;
+
+//------------------------------------------------------------------------------
+
+class function TPolyLineBuilder.Grow(const Points: TArrayOfFloatPoint; const Delta: TFloat; JoinStyle: TJoinStyle; Closed: Boolean;
+  MiterLimit: TFloat): TArrayOfFloatPoint;
+var
+  Normals: TArrayOfFloatPoint;
+begin
+  Normals := BuildNormals(Points);
+  Result := Grow(Points, Normals, Delta, JoinStyle, Closed, MiterLimit);
+end;
+
+//------------------------------------------------------------------------------
+
+class function TPolyLineBuilder.Grow(const Points: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle; Closed: Boolean;
+  MiterLimit: TFixed): TArrayOfFixedPoint;
+var
+  Normals: TArrayOfFixedPoint;
+begin
+  Normals := BuildNormals(Points);
+  Result := Grow(Points, Normals, Delta, JoinStyle, Closed, MiterLimit);
+end;
+
+//------------------------------------------------------------------------------
+
+class function TPolyLineBuilder.Grow(const Points, Normals: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle;
+  Closed: Boolean; MiterLimit: TFixed): TArrayOfFixedPoint;
+var
+  FloatPoints, FloatNormals, FloatResult: TArrayOfFloatPoint;
+begin
+  FloatPoints := FixedPointToFloatPoint(Points);
+  FloatNormals := FixedPointToFloatPoint(Normals);
+
+  // Defer to float implementation
+  FloatResult := Grow(FloatPoints, FloatNormals, Delta * FixedToFloat, JoinStyle, Closed, MiterLimit * FixedToFloat);
+
+  if (Length(FloatResult) > 0) then
+    Result := FloatPointToFixedPoint(FloatResult)
+  else
+    SetLength(Result, 0);
+end;
+
+
+
+//------------------------------------------------------------------------------
+
+function Grow(const Points: TArrayOfFloatPoint; const Normals: TArrayOfFloatPoint; const Delta: TFloat; JoinStyle: TJoinStyle; Closed: Boolean; MiterLimit: TFloat): TArrayOfFloatPoint;
+begin
+  Result := Grow(Points, Delta, JoinStyle, Closed, MiterLimit);
+end;
+
+function Grow(const Points: TArrayOfFloatPoint; const Delta: TFloat; JoinStyle: TJoinStyle; Closed: Boolean; MiterLimit: TFloat): TArrayOfFloatPoint;
+begin
+  Result := PolylineBuilder.Grow(Points, Delta, JoinStyle, Closed, MiterLimit);
+end;
+
+function Grow(const Points: TArrayOfFixedPoint; const Normals: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle; Closed: Boolean; MiterLimit: TFixed): TArrayOfFixedPoint;
+begin
+  Result := Grow(Points, Delta, JoinStyle, Closed, MiterLimit);
+end;
+
+function Grow(const Points: TArrayOfFixedPoint; const Delta: TFixed; JoinStyle: TJoinStyle; Closed: Boolean; MiterLimit: TFixed): TArrayOfFixedPoint;
+begin
+  Result := PolylineBuilder.Grow(Points, Delta, JoinStyle, Closed, MiterLimit);
+end;
+
+//------------------------------------------------------------------------------
+
+function BuildPolyLine(const Points: TArrayOfFloatPoint; StrokeWidth: TFloat; JoinStyle: TJoinStyle; EndStyle: TEndStyle; MiterLimit: TFloat): TArrayOfFloatPoint;
+begin
+  Result := PolylineBuilder.BuildPolyLine(Points, StrokeWidth, JoinStyle, EndStyle, MiterLimit);
+end;
+
+function BuildPolyPolyLine(const Points: TArrayOfArrayOfFloatPoint; Closed: Boolean; StrokeWidth: TFloat; JoinStyle: TJoinStyle; EndStyle: TEndStyle; MiterLimit: TFloat): TArrayOfArrayOfFloatPoint;
+begin
+  Result := PolylineBuilder.BuildPolyPolyLine(Points, Closed, StrokeWidth, JoinStyle, EndStyle, MiterLimit);
+end;
+
+function BuildPolyLine(const Points: TArrayOfFixedPoint; StrokeWidth: TFixed; JoinStyle: TJoinStyle; EndStyle: TEndStyle; MiterLimit: TFixed): TArrayOfFixedPoint;
+begin
+  Result := PolylineBuilder.BuildPolyLine(Points, StrokeWidth, JoinStyle, EndStyle, MiterLimit);
+end;
+
+function BuildPolyPolyLine(const Points: TArrayOfArrayOfFixedPoint; Closed: Boolean; StrokeWidth: TFixed; JoinStyle: TJoinStyle; EndStyle: TEndStyle; MiterLimit: TFixed): TArrayOfArrayOfFixedPoint;
+begin
+  Result := PolylineBuilder.BuildPolyPolyLine(Points, Closed, StrokeWidth, JoinStyle, EndStyle, MiterLimit);
+end;
+
+//------------------------------------------------------------------------------
+
+initialization
+{$if defined(GR32_OFFSET_CLIPPER)}
+  PolylineBuilder := PolyLineBuilderClipper;
+{$elseif defined(GR32_OFFSET_ANGUS)}
+  PolylineBuilder := PolyLineBuilderAngus;
+{$elseif defined(GR32_OFFSET_REF)}
+  PolylineBuilder := PolyLineBuilderReference;
+{$ifend}
 end.
