@@ -51,7 +51,6 @@ begin
   Inherited Create(AOwner);
 
   m_bWithBorder   := False;
-  m_bWithBack     := False;
 end;
 
 //==============================================================================

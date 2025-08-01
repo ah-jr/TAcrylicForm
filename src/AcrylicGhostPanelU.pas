@@ -29,7 +29,6 @@ type
 
   protected
     m_bmpBuffer     : TBitmap32;
-    m_clBackColor   : TColor;
     m_clColor       : TAlphaColor;
     m_clBorderColor : TAlphaColor;
     m_bGhost        : Boolean;
@@ -47,7 +46,6 @@ type
     property Ghost       : Boolean      read m_bGhost        write m_bGhost;
     property Colored     : Boolean      read m_bColored      write m_bColored;
     property Color       : TAlphaColor  read m_clColor       write m_clColor;
-    property Backcolor   : TColor       read m_clBackColor   write m_clBackColor;
     property Bordercolor : TAlphaColor  read m_clBorderColor write m_clBorderColor;
     property WithBorder  : Boolean      read m_bWithBorder   write m_bWithBorder;
     property Canvas;
@@ -77,7 +75,6 @@ end;
 constructor TAcrylicGhostPanel.Create(AOwner : TComponent);
 begin
   Inherited;
-  m_clBackColor := c_clFormBack;
   m_clColor     := c_clFormColor;
   m_bColored    := False;
   m_bWithBorder := False;
@@ -109,7 +106,7 @@ begin
 
   if g_bWithBlur
     then m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clTransparent)
-    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
+    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clFormBack);
 
   if m_bColored then
     m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, m_clColor);

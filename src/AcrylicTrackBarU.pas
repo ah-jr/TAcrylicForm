@@ -96,7 +96,6 @@ begin
   m_clTrackColor := c_clSeaBlue;
   m_bClickable   := True;
   m_bWithBorder  := False;
-  m_bWithBack    := False;
   m_bChanging    := False;
 end;
 
@@ -153,7 +152,7 @@ begin
   ///  Draw Track's back
 
   m_gdiSolidPen.SetWidth(ClientHeight - 2 * c_nHeightBorder + 2);
-  m_gdiSolidPen.SetColor(gdiColor(m_clBackColor));
+  m_gdiSolidPen.SetColor(gdiColor(m_clColor));
   pntStart.X := c_nWidthBorder;
   pntStart.Y := ClientHeight div 2;
   pntEnd.X   := ClientWidth - c_nWidthBorder;

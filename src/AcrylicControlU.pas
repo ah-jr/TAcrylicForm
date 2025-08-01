@@ -40,11 +40,10 @@ type
     procedure SetAlignment       (a_aAlignment    : TAlignment);
     procedure SetColor           (a_clColor       : TAlphaColor);
     procedure SetFontColor       (a_clFontColor   : TAlphaColor);
-    procedure SetBackColor       (a_clBackColor   : TColor);
     procedure SetBorderColor     (a_clBorderColor : TAlphaColor);
     procedure SetCornerRadius    (a_dCornerRadius : Double);
     procedure SetWithBorder      (a_bWithBorder   : Boolean);
-    procedure SetWithBackground  (a_bWithBack     : Boolean);
+    procedure SetColored         (a_bColored      : Boolean);
     procedure SetTriggerDblClick (a_nDblClick     : Boolean);
 
 
@@ -57,13 +56,12 @@ type
     m_aAlignment    : TAlignment;
     m_clColor       : TAlphaColor;
     m_clFontColor   : TAlphaColor;
-    m_clBackColor   : TColor;
     m_clBorderColor : TAlphaColor;
     m_clReset       : TAlphaColor;
     m_fFont         : TFont;
     m_dCornerRadius : Double;
     m_bWithBorder   : Boolean;
-    m_bWithBack     : Boolean;
+    m_bColored      : Boolean;
     m_bClickable    : Boolean;
     m_bGhost        : Boolean;
     m_bmpBuffer     : TBitmap32;
@@ -98,11 +96,10 @@ type
     property Alignment       : TAlignment  read m_aAlignment    write SetAlignment;
     property Color           : TAlphaColor read m_clColor       write SetColor;
     property FontColor       : TAlphaColor read m_clFontColor   write SetFontColor;
-    property BackColor       : TColor      read m_clBackColor   write SetBackColor;
     property BorderColor     : TAlphaColor read m_clBorderColor write SetBorderColor;
     property CornerRadius    : Double      read m_dCornerRadius write SetCornerRadius;
     property WithBorder      : Boolean     read m_bWithBorder   write SetWithBorder;
-    property WithBackground  : Boolean     read m_bWithBack     write SetWithBackground;
+    property Colored         : Boolean     read m_bColored      write SetColored;
     property Ghost           : Boolean     read m_bGhost        write m_bGhost;
     property TriggerDblClick : Boolean                          write SetTriggerDblClick;
     property Clickable       : Boolean     read m_bClickable    write m_bClickable;
@@ -139,7 +136,7 @@ begin
   m_bGhost        := False;
   m_bRepaint      := True;
   m_bWithBorder   := True;
-  m_bWithBack     := True;
+  m_bColored      := True;
   m_fFont         := TFont.Create;
   m_bmpPaint      := TBitmap.Create;
   m_strTexts      := TStringList.Create;
@@ -148,7 +145,6 @@ begin
   m_clFontColor   := c_clCtrlFont;
   m_clColor       := c_clCtrlColor;
   m_clBorderColor := c_clCtrlBorder;
-  m_clBackColor   := c_clFormBack;
   m_dCornerRadius := 0;
 
   m_fFont.Name    := 'Tahoma';
@@ -220,13 +216,6 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicControl.SetBackColor(a_clBackColor : TColor);
-begin
-  m_clBackColor := a_clBackColor;
-  Refresh(True);
-end;
-
-//==============================================================================
 procedure TAcrylicControl.SetBorderColor(a_clBorderColor : TAlphaColor);
 begin
   m_clBorderColor := a_clBorderColor;
@@ -248,9 +237,9 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicControl.SetWithBackground(a_bWithBack : Boolean);
+procedure TAcrylicControl.SetColored(a_bColored : Boolean);
 begin
-  m_bWithBack := a_bWithBack;
+  m_bColored := a_bColored;
   Refresh(True);
 end;
 
@@ -314,9 +303,9 @@ begin
 
   if g_bWithBlur
     then m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clTransparent)
-    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
+    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clFormBack);
 
-  if m_bWithBack then
+  if m_bColored then
   begin
     clColor := 0;
 

@@ -96,7 +96,6 @@ begin
   m_bmpData.HandleType  := bmDIB;
   m_bmpData.Alphaformat := afDefined;
 
-  m_clBackColor   := $0F0F0F;
   m_clBorderColor := $CF1F1F1F;
   m_clLineColor   := $FFFF8B64;
   m_clTitleColor  := $64323232;

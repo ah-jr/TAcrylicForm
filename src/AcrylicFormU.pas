@@ -55,7 +55,6 @@ type
     m_bDisableBlurWhenSizing : Boolean;
 
     m_clBlurColor   : TColor;
-    m_clBackColor   : TColor;
     m_clBorderColor : TAlphaColor;
     m_btBlurAmount  : Byte;
 
@@ -99,7 +98,6 @@ type
     property WithBlur              : Boolean     read GetWithBlur              write ToggleBlur;
     property WithBorder            : Boolean     read m_bWithBorder            write SetWithBorder;
     property BorderColor           : TAlphaColor read m_clBorderColor          write SetBorderColor;
-    property BackColor             : TColor      read m_clBackColor            write m_clBackColor;
     property BlurColor             : TColor      read m_clBlurColor            write SetColor;
     property BlurAmount            : Byte        read m_btBlurAmount           write SetBlurAmount;
     property Resizable             : Boolean     read m_bResizable             write m_bResizable;
@@ -284,6 +282,10 @@ end;
 procedure TAcrylicForm.SetColor(a_clColor : TColor);
 begin
   m_clBlurColor := a_clColor;
+  EnableBlur(Handle);
+  Invalidate;
+
+  RefreshAcrylicControls(Self);
 end;
 
 //==============================================================================
@@ -298,6 +300,9 @@ procedure TAcrylicForm.SetBlurAmount(a_btAmount : Byte);
 begin
   m_btBlurAmount := a_btAmount;
   EnableBlur(Handle);
+  Invalidate;
+
+  RefreshAcrylicControls(Self);
 end;
 
 //==============================================================================
@@ -338,7 +343,6 @@ begin
 
   m_clBlurColor   := c_clFormBlur;
   m_clBorderColor := c_clFormBorder;
-  m_clBackColor   := c_clFormBack;
   m_btBlurAmount  := c_nDefaultBlur;
 
   m_bResizable    := True;

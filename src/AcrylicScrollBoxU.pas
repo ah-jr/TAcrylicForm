@@ -54,7 +54,6 @@ type
     property ScrollPanel : TAcrylicGhostPanel read m_ScrollPanel   write m_ScrollPanel;
     property ScrollColor : TAlphaColor        read m_clScrollColor write m_clScrollColor;
 
-    property BackColor;
     property Color;
     property Canvas;
     property Colored;
@@ -165,7 +164,7 @@ begin
 
   if g_bWithBlur
     then m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clTransparent)
-    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, m_clBackColor);
+    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clFormBack);
 
   if m_bColored then
     m_bmpBuffer.FillRectS(0, 0, ClientWidth, ClientHeight, m_clColor);

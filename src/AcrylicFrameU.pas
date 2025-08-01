@@ -44,7 +44,6 @@ type
     m_bWithBorder   : Boolean;
     m_bColored      : Boolean;
     m_bIntersecting : Boolean;
-    m_clBackColor   : TColor;
     m_strTitle      : String;
 
     m_LastX         : Integer;
@@ -81,7 +80,6 @@ type
     property Canvas      : TCanvas     read m_Canvas        write m_Canvas;
     property WithBorder  : Boolean     read m_bWithBorder   write m_bWithBorder;
     property Colored     : Boolean     read m_bColored      write m_bColored;
-    property BackColor   : TColor      read m_clBackColor   write m_clBackColor;
     property Resisable   : Boolean     read m_bResizable    write m_bResizable;
     property Title       : String      read m_strTitle      write SetTitle;
 
@@ -126,7 +124,6 @@ begin
 
   m_bWithBorder := True;
   m_bColored    := True;
-  m_clBackColor := c_clFormBack;
 
   m_pnlBody         := TAcrylicghostPanel.Create(pnlBack);
   m_pnlBody.Parent  := pnlBack;
@@ -142,7 +139,6 @@ begin
   pnlTitle.Color      := c_clFormColor;
 
   lblTitle.Color          := c_clFormColor;
-  lblTitle.WithBackground := True;
 
   m_LastX         := 0;
   m_LastY         := 0;
