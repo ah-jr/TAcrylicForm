@@ -100,7 +100,7 @@ begin
     if Message.WheelDelta < 0 then
       m_ScrollPanel.Top := Max(ClientHeight - m_ScrollPanel.Height, m_ScrollPanel.Top - 10);
 
-    Invalidate;
+    Refresh(True);
   end;
 end;
 
@@ -148,9 +148,9 @@ begin
   begin
     m_ScrollPanel.Height := Max(m_ScrollPanel.Height, a_cControl.Top + a_cControl.Height);
     a_cControl.Parent := m_ScrollPanel;
-  end;
 
-  Invalidate;
+    Refresh(True);
+  end;
 end;
 
 //==============================================================================
@@ -162,7 +162,7 @@ begin
   if a_nDist < 0 then
     m_ScrollPanel.Top := Max(ClientHeight - m_ScrollPanel.Height, m_ScrollPanel.Top + a_nDist);
 
-  Invalidate;
+  Refresh(True);
 end;
 
 //==============================================================================
@@ -177,14 +177,14 @@ begin
     nNew := Trunc((m_ScrollPanel.Height/ClientHeight) * (Y - m_nLastY));
 
     m_ScrollPanel.Top := Min(0, Max(nMin, m_dLastTop - nNew));
+
+    Refresh(True);
   end
   else
   begin
     m_dLastTop   := m_ScrollPanel.Top;
     m_nLastY     := Y;
   end;
-
-  Invalidate;
 end;
 
 end.

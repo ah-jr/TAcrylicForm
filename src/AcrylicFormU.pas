@@ -39,7 +39,14 @@ type
     procedure imgMaximizeClick     (Sender: TObject);
     procedure imgMinimizeClick     (Sender: TObject);
 
-    procedure WMEraseBkgnd(var Message: TWmEraseBkgnd); message WM_ERASEBKGND;
+    procedure WMEraseBkgnd   (var Msg: TWmEraseBkgnd);    message WM_ERASEBKGND;
+    procedure WMNCMoving     (var Msg: TWMMoving);        message WM_MOVING;
+    procedure WMNCSize       (var Msg: TWMSize);          message WM_SIZE;
+    procedure WMNCHitTest    (var Msg: TWMNCHitTest);     message WM_NCHITTEST;
+    procedure WMNCMouseMove  (var Msg: TWMNCMouseMove);   message WM_NCMOUSEMOVE;
+    procedure WMNCLMouseDown (var Msg: TWMNCMButtonDown); message WM_NCLBUTTONDOWN;
+    procedure WMNCLMouseUp   (var Msg: TWMNCMButtonUp);   message WM_NCLBUTTONUP;
+    procedure WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo); message WM_GETMINMAXINFO;
 
   private
     m_bInitialized           : Boolean;
@@ -72,14 +79,6 @@ type
     procedure ToggleBlur      (a_bBlur    : Boolean);
 
     function  GetWithBlur : Boolean;
-
-    procedure WMNCMoving     (var Msg: TWMMoving);        message WM_MOVING;
-    procedure WMNCSize       (var Msg: TWMSize);          message WM_SIZE;
-    procedure WMNCHitTest    (var Msg: TWMNCHitTest);     message WM_NCHITTEST;
-    procedure WMNCMouseMove  (var Msg: TWMNCMouseMove);   message WM_NCMOUSEMOVE;
-    procedure WMNCLMouseDown (var Msg: TWMNCMButtonDown); message WM_NCLBUTTONDOWN;
-    procedure WMNCLMouseUp   (var Msg: TWMNCMButtonUp);   message WM_NCLBUTTONUP;
-    procedure WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo); message WM_GETMINMAXINFO;
 
   public
     constructor Create(a_cOwner : TComponent); override;
@@ -137,12 +136,6 @@ uses
 procedure Register;
 begin
   RegisterComponents('AcrylicComponents', [TAcrylicForm]);
-end;
-
-//==============================================================================
-procedure TAcrylicForm.WMEraseBkgnd(var Message: TWmEraseBkgnd);
-begin
-  //
 end;
 
 //==============================================================================
@@ -378,6 +371,8 @@ begin
   imgMinimize.Visible := fsMinimize in m_fsStyle;
 
   m_bInitialized := True;
+
+  UpdatePositions;
 end;
 
 //==============================================================================
@@ -551,7 +546,6 @@ begin
 end;
 
 //==============================================================================
-
 procedure TAcrylicForm.imgMinimizeMouseEnter(Sender: TObject);
 begin
   imgMinimize.Visible      := False;
@@ -569,6 +563,12 @@ end;
 //
 //  System Messages
 //
+//==============================================================================
+procedure TAcrylicForm.WMEraseBkgnd(var Msg: TWmEraseBkgnd);
+begin
+  //
+end;
+
 //==============================================================================
 procedure TAcrylicForm.WMNCMoving(var Msg: TWMMoving);
 begin

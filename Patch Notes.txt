@@ -2,7 +2,14 @@
 AcrylicComponents - PATCH NOTES 
 ==============================================================================
 
-v1.4
+v1.5:
+
+  - Removed bloat from controls.
+  - Renamed some controls and attributes.
+  - Fixed coloring.
+  - Included GR32 source files.
+
+v1.4:
 
   - Enhanced control customization and refactoring in data painting.
   - Enabled mode without blur, enabled dynamic path in tracks.
@@ -10,12 +17,12 @@ v1.4
   - Added simple scrollbox component, works with mouse dragging and wheel.
   - Added TAcrylicKnob, a rotatory slider.
   - Created a TAcrylicFrame component, which works as a window that can be
-    inserted used within a AcrylicForm
-  - Added AcrylicTrackBar component  
-  - Fixed memory leak with TBitmap
-  - Created border painting in GhostPanel
-  - Allow user to customize form buttons (close, maximize, minimize)
-  - Added possibility to create label with multiple strings
+    inserted used within a AcrylicForm.
+  - Added AcrylicTrackBar component.
+  - Fixed memory leak with TBitmap.
+  - Created border painting in GhostPanel.
+  - Allow user to customize form buttons (close, maximize, minimize).
+  - Added possibility to create label with multiple strings.
    
 
 v1.3:
