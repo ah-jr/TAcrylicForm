@@ -3,33 +3,22 @@ unit AcrylicButtonU;
 interface
 
 uses
-  Winapi.Windows,
-  Winapi.Messages,
-  System.SysUtils,
-  System.Variants,
   System.Classes,
-  Vcl.Graphics,
-  Vcl.Controls,
-  Vcl.Forms,
-  Vcl.Dialogs,
-  Vcl.StdCtrls,
-  Vcl.ExtCtrls,
-  Vcl.Imaging.pngimage,
-  AcrylicControlU,
-  AcrylicTypesU;
+  Vcl.Imaging.PngImage,
+  AcrylicControlU;
 
 type
+
   TAcrylicButton = Class(TAcrylicControl)
   private
-    m_pngImage : TPngImage;
-
     procedure SetPNG(a_pngPNG : TPngImage);
 
   protected
+    m_pngImage : TPngImage;
     procedure PaintComponent; override;
 
   public
-    constructor Create(AOwner: TComponent); override;
+    constructor Create(a_cOwner: TComponent); override;
     destructor  Destroy; override;
 
   published
@@ -42,20 +31,25 @@ type
 implementation
 
 uses
-  GDIPOBJ, GDIPAPI, GDIPUTIL;
+  System.SysUtils,
+  AcrylicTypesU,
+  GDIPOBJ;
 
+//==============================================================================
  procedure Register;
  begin
    RegisterComponents('AcrylicComponents', [TAcrylicButton]);
  end;
 
 //==============================================================================
-constructor TAcrylicButton.Create(AOwner: TComponent);
+constructor TAcrylicButton.Create(a_cOwner: TComponent);
 begin
-  Inherited Create(AOwner);
-  m_pngImage := nil;
+  Inherited Create(a_cOwner);
 
-  m_bClickable := True;
+  m_pngImage    := nil;
+  m_bClickable  := True;
+  m_bWithBorder := True;
+  m_bColored    := True;
 end;
 
 //==============================================================================
@@ -83,6 +77,7 @@ var
   msStream  : TMemoryStream;
   saAdapter : TStreamAdapter;
 begin
+  InitializeGDI;
   PaintText;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -104,6 +99,8 @@ begin
     gdiImage.Free;
     msStream.Free;
   end;
+
+  ShutdownGDI;
 end;
 
 end.

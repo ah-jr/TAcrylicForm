@@ -3,23 +3,14 @@ unit AcrylicKnobU;
 interface
 
 uses
-  Winapi.Windows,
-  Winapi.Messages,
-  System.SysUtils,
-  System.Variants,
   System.Classes,
   System.UITypes,
-  Vcl.Graphics,
   Vcl.Controls,
-  Vcl.Forms,
-  Vcl.Dialogs,
-  Vcl.StdCtrls,
-  Vcl.ExtCtrls,
-  Vcl.Imaging.pngimage,
   AcrylicControlU,
   AcrylicTypesU;
 
 type
+
   TAcrylicKnob = Class(TAcrylicControl)
   private
     m_clKnobColor : TAlphaColor;
@@ -40,7 +31,7 @@ type
     procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
 
   public
-    constructor Create(AOwner: TComponent); override;
+    constructor Create(a_cOwner: TComponent); override;
     destructor  Destroy; override;
 
   published
@@ -60,12 +51,11 @@ const
 implementation
 
 uses
-  GDIPOBJ,
   GDIPAPI,
-  GDIPUTIL,
   Math,
   AcrylicUtilsU;
 
+//==============================================================================
  procedure Register;
  begin
    RegisterComponents('AcrylicComponents', [TAcrylicKnob]);
@@ -86,12 +76,12 @@ begin
 end;
 
 //==============================================================================
-constructor TAcrylicKnob.Create(AOwner: TComponent);
+constructor TAcrylicKnob.Create(a_cOwner: TComponent);
 begin
-  Inherited Create(AOwner);
+  Inherited Create(a_cOwner);
 
   m_dLevel      := 0.5;
-  m_clKnobColor := c_clLavaOrange;
+  m_clKnobColor := c_clCtrlFont;
   m_bClickable  := True;
 
   m_dLastLevel  := 0.5;
@@ -130,6 +120,8 @@ procedure TAcrylicKnob.PaintComponent;
 var
   nAngle : Integer;
 begin
+  InitializeGDI;
+
   PaintText;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -164,6 +156,8 @@ begin
 
   m_gdiGraphics.SetSmoothingMode(SmoothingModeAntiAlias);
   m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
+
+  ShutdownGDI;
 end;
 
 //==============================================================================

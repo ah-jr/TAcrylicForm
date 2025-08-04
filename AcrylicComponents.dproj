@@ -107,7 +107,7 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <DCCReference Include="vclimg.dcp"/>
         <DCCReference Include="vcl.dcp"/>
         <DCCReference Include="src\AcrylicControlU.pas"/>
-        <DCCReference Include="src\AcrylicGhostPanelU.pas"/>
+        <DCCReference Include="src\AcrylicPanelU.pas"/>
         <DCCReference Include="src\AcrylicPopUpU.pas"/>
         <DCCReference Include="src\AcrylicFrameU.pas"/>
         <DCCReference Include="src\AcrylicScrollBoxU.pas"/>
@@ -115,9 +115,8 @@ $(PostBuildEvent)]]></PostBuildEvent>
         <DCCReference Include="src\AcrylicUtilsU.pas"/>
         <DCCReference Include="src\AcrylicButtonU.pas"/>
         <DCCReference Include="src\AcrylicLabelU.pas"/>
-        <DCCReference Include="src\AcrylicTrackU.pas"/>
         <DCCReference Include="src\AcrylicKnobU.pas"/>
-        <DCCReference Include="src\AcrylicTrackBarU.pas"/>
+        <DCCReference Include="src\AcrylicSliderU.pas"/>
         <DCCReference Include="src\AcrylicFormU.pas"/>
         <DCCReference Include="deps\GR32\amEasing.pas"/>
         <DCCReference Include="deps\GR32\GR32.BigEndian.pas"/>

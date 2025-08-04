@@ -6,28 +6,48 @@ object AcrylicFrame: TAcrylicFrame
   DoubleBuffered = False
   ParentDoubleBuffered = False
   TabOrder = 0
-  object pnlBack: TAcrylicGhostPanel
+  object pnlBack: TAcrylicPanel
     Left = 0
     Top = 0
     Width = 200
     Height = 200
+    Text = ''
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    Alignment = aCenter
     Color = x001F1F1F
-    TabOrder = 0
-    Ghost = True
-    Colored = False
+    FontColor = claWhite
     Bordercolor = claNull
     WithBorder = False
-    object pnlTitle: TAcrylicGhostPanel
+    Colored = False
+    Ghost = True
+    Clickable = False
+    AuxId = -1
+    TabOrder = 0
+    object pnlTitle: TAcrylicPanel
       Left = 1
       Top = 1
       Width = 198
       Height = 25
+      Text = ''
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      Alignment = aCenter
       Color = x001F1F1F
-      TabOrder = 0
-      Ghost = True
-      Colored = False
+      FontColor = claWhite
       Bordercolor = claNull
       WithBorder = False
+      Colored = False
+      Ghost = True
+      Clickable = False
+      AuxId = -1
+      TabOrder = 0
       object imgClose: TImage
         Left = 172
         Top = 1
@@ -106,8 +126,10 @@ object AcrylicFrame: TAcrylicFrame
         FontColor = claWhite
         BorderColor = x64070707
         WithBorder = False
+        Colored = True
         Ghost = True
         Clickable = False
+        AuxId = -1
       end
     end
   end

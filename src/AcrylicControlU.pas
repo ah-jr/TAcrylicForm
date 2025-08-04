@@ -3,28 +3,17 @@ unit AcrylicControlU;
 interface
 
 uses
-  Winapi.Windows,
   Winapi.Messages,
-  System.SysUtils,
-  System.Variants,
   System.Classes,
   System.UITypes,
   Vcl.Graphics,
   Vcl.Controls,
-  Vcl.Forms,
-  Vcl.Dialogs,
-  Vcl.StdCtrls,
-  Vcl.ExtCtrls,
-  Vcl.Imaging.pngimage,
   GR32,
-  GR32_Polygons,
-  GR32_VectorUtils,
   AcrylicTypesU,
-  GDIPOBJ,
-  GDIPAPI,
-  GDIPUTIL;
+  GDIPOBJ;
 
 type
+
   TAcrylicControl = Class(TCustomControl)
   private
     procedure WMEraseBkgnd(var Msg: TWmEraseBkgnd); message WM_ERASEBKGND;
@@ -41,37 +30,35 @@ type
     procedure SetColor           (a_clColor       : TAlphaColor);
     procedure SetFontColor       (a_clFontColor   : TAlphaColor);
     procedure SetBorderColor     (a_clBorderColor : TAlphaColor);
-    procedure SetCornerRadius    (a_dCornerRadius : Double);
+    procedure SetBorderRadius    (a_dBorderRadius : Double);
     procedure SetWithBorder      (a_bWithBorder   : Boolean);
     procedure SetColored         (a_bColored      : Boolean);
     procedure SetTriggerDblClick (a_nDblClick     : Boolean);
-
 
   protected
     m_msMouseState  : TMouseState;
     m_strText       : String;
     m_strTexts      : TStringList;
-    m_bmpPaint      : TBitmap;
+    m_bmpBuffer     : TBitmap32;
     m_bRepaint      : Boolean;
     m_aAlignment    : TAlignment;
     m_clColor       : TAlphaColor;
     m_clFontColor   : TAlphaColor;
     m_clBorderColor : TAlphaColor;
-    m_clReset       : TAlphaColor;
     m_fFont         : TFont;
-    m_dCornerRadius : Double;
+    m_dBorderRadius : Double;
     m_bWithBorder   : Boolean;
     m_bColored      : Boolean;
     m_bClickable    : Boolean;
     m_bGhost        : Boolean;
-    m_bmpBuffer     : TBitmap32;
     m_nAuxId        : Integer;
-
     m_gdiGraphics   : TGPGraphics;
     m_gdiSolidPen   : TGPPen;
     m_gdiBrush      : TGPSolidBrush;
     m_gdiFont       : TGPFont;
 
+    procedure InitializeGDI;
+    procedure ShutdownGDI;
 
     procedure Paint; override;
     procedure PaintComponent; virtual;
@@ -81,13 +68,13 @@ type
 
     procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
     procedure MouseUp  (Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
-    procedure MouseMove(Shift: TShiftState; X, Y: Integer); override;
+    procedure MouseMove(                      Shift: TShiftState; X, Y: Integer); override;
 
   public
-    constructor Create(AOwner: TComponent); override;
+    constructor Create(a_cOwner: TComponent); override;
     destructor  Destroy; override;
 
-    procedure Refresh(a_bForce : Boolean = False);
+    procedure Refresh(a_bRepaint : Boolean = False);
 
   published
     property Text            : String      read m_strText       write SetText;
@@ -97,7 +84,7 @@ type
     property Color           : TAlphaColor read m_clColor       write SetColor;
     property FontColor       : TAlphaColor read m_clFontColor   write SetFontColor;
     property BorderColor     : TAlphaColor read m_clBorderColor write SetBorderColor;
-    property CornerRadius    : Double      read m_dCornerRadius write SetCornerRadius;
+    property BorderRadius    : Double      read m_dBorderRadius write SetBorderRadius;
     property WithBorder      : Boolean     read m_bWithBorder   write SetWithBorder;
     property Colored         : Boolean     read m_bColored      write SetColored;
     property Ghost           : Boolean     read m_bGhost        write m_bGhost;
@@ -121,12 +108,18 @@ type
 implementation
 
 uses
-  Math, AcrylicUtilsU;
+  Winapi.Windows,
+  System.SysUtils,
+  Math,
+  AcrylicUtilsU,
+  GR32_Polygons,
+  GR32_VectorUtils,
+  GDIPAPI;
 
 //==============================================================================
-constructor TAcrylicControl.Create(AOwner: TComponent);
+constructor TAcrylicControl.Create(a_cOwner: TComponent);
 begin
-  Inherited Create(AOwner);
+  Inherited Create(a_cOwner);
 
   m_aAlignment    := aCenter;
   m_strText       := Name;
@@ -135,40 +128,37 @@ begin
   m_bClickable    := False;
   m_bGhost        := False;
   m_bRepaint      := True;
-  m_bWithBorder   := True;
-  m_bColored      := True;
+  m_bWithBorder   := False;
+  m_bColored      := False;
   m_fFont         := TFont.Create;
-  m_bmpPaint      := TBitmap.Create;
+  m_bmpBuffer     := TBitmap32.Create;
   m_strTexts      := TStringList.Create;
   m_nAuxId        := -1;
 
   m_clFontColor   := c_clCtrlFont;
   m_clColor       := c_clCtrlColor;
   m_clBorderColor := c_clCtrlBorder;
-  m_dCornerRadius := 0;
+  m_dBorderRadius := 0;
 
   m_fFont.Name    := 'Tahoma';
   m_fFont.Size    := 8;
   m_fFont.Style   := [];
 
-  m_bmpBuffer     := TBitmap32.Create;
-
   m_gdiGraphics   := nil;
   m_gdiSolidPen   := TGPPen.Create(0);
   m_gdiBrush      := TGPSolidBrush.Create(0);
 
-  ControlStyle := ControlStyle - [csDoubleClicks];
+  ControlStyle := ControlStyle - [csDoubleClicks] + [csAcceptsControls];
 end;
 
 //==============================================================================
 destructor TAcrylicControl.Destroy;
 begin
-  m_bmpPaint.Free;
+  m_bmpBuffer.Free;
   m_fFont.Free;
   m_gdiSolidPen.Free;
   m_gdiBrush.Free;
   m_strTexts.Free;
-  m_bmpBuffer.Free;
 
   Inherited;
 end;
@@ -223,9 +213,9 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicControl.SetCornerRadius(a_dCornerRadius : Double);
+procedure TAcrylicControl.SetBorderRadius(a_dBorderRadius : Double);
 begin
-  m_dCornerRadius := a_dCornerRadius;
+  m_dBorderRadius := a_dBorderRadius;
   Refresh(True);
 end;
 
@@ -253,12 +243,24 @@ end;
 
 
 //==============================================================================
-procedure TAcrylicControl.Refresh(a_bForce : Boolean = False);
+procedure TAcrylicControl.Refresh(a_bRepaint : Boolean = False);
 begin
-  m_bRepaint := m_bRepaint or a_bForce;
+  m_bRepaint := m_bRepaint or a_bRepaint;
+  Invalidate;
+end;
 
-  if m_bRepaint then
-    Invalidate;
+//==============================================================================
+procedure TAcrylicControl.InitializeGDI;
+begin
+  m_gdiGraphics := TGPGraphics.Create(m_bmpBuffer.Canvas.Handle);
+  m_gdiGraphics.SetSmoothingMode(SmoothingModeNone);
+  m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
+end;
+
+//==============================================================================
+procedure TAcrylicControl.ShutdownGDI;
+begin
+  FreeAndNil(m_gdiGraphics);
 end;
 
 //==============================================================================
@@ -267,30 +269,29 @@ begin
   if m_bRepaint then
   begin
     ////////////////////////////////////////////////////////////////////////////
-    // Create bitmap that will contain the final result
-    m_bmpPaint.SetSize(ClientWidth,ClientHeight);
+    // Ser buffer size
+    m_bmpBuffer.SetSize(Width, Height);
 
     ////////////////////////////////////////////////////////////////////////////
     // Draw background
     PaintBackground;
 
     ////////////////////////////////////////////////////////////////////////////
-    // Initializes GDI
-    m_gdiGraphics := TGPGraphics.Create(m_bmpPaint.Canvas.Handle);
-    m_gdiGraphics.SetSmoothingMode(SmoothingModeNone);
-    m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
-
-    ////////////////////////////////////////////////////////////////////////////
     // Draw Component
     PaintComponent;
     PaintEnabled;
 
-    m_gdiGraphics.Free;
     m_bRepaint := False;
   end;
+
   //////////////////////////////////////////////////////////////////////////////
   // Draw result to canvas
-  Canvas.Draw(0, 0, m_bmpPaint);
+  Canvas.Lock;
+  try
+    BitBlt(Canvas.Handle, 0, 0, Width, Height, m_bmpBuffer.Canvas.Handle, 0, 0, SRCCOPY);
+  finally
+    Canvas.Unlock;
+  end;
 end;
 
 //==============================================================================
@@ -299,12 +300,20 @@ var
   clColor   : TAlphaColor;
   arrPoints : TArrayOfFloatPoint;
 begin
-  m_bmpBuffer.SetSize(ClientWidth, ClientHeight);
+  //////////////////////////////////////////////////////////////////////////////
+  // Erase background
+  m_bmpBuffer.FillRect(0, 0, Width, Height, $0);
 
-  if g_bWithBlur
-    then m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clTransparent)
-    else m_bmpBuffer.FillRect(0, 0, ClientWidth, ClientHeight, c_clFormBack);
+  //////////////////////////////////////////////////////////////////////////////
+  // Replicates parent's background color
+  if (Parent <> nil) and (Parent is TAcrylicControl) then
+    m_bmpBuffer.FillRectTS(0, 0, Width, Height, TAcrylicControl(Parent).Color);
 
+  if m_dBorderRadius <> 0 then
+    arrPoints := RoundRect(FloatRect(0.5, 0.5, Width - 0.5, Height - 0.5), m_dBorderRadius);
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Paints own background
   if m_bColored then
   begin
     clColor := 0;
@@ -315,25 +324,18 @@ begin
       msClicked : clColor := ChangeColor(m_clColor, 0, 40, 40, 40);
     end;
 
-    if m_dCornerRadius <> 0 then
-    begin
-      arrPoints := RoundRect(FloatRect(0, 0, ClientWidth, ClientHeight), m_dCornerRadius);
-      PolygonFS(m_bmpBuffer, arrPoints, clColor);
-    end
-    else
-    begin
-      m_bmpBuffer.FillRectTS(0, 0, ClientWidth, ClientHeight, clColor);
-    end;
+    if m_dBorderRadius <> 0
+      then PolygonFS(m_bmpBuffer, arrPoints, clColor)
+      else m_bmpBuffer.FillRectTS(0, 0, Width, Height, clColor);
   end;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // Paints the borders
   if m_bWithBorder then
-    m_bmpBuffer.FrameRectTS(0, 0, ClientWidth, ClientHeight, m_clBorderColor);
-
-  m_bmpBuffer.Lock;
-  try
-    BitBlt(m_bmpPaint.Canvas.Handle, 0, 0, Width, Height, m_bmpBuffer.Handle, 0, 0, SRCCOPY);
-  finally
-    m_bmpBuffer.Unlock;
+  begin
+    if m_dBorderRadius <> 0
+      then PolylineFS(m_bmpBuffer, arrPoints, m_clBorderColor, True)
+      else m_bmpBuffer.FrameRectTS(0, 0, Width, Height, m_clBorderColor);
   end;
 end;
 
@@ -348,6 +350,8 @@ var
 const
   c_nLineBreakGap = 1;
 begin
+  assert(m_gdiGraphics <> nil);
+
   if (Text <> '') or (Texts.Count > 0) then
   begin
     if fsBold in Font.Style
@@ -360,7 +364,7 @@ begin
     pntText.Y := 0;
 
     ////////////////////////////////////////////////////////////////////////////
-    ///  One single String:
+    ///  One single String
     if Text <> '' then
     begin
       m_gdiGraphics.MeasureString(Text, -1, gdiFont, pntText, recText);
@@ -368,22 +372,22 @@ begin
       if a_nLeft < 0 then
       begin
         case Alignment of
-          aCenter: pntText.X := Trunc(ClientWidth  - recText.Width) div 2;
+          aCenter: pntText.X := Trunc(Width  - recText.Width) div 2;
           aLeft:   pntText.X := 1;
-          aRight:  pntText.X := Trunc(ClientWidth  - recText.Width - 1);
+          aRight:  pntText.X := Trunc(Width  - recText.Width - 1);
         end;
       end
       else
         pntText.X := a_nLeft;
 
       if a_nTop < 0
-        then pntText.Y := (Trunc(ClientHeight - recText.Height) div 2) + 1
+        then pntText.Y := (Trunc(Height - recText.Height) div 2) + 1
         else pntText.Y := a_nTop;
 
       m_gdiGraphics.DrawString(Text, -1, gdiFont, pntText, m_gdiBrush);
     end
     ////////////////////////////////////////////////////////////////////////////
-    ///  Multiple Strings:
+    ///  Multiple Strings
     else if Texts.Count > 0 then
     begin
       m_gdiGraphics.MeasureString(Texts[0], -1, gdiFont, pntText, recText);
@@ -405,16 +409,13 @@ end;
 procedure TAcrylicControl.PaintEnabled;
 begin
   if not Enabled then
-  begin
-    m_gdiBrush.SetColor(GdiColor(c_clCtrlDisabled));
-    m_gdiGraphics.FillRectangle(m_gdiBrush, 1, 1, ClientWidth-2, ClientHeight-2);
-  end;
+    m_bmpBuffer.FillRectTS(0, 0, Width, Height, c_clCtrlDisabled);
 end;
 
 //==============================================================================
 procedure TAcrylicControl.PaintComponent;
 begin
-  //
+  // The derived component should override this procedure if needed.
 end;
 
 //==============================================================================
@@ -450,14 +451,14 @@ end;
 //==============================================================================
 procedure TAcrylicControl.WMEraseBkgnd(var Msg: TWMEraseBkgnd);
 begin
-  // Do nothing to prevent flickering
+  // Do nothing to prevent flickering.
 end;
 
 //==============================================================================
 procedure TAcrylicControl.WMNCMoving(var Msg: TWMMoving);
 begin
   inherited;
-  Refresh(True);
+  Refresh;
 end;
 
 //==============================================================================
@@ -471,18 +472,20 @@ end;
 procedure TAcrylicControl.CMMouseEnter(var Msg: TMessage);
 begin
   if m_bClickable then
+  begin
     m_msMouseState := msHover;
-
-  Refresh(True);
+    Refresh(True);
+  end;
 end;
 
 //==============================================================================
 procedure TAcrylicControl.CMMouseLeave(var Msg: TMessage);
 begin
   if m_bClickable then
+  begin
     m_msMouseState := msNone;
-
-  Refresh(True);
+    Refresh(True);
+  end;
 end;
 
 //==============================================================================

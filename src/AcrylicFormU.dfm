@@ -5,7 +5,7 @@ object AcrylicForm: TAcrylicForm
   Caption = 'AcrylicForm'
   ClientHeight = 519
   ClientWidth = 617
-  Color = clCream
+  Color = clBtnFace
   TransparentColorValue = clPurple
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,32 +15,52 @@ object AcrylicForm: TAcrylicForm
   OnCreate = FormCreate
   OnPaint = FormPaint
   TextHeight = 13
-  object pnlBackground: TAcrylicGhostPanel
+  object pnlBackground: TAcrylicPanel
     Left = 0
     Top = 0
     Width = 617
     Height = 519
-    Align = alClient
-    BevelOuter = bvNone
-    Color = x001F1F1F
-    TabOrder = 0
-    Ghost = True
-    Colored = False
+    Text = ''
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    Alignment = aCenter
+    Color = claNull
+    FontColor = claWhite
     Bordercolor = claNull
     WithBorder = True
-    object pnlTitleBar: TAcrylicGhostPanel
+    Colored = False
+    Ghost = True
+    Clickable = False
+    AuxId = -1
+    Align = alClient
+    TabOrder = 0
+    BevelOuter = bvNone
+    object pnlTitleBar: TAcrylicPanel
       Left = 0
       Top = 0
       Width = 617
       Height = 41
-      Align = alTop
-      BevelOuter = bvNone
-      Color = x001F1F1F
-      TabOrder = 0
-      Ghost = True
-      Colored = False
+      Text = ''
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      Alignment = aCenter
+      Color = claNull
+      FontColor = claWhite
       Bordercolor = claNull
       WithBorder = False
+      Colored = False
+      Ghost = True
+      Clickable = False
+      AuxId = -1
+      Align = alTop
+      TabOrder = 0
+      BevelOuter = bvNone
       object imgClose: TImage
         Left = 571
         Top = -1
@@ -223,19 +243,28 @@ object AcrylicForm: TAcrylicForm
         OnMouseLeave = imgMinimizeMouseLeave
       end
     end
-    object pnlContent: TAcrylicGhostPanel
+    object pnlContent: TAcrylicPanel
       Left = 0
       Top = 41
       Width = 617
       Height = 478
-      Align = alClient
-      Caption = 'pnlContent'
-      Color = x85000000
-      TabOrder = 1
-      Ghost = True
-      Colored = False
+      Text = ''
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      Alignment = aCenter
+      Color = claNull
+      FontColor = claWhite
       Bordercolor = claBlack
       WithBorder = False
+      Colored = False
+      Ghost = True
+      Clickable = False
+      AuxId = -1
+      Align = alClient
+      TabOrder = 1
     end
   end
 end

@@ -3,29 +3,14 @@ unit AcrylicLabelU;
 interface
 
 uses
-  Winapi.Windows,
-  Winapi.Messages,
-  System.SysUtils,
-  System.Variants,
   System.Classes,
-  Vcl.Graphics,
-  Vcl.Controls,
-  Vcl.Forms,
-  Vcl.Dialogs,
-  Vcl.StdCtrls,
-  Vcl.ExtCtrls,
-  Vcl.Imaging.pngimage,
-  Registry,
-  DWMApi,
-  AcrylicUtilsU,
   AcrylicControlU;
 
 type
 
   TAcrylicLabel = Class(TAcrylicControl)
-
   public
-    constructor Create(AOwner: TComponent); override;
+    constructor Create(a_cOwner: TComponent); override;
 
   protected
     procedure PaintComponent; override;
@@ -37,7 +22,7 @@ procedure Register;
 implementation
 
 uses
-  GDIPOBJ, GDIPAPI, GDIPUTIL, AcrylicTypesU;
+  GDIPAPI;
 
 //==============================================================================
 procedure Register;
@@ -46,17 +31,17 @@ begin
 end;
 
 //==============================================================================
-constructor TAcrylicLabel.Create(AOwner: TComponent);
+constructor TAcrylicLabel.Create(a_cOwner: TComponent);
 begin
-  Inherited Create(AOwner);
-
-  m_bWithBorder   := False;
+  Inherited;
 end;
 
 //==============================================================================
 procedure TAcrylicLabel.PaintComponent;
 begin
+  InitializeGDI;
   PaintText;
+  ShutdownGDI;
 end;
 
 end.

@@ -1,37 +1,28 @@
-unit AcrylicTrackBarU;
+unit AcrylicSliderU;
 
 interface
 
 uses
-  Winapi.Windows,
-  Winapi.Messages,
-  System.SysUtils,
-  System.Variants,
   System.Classes,
   System.UITypes,
-  Vcl.Graphics,
   Vcl.Controls,
-  Vcl.Forms,
-  Vcl.Dialogs,
-  Vcl.StdCtrls,
-  Vcl.ExtCtrls,
-  Vcl.Imaging.pngimage,
-  AcrylicControlU,
-  AcrylicTypesU;
+  AcrylicControlU;
 
 type
-  TAcrylicTrackBar = Class(TAcrylicControl)
-  private
-    m_clTrackColor : TAlphaColor;
-    m_dLevel       : Single;
-    m_dTempLevel   : Single;
-    m_bChanging    : Boolean;
-    m_OnChange     : TNotifyEvent;
 
-    procedure CMMouseWheel(var Msg : TCMMouseWheel); message CM_MOUSEWHEEL;
-    procedure SetLevel     (a_dLevel : Single);
-    procedure SetTempLevel (a_dLevel : Single);
-    procedure SetTrackColor(a_clTrackColor : TAlphaColor);
+  TAcrylicSlider = Class(TAcrylicControl)
+  private
+    m_clSliderColor : TAlphaColor;
+    m_dLevel        : Single;
+    m_dTempLevel    : Single;
+    m_bChanging     : Boolean;
+    m_OnChange      : TNotifyEvent;
+
+    procedure CMMouseWheel (var Msg : TCMMouseWheel); message CM_MOUSEWHEEL;
+
+    procedure SetLevel      (a_dLevel : Single);
+    procedure SetTempLevel  (a_dLevel : Single);
+    procedure SetSliderColor(a_clSliderColor : TAlphaColor);
     procedure Changed;
 
   protected
@@ -42,13 +33,13 @@ type
     procedure MouseUp  (Button: TMouseButton; Shift: TShiftState; X, Y: Integer); override;
 
   public
-    constructor Create(AOwner: TComponent); override;
+    constructor Create(a_cOwner: TComponent); override;
     destructor  Destroy; override;
 
   published
-    property TrackColor : TAlphaColor  read m_clTrackColor write SetTrackColor;
-    property Level      : Single       read m_dLevel       write SetLevel;
-    property OnChange   : TNotifyEvent read m_OnChange     write m_OnChange;
+    property SliderColor : TAlphaColor  read m_clSliderColor write SetSliderColor;
+    property Level       : Single       read m_dLevel        write SetLevel;
+    property OnChange    : TNotifyEvent read m_OnChange      write m_OnChange;
 
   end;
 
@@ -61,19 +52,19 @@ const
 implementation
 
 uses
-  GDIPOBJ,
   GDIPAPI,
-  GDIPUTIL,
   Math,
+  AcrylicTypesU,
   AcrylicUtilsU;
 
+//==============================================================================
  procedure Register;
  begin
-   RegisterComponents('AcrylicComponents', [TAcrylicTrackBar]);
+   RegisterComponents('AcrylicComponents', [TAcrylicSlider]);
  end;
 
  //==============================================================================
-procedure TAcrylicTrackBar.CMMouseWheel(var Msg: TCMMouseWheel);
+procedure TAcrylicSlider.CMMouseWheel(var Msg: TCMMouseWheel);
 begin
   Inherited;
 
@@ -87,26 +78,26 @@ begin
 end;
 
 //==============================================================================
-constructor TAcrylicTrackBar.Create(AOwner: TComponent);
+constructor TAcrylicSlider.Create(a_cOwner: TComponent);
 begin
-  Inherited Create(AOwner);
+  Inherited Create(a_cOwner);
 
-  m_dLevel       := 0;
-  m_dTempLevel   := 0;
-  m_clTrackColor := c_clSeaBlue;
-  m_bClickable   := True;
-  m_bWithBorder  := False;
-  m_bChanging    := False;
+  m_dLevel        := 0;
+  m_dTempLevel    := 0;
+  m_clSliderColor := c_clCtrlFont;
+  m_bClickable    := True;
+  m_bWithBorder   := False;
+  m_bChanging     := False;
 end;
 
 //==============================================================================
-destructor TAcrylicTrackBar.Destroy;
+destructor TAcrylicSlider.Destroy;
 begin
   Inherited;
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.Changed;
+procedure TAcrylicSlider.Changed;
 begin
   if Assigned(m_OnChange) then
     m_OnChange(Self);
@@ -115,27 +106,27 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.SetLevel(a_dLevel : Single);
+procedure TAcrylicSlider.SetLevel(a_dLevel : Single);
 begin
   m_dLevel := Min(Max(a_dLevel, 0), 1);
   Changed;
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.SetTempLevel(a_dLevel : Single);
+procedure TAcrylicSlider.SetTempLevel(a_dLevel : Single);
 begin
   m_dTempLevel := Min(Max(a_dLevel, 0), 1);
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.SetTrackColor(a_clTrackColor : TAlphaColor);
+procedure TAcrylicSlider.SetSliderColor(a_clSliderColor : TAlphaColor);
 begin
-  m_clTrackColor := a_clTrackColor;
+  m_clSliderColor := a_clSliderColor;
   Refresh(True);
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.PaintComponent;
+procedure TAcrylicSlider.PaintComponent;
 var
   pntStart : TGPPointF;
   pntEnd   : TGPPointF;
@@ -143,6 +134,8 @@ var
 const
   c_nEPS = 0.01;
 begin
+  InitializeGDI;
+
   m_gdiGraphics.SetSmoothingMode(SmoothingModeHighQuality);
   m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeHighQuality);
   m_gdiSolidPen.SetLineJoin(LineJoinBevel);
@@ -167,7 +160,7 @@ begin
     else dLevel := m_dLevel;
 
   m_gdiSolidPen.SetWidth(ClientHeight - 2 * c_nHeightBorder);
-  m_gdiSolidPen.SetColor(gdiColor(m_clTrackColor));
+  m_gdiSolidPen.SetColor(gdiColor(m_clSliderColor));
   pntEnd.X := Max(c_nWidthBorder + c_nEPS,
                   c_nWidthBorder + dLevel*(ClientWidth - 2*c_nWidthBorder));
 
@@ -176,10 +169,12 @@ begin
   m_gdiGraphics.SetSmoothingMode(SmoothingModeAntiAlias);
   m_gdiGraphics.SetPixelOffsetMode(PixelOffsetModeNone);
   m_gdiSolidPen.SetLineCap(LineCapFlat, LineCapFlat, DashCapFlat);
+
+  ShutdownGDI;
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.MouseMove(Shift: TShiftState; X, Y: Integer);
+procedure TAcrylicSlider.MouseMove(Shift: TShiftState; X, Y: Integer);
 begin
   if m_msMouseState = msClicked then
     SetTempLevel(X / ClientWidth);
@@ -188,7 +183,7 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TAcrylicSlider.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   SetTempLevel(X / ClientWidth);
   m_bChanging := True;
@@ -197,7 +192,7 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicTrackBar.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+procedure TAcrylicSlider.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   if m_bChanging then
   begin

@@ -3,41 +3,40 @@ unit AcrylicUtilsU;
 interface
 
 uses
-  Winapi.Windows,
-  Winapi.Messages,
   System.UITypes,
+  Vcl.Controls;
+
+function  BoolToInt   (a_bBool   : Boolean)                 : Integer;
+function  ToAlphaColor(a_clColor : TColor)                  : TAlphaColor;
+function  ToColor     (a_clColor : TAlphaColor)             : TColor;
+function  ARGBtoABGR  (a_clColor: TAlphaColor)              : Cardinal;
+function  GdiColor    (a_clColor : TAlphaColor)             : Cardinal; overload;
+function  GdiColor    (a_clColor : TColor)                  : Cardinal; overload;
+function  GdiColor    (a_clColor : TColor; a_nAlpha : Byte) : Cardinal; overload;
+
+function  GdiChangeColor(a_clColor   : TAlphaColor;
+                         a_byteAlpha : SmallInt = 0;
+                         a_byteRed   : SmallInt = 0;
+                         a_byteGreen : SmallInt = 0;
+                         a_byteBlue  : SmallInt = 0) : Cardinal;
+
+function  ChangeColor(a_clColor   : TAlphaColor;
+                      a_byteAlpha : SmallInt = 0;
+                      a_byteRed   : SmallInt = 0;
+                      a_byteGreen : SmallInt = 0;
+                      a_byteBlue  : SmallInt = 0) : TAlphaColor;
+
+procedure RefreshAcrylicControls(Parent: TWinControl);
+function  SupportBlur: Boolean;
+
+implementation
+
+uses
+  Winapi.Windows,
   System.SysUtils,
-  VCL.Graphics,
-  Vcl.Controls,
   Math,
   GDIPAPI,
   AcrylicControlU;
-
-  function  BoolToInt(a_bBool : Boolean) : Integer;
-  function  ToAlphaColor(a_clColor : TColor) : TAlphaColor;
-  function  ToColor(a_clColor : TAlphaColor) : TColor;
-  function  GdiColor(a_clColor : TAlphaColor) : Cardinal; overload;
-  function  GdiColor(a_clColor : TColor) : Cardinal; overload;
-  function  GdiColor(a_clColor : TColor; a_nAlpha : Byte) : Cardinal; overload;
-  function  GdiChangeColor(a_clColor   : TAlphaColor;
-                           a_byteAlpha : SmallInt = 0;
-                           a_byteRed   : SmallInt = 0;
-                           a_byteGreen : SmallInt = 0;
-                           a_byteBlue  : SmallInt = 0) : Cardinal;
-  function  ChangeColor(a_clColor   : TAlphaColor;
-                        a_byteAlpha : SmallInt = 0;
-                        a_byteRed   : SmallInt = 0;
-                        a_byteGreen : SmallInt = 0;
-                        a_byteBlue  : SmallInt = 0) : TAlphaColor;
-
-  procedure RefreshAcrylicControls(Parent: TWinControl);
-  function  SupportBlur: Boolean;
-
-var
-  // Blur state can be accessed globally via this variable
-  g_bWithBlur : Boolean = False;
-
-implementation
 
 //==============================================================================
 function BoolToInt(a_bBool : Boolean) : Integer;
@@ -63,6 +62,19 @@ begin
   Result := RGB(GetRed  (a_clColor),
                 GetGreen(a_clColor),
                 GetBlue (a_clColor));
+end;
+
+//==============================================================================
+function ARGBtoABGR(a_clColor: TAlphaColor): Cardinal;
+var
+  bA, bR, bG, bB: Byte;
+begin
+  bA := (a_clColor shr 24) and $FF;
+  bR := (a_clColor shr 16) and $FF;
+  bG := (a_clColor shr 8)  and $FF;
+  bB :=  a_clColor and $FF;
+
+  Result := (bA shl 24) or (bB shl 16) or (bG shl 8) or bR;
 end;
 
 //==============================================================================
@@ -122,17 +134,17 @@ end;
 procedure RefreshAcrylicControls(Parent: TWinControl);
 var
   nIndex: Integer;
-  Child: TControl;
+  cChild: TControl;
 begin
   for nIndex := 0 to Parent.ControlCount - 1 do
   begin
-    Child := Parent.Controls[nIndex];
+    cChild := Parent.Controls[nIndex];
 
-    if Child is TAcrylicControl then
-      (Child as TAcrylicControl).Refresh(True);
+    if cChild is TAcrylicControl then
+      (cChild as TAcrylicControl).Refresh(True);
 
-    if Child is TWinControl then
-      RefreshAcrylicControls(TWinControl(Child));
+    if cChild is TWinControl then
+      RefreshAcrylicControls(TWinControl(cChild));
   end;
 end;
 

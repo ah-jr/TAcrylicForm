@@ -5,27 +5,21 @@ interface
 uses
   Winapi.Windows,
   Winapi.Messages,
-  System.SysUtils,
-  System.Variants,
   System.Classes,
-  System.Types,
   System.UITypes,
-  Vcl.Graphics,
-  Vcl.Controls,
   Vcl.Forms,
-  Vcl.Dialogs,
-  Vcl.StdCtrls,
   Vcl.ExtCtrls,
-  Vcl.ImgList,
-  Vcl.Imaging.pngimage,
+  Vcl.Imaging.PngImage,
+  Vcl.Controls,
   AcrylicTypesU,
-  AcrylicGhostPanelU;
+  AcrylicPanelU,
+  AcrylicControlU;
 
 type
   TAcrylicForm = class(TForm)
-    pnlTitleBar      : TAcrylicGhostPanel;
-    pnlBackground    : TAcrylicGhostPanel;
-    pnlContent       : TAcrylicGhostPanel;
+    pnlTitleBar      : TAcrylicPanel;
+    pnlBackground    : TAcrylicPanel;
+    pnlContent       : TAcrylicPanel;
     imgClose         : TImage;
     imgMaximize      : TImage;
     imgMinimize      : TImage;
@@ -54,9 +48,9 @@ type
     m_bMaximized             : Boolean;
     m_bDisableBlurWhenSizing : Boolean;
 
-    m_clBlurColor   : TColor;
+    m_clBlurColor   : TAlphaColor;
     m_clBorderColor : TAlphaColor;
-    m_btBlurAmount  : Byte;
+    m_bWithBlur     : Boolean;
 
     m_nMinHeight    : Integer;
     m_nMinWidth     : Integer;
@@ -72,10 +66,9 @@ type
 
     procedure EnableBlur      (hwndHandle : HWND);
     procedure OnMouseMoveTimer(Sender     : TObject);
-    procedure SetColor        (a_clColor  : TColor);
+    procedure SetBlurColor    (a_clColor  : TAlphaColor);
     procedure SetBorderColor  (a_clColor  : TAlphaColor);
     procedure SetWithBorder   (a_bBorder  : Boolean);
-    procedure SetBlurAmount   (a_btAmount : Byte);
     procedure ToggleBlur      (a_bBlur    : Boolean);
 
     function  GetWithBlur : Boolean;
@@ -89,7 +82,7 @@ type
     procedure WMGetMinMaxInfo(var Msg: TWMGetMinMaxInfo); message WM_GETMINMAXINFO;
 
   public
-    constructor Create(AOwner : TComponent); override;
+    constructor Create(a_cOwner : TComponent); override;
     destructor  Destroy; override;
 
     property Style : TAcrylicFormStyle read m_fsStyle       write m_fsStyle;
@@ -98,8 +91,7 @@ type
     property WithBlur              : Boolean     read GetWithBlur              write ToggleBlur;
     property WithBorder            : Boolean     read m_bWithBorder            write SetWithBorder;
     property BorderColor           : TAlphaColor read m_clBorderColor          write SetBorderColor;
-    property BlurColor             : TColor      read m_clBlurColor            write SetColor;
-    property BlurAmount            : Byte        read m_btBlurAmount           write SetBlurAmount;
+    property BlurColor             : TAlphaColor read m_clBlurColor            write SetBlurColor;
     property Resizable             : Boolean     read m_bResizable             write m_bResizable;
     property MinWidth              : Integer     read m_nMinWidth              write m_nMinWidth;
     property MinHeight             : Integer     read m_nMinHeight             write m_nMinHeight;
@@ -136,6 +128,7 @@ procedure Register;
 implementation
 
 uses
+  Vcl.Dialogs,
   AcrylicUtilsU;
 
 {$R *.dfm}
@@ -279,7 +272,7 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicForm.SetColor(a_clColor : TColor);
+procedure TAcrylicForm.SetBlurColor(a_clColor : TAlphaColor);
 begin
   m_clBlurColor := a_clColor;
   EnableBlur(Handle);
@@ -296,19 +289,9 @@ begin
 end;
 
 //==============================================================================
-procedure TAcrylicForm.SetBlurAmount(a_btAmount : Byte);
-begin
-  m_btBlurAmount := a_btAmount;
-  EnableBlur(Handle);
-  Invalidate;
-
-  RefreshAcrylicControls(Self);
-end;
-
-//==============================================================================
 procedure TAcrylicForm.ToggleBlur(a_bBlur : Boolean);
 begin
-  g_bWithBlur := a_bBlur and SupportBlur;
+  m_bWithBlur := a_bBlur and SupportBlur;
 
   EnableBlur(Handle);
   Invalidate;
@@ -319,7 +302,7 @@ end;
 //==============================================================================
 function TAcrylicForm.GetWithBlur : Boolean;
 begin
-  Result := g_bWithBlur;
+  Result := m_bWithBlur;
 end;
 
 //==============================================================================
@@ -329,10 +312,10 @@ begin
 end;
 
 //==============================================================================
-constructor TAcrylicForm.Create(AOwner : TComponent);
+constructor TAcrylicForm.Create(a_cOwner : TComponent);
 begin
   m_bInitialized           := False;
-  g_bWithBlur              := SupportBlur;
+  m_bWithBlur              := SupportBlur;
   m_bDisableBlurWhenSizing := False;
 
   m_tmrMouseMove          := TTimer.Create(self);
@@ -340,10 +323,8 @@ begin
   m_tmrMouseMove.OnTimer  := OnMouseMoveTimer;
   m_tmrMouseMove.Enabled  := False;
 
-
-  m_clBlurColor   := c_clFormBlur;
+  m_clBlurColor   := c_clBlurColor;
   m_clBorderColor := c_clFormBorder;
-  m_btBlurAmount  := c_nDefaultBlur;
 
   m_bResizable    := True;
   m_bWithBorder   := True;
@@ -487,7 +468,7 @@ begin
     begin
       Accent.AccentState   := nMode;
       Accent.AccentFlags   := 2;
-      Accent.GradientColor := (m_btBlurAmount SHL 24) or m_clBlurColor;
+      Accent.GradientColor := ARGBtoABGR(m_clBlurColor);
 
       Data.Attribute  := WCA_ACCENT_POLICY;
       Data.SizeOfData := SizeOf(Accent);

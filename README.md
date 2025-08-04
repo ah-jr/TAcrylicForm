@@ -21,9 +21,9 @@ It uses the same API used by multiple menus in Windows 10.
 
 1. TAcrylicButton     : A simple button with a removable background and border and hovered effects. 
 2. TAcrylicFrame      : A type of window that can be used within TAcrylicForm. 
-3. TAcrylicGhostPanel : A panel equivalent to TPanel but with Ghost property (which allows to ignore mouse messages) and own painting method. 
+3. TAcrylicPanel      : A panel with acrylic properties. 
 4. TAcrylicKnob       : A simple rotatory slider that can be changed by dragging the mouse or using the wheel.
-5. TAcrylicTrackBar   : A horizontal slider that can be changed by dragging the mouse or using the wheel.  
+5. TAcrylicSlider     : A horizontal slider that can be changed by dragging the mouse or using the wheel.  
 
 Among others.
 

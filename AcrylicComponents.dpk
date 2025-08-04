@@ -35,7 +35,7 @@ requires
 contains
   // Source
   AcrylicControlU in 'src\AcrylicControlU.pas',
-  AcrylicGhostPanelU in 'src\AcrylicGhostPanelU.pas',
+  AcrylicPanelU in 'src\AcrylicPanelU.pas',
   AcrylicPopUpU in 'src\AcrylicPopUpU.pas',
   AcrylicFrameU in 'src\AcrylicFrameU.pas',
   AcrylicScrollBoxU in 'src\AcrylicScrollBoxU.pas',
@@ -43,9 +43,8 @@ contains
   AcrylicUtilsU in 'src\AcrylicUtilsU.pas',
   AcrylicButtonU in 'src\AcrylicButtonU.pas',
   AcrylicLabelU in 'src\AcrylicLabelU.pas',
-  AcrylicTrackU in 'src\AcrylicTrackU.pas',
   AcrylicKnobU in 'src\AcrylicKnobU.pas',
-  AcrylicTrackBarU in 'src\AcrylicTrackBarU.pas',
+  AcrylicSliderU in 'src\AcrylicSliderU.pas',
   AcrylicFormU in 'src\AcrylicFormU.pas',
 
   // Deps

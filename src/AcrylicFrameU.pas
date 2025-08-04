@@ -3,46 +3,32 @@ unit AcrylicFrameU;
 interface
 
 uses
-  Winapi.Windows,
   Winapi.Messages,
-  System.SysUtils,
-  System.UITypes,
-  System.Variants,
   System.Classes,
   Vcl.Graphics,
-  Vcl.Controls,
   Vcl.Forms,
-  Vcl.Dialogs,
-  Vcl.StdCtrls,
   Vcl.ExtCtrls,
-  Vcl.Imaging.pngimage,
-  Registry,
-  DWMApi,
-  GDIPOBJ,
-  GDIPAPI,
-  GDIPUTIL,
-  AcrylicGhostPanelU,
-  AcrylicControlU,
-  AcrylicLabelU;
+  Vcl.Imaging.PngImage,
+  Vcl.Controls,
+  AcrylicPanelU,
+  AcrylicLabelU,
+  AcrylicControlU;
 
 type
 
   TAcrylicFrame = Class(TFrame)
     imgClose      : TImage;
-    pnlTitle      : TAcrylicGhostPanel;
+    pnlTitle      : TAcrylicPanel;
     lblTitle      : TAcrylicLabel;
-    pnlBack       : TAcrylicGhostPanel;
+    pnlBack       : TAcrylicPanel;
     imgCloseHover : TImage;
 
-    procedure imgCloseMouseEnter   (Sender: TObject);
-    procedure imgCloseMouseLeave   (Sender: TObject);
-    procedure imgCloseClick        (Sender: TObject);
+    procedure imgCloseMouseEnter (Sender: TObject);
+    procedure imgCloseMouseLeave (Sender: TObject);
+    procedure imgCloseClick      (Sender: TObject);
 
   private
-    m_Canvas        : TCanvas;
     m_bResizable    : Boolean;
-    m_bWithBorder   : Boolean;
-    m_bColored      : Boolean;
     m_bIntersecting : Boolean;
     m_strTitle      : String;
 
@@ -56,7 +42,7 @@ type
     m_nMaxHeight    : Integer;
     m_nMaxWidth     : Integer;
 
-    m_pnlBody       : TAcrylicGhostPanel;
+    m_pnlBody       : TAcrylicPanel;
 
     procedure WMNCSize           (var Msg: TWMSize);              message WM_SIZE;
     procedure WMEraseBkgnd       (var Msg: TWmEraseBkgnd);        message WM_ERASEBKGND;
@@ -68,25 +54,19 @@ type
     procedure UpdatePositions;
     procedure SetTitle(a_strTitle : String);
 
-  protected
-    //
-
   public
-    constructor Create(AOwner : TComponent); override;
+    constructor Create(a_cOwner : TComponent); override;
     destructor  Destroy; override;
 
   published
-    property Body : TAcrylicGhostPanel read m_pnlBody       write m_pnlBody;
-    property Canvas      : TCanvas     read m_Canvas        write m_Canvas;
-    property WithBorder  : Boolean     read m_bWithBorder   write m_bWithBorder;
-    property Colored     : Boolean     read m_bColored      write m_bColored;
-    property Resisable   : Boolean     read m_bResizable    write m_bResizable;
-    property Title       : String      read m_strTitle      write SetTitle;
+    property Body        : TAcrylicPanel read m_pnlBody       write m_pnlBody;
+    property Resizable   : Boolean       read m_bResizable    write m_bResizable;
+    property Title       : String        read m_strTitle      write SetTitle;
 
-    property MinWidth    : Integer     read m_nMinWidth     write m_nMinWidth;
-    property MinHeight   : Integer     read m_nMinHeight    write m_nMinHeight;
-    property MaxWidth    : Integer     read m_nMaxWidth     write m_nMaxWidth;
-    property MaxHeight   : Integer     read m_nMaxHeight    write m_nMaxHeight;
+    property MinWidth    : Integer       read m_nMinWidth     write m_nMinWidth;
+    property MinHeight   : Integer       read m_nMinHeight    write m_nMinHeight;
+    property MaxWidth    : Integer       read m_nMaxWidth     write m_nMaxWidth;
+    property MaxHeight   : Integer       read m_nMaxHeight    write m_nMaxHeight;
 
     property Visible;
   end;
@@ -104,8 +84,7 @@ implementation
 {$R *.dfm}
 
 uses
-  System.Types,
-  AcrylicUtilsU,
+  Winapi.Windows,
   AcrylicTypesU;
 
 //==============================================================================
@@ -115,30 +94,25 @@ begin
 end;
 
 //==============================================================================
-constructor TAcrylicFrame.Create(AOwner : TComponent);
+constructor TAcrylicFrame.Create(a_cOwner : TComponent);
 begin
   Inherited;
 
-  m_Canvas     := TCanvas.Create;
   m_bResizable := True;
 
-  m_bWithBorder := True;
-  m_bColored    := True;
-
-  m_pnlBody         := TAcrylicghostPanel.Create(pnlBack);
+  m_pnlBody         := TAcrylicPanel.Create(pnlBack);
   m_pnlBody.Parent  := pnlBack;
   m_pnlBody.Ghost   := True;
   m_pnlBody.Colored := False;
 
-  pnlBack.Colored     := True;
-  pnlBack.Color       := c_clFormColor;
+  pnlBack.Colored     := False;
   pnlBack.WithBorder  := True;
   pnlBack.Bordercolor := c_clFrameBorder;
 
   pnlTitle.Colored    := True;
-  pnlTitle.Color      := c_clFormColor;
+  pnlTitle.Color      := c_clFrameTitle;
 
-  lblTitle.Color          := c_clFormColor;
+  lblTitle.Colored    := False;
 
   m_LastX         := 0;
   m_LastY         := 0;
@@ -157,7 +131,6 @@ end;
 //==============================================================================
 destructor TAcrylicFrame.Destroy;
 begin
-  m_Canvas.Free;
   Inherited;
 end;
 
@@ -231,15 +204,15 @@ var
   recParent   : TRect;
   recFrame    : TRect;
   recInter    : TRect;
-  pnlParent   : TAcrylicGhostPanel;
+  pnlParent   : TAcrylicPanel;
   nIndex      : Integer;
   ctrlControl : TAcrylicFrame;
 const
   c_nDistThreshold = 40;
 begin
-  if Parent is TAcrylicGhostPanel then
+  if Parent is TAcrylicPanel then
   begin
-    pnlParent := Parent as TAcrylicGhostPanel;
+    pnlParent := Parent as TAcrylicPanel;
 
     with Msg.Windowpos^ do
     Begin
@@ -351,7 +324,6 @@ end;
 procedure TAcrylicFrame.SetTitle(a_strTitle : String);
 begin
   m_strTitle := a_strTitle;
-
   lblTitle.Text := m_strTitle;
 end;
 
